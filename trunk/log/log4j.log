@@ -1,0 +1,7 @@
+[18 Dec 2009 15:40:59,605] DEBUG (EnvironmentAgent.java:48) - setup start
+[18 Dec 2009 15:40:59,943] DEBUG (EnvironmentAgent.java:106) - setup end
+[18 Dec 2009 15:40:59,943] DEBUG (EnvironmentAgent.java:124) - action start
+[18 Dec 2009 15:41:09,566] DEBUG (FireMonitorAgent.java:39) - setup start
+[18 Dec 2009 15:41:09,690] DEBUG (FireMonitorAgent.java:69) - setup end
+[18 Dec 2009 15:41:09,691] DEBUG (FireMonitorAgent.java:136) - action start
+[18 Dec 2009 15:41:09,897] INFO (FireMonitorAgent.java:149) - sent AreaDimensions request
