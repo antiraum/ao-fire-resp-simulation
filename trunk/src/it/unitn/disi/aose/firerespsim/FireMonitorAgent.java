@@ -31,21 +31,23 @@ public final class FireMonitorAgent extends Agent {
      */
     static Logger logger = Logger.getLogger("it.unitn.disi.aose.firerespsim");
     
-    private static final DFAgentDescription areaDimensionsAD = new DFAgentDescription();
-    private static final ServiceDescription areaDimensionsSD = new ServiceDescription();
-    private AID areaDimensionsAID = null;
-    private static final DFAgentDescription fireStatusAD = new DFAgentDescription();
-    private static final ServiceDescription fireStatusSD = new ServiceDescription();
-    private AID fireStatusAID = null;
+    /**
+     * Package scoped for faster access by inner classes.
+     */
+    private final ThreadedBehaviourFactory tbf = new ThreadedBehaviourFactory();
+    /**
+     * Package scoped for faster access by inner classes.
+     */
+    private final Set<Behaviour> threadedBehaviours = new HashSet<Behaviour>();
     
-    /**
-     * Package scoped for faster access by inner classes.
-     */
-    final ThreadedBehaviourFactory tbf = new ThreadedBehaviourFactory();
-    /**
-     * Package scoped for faster access by inner classes.
-     */
-    final Set<Behaviour> threadedBehaviours = new HashSet<Behaviour>();
+    private static final int DEFAULT_SCAN_AREA_IVAL = 10000;
+    
+    private final DFAgentDescription areaDimensionsAD = new DFAgentDescription();
+    private final ServiceDescription areaDimensionsSD = new ServiceDescription();
+    private AID areaDimensionsAID = null;
+    private final DFAgentDescription fireStatusAD = new DFAgentDescription();
+    private final ServiceDescription fireStatusSD = new ServiceDescription();
+    private AID fireStatusAID = null;
     
     /**
      * @see jade.core.Agent#setup()
@@ -53,21 +55,26 @@ public final class FireMonitorAgent extends Agent {
     @Override
     protected void setup() {
 
-        logger.debug("setup start");
-        
         super.setup();
-        
-//        BasicConfigurator.configure();
         
         areaDimensionsSD.setType("AreaDimensions");
         areaDimensionsAD.addServices(areaDimensionsSD);
         fireStatusSD.setType("FireStatus");
         fireStatusAD.addServices(fireStatusSD);
         
+        // initialization parameters
+        int scanAreaIval = 0;
+        Object[] params = getArguments();
+        if (params == null) {
+            params = new Object[] {};
+        }
+        scanAreaIval = (params.length > 0) ? (Integer) params[0] : DEFAULT_SCAN_AREA_IVAL;
+        
         // add behaviors
         final SequentialBehaviour sb = new SequentialBehaviour();
         sb.addSubBehaviour(new GetAreaDimensions());
-        threadedBehaviours.addAll(Arrays.asList(new Behaviour[] {new ScanArea(this, 1000), new FireAlertService()}));
+        threadedBehaviours.addAll(Arrays.asList(new Behaviour[] {
+            new ScanArea(this, scanAreaIval), new FireAlertService()}));
         final ParallelBehaviour pb = new ParallelBehaviour(ParallelBehaviour.WHEN_ALL);
         for (final Behaviour b : threadedBehaviours) {
             pb.addSubBehaviour(tbf.wrap(b));
@@ -88,8 +95,6 @@ public final class FireMonitorAgent extends Agent {
             e.printStackTrace();
             doDelete();
         }
-        
-        logger.debug("setup end");
     }
     
     /**
@@ -178,8 +183,6 @@ public final class FireMonitorAgent extends Agent {
         @Override
         public void action() {
 
-            logger.debug("action start");
-            
             final AID aid = getAreaDimensionsAID();
             if (aid == null) {
                 logger.error("no AreaDimensions AID");
@@ -191,17 +194,15 @@ public final class FireMonitorAgent extends Agent {
             requestMsg.setOntology("AreaDimensions");
             requestMsg.setContent(areaColumn + " " + areaRow); // XXX
             send(requestMsg);
-            logger.info("sent AreaDimensions request");
+            logger.debug("sent AreaDimensions request");
             final ACLMessage replyMsg = blockingReceive(replyTpl);
-            logger.info("received AreaDimensions reply");
+            logger.debug("received AreaDimensions reply");
             final String[] areaDimensions = replyMsg.getContent().split(" ");
             areaWidth = Integer.parseInt(areaDimensions[0]);
             areaHeight = Integer.parseInt(areaDimensions[1]);
-            logger.info("AreaDimensions: " + areaWidth + "x" + areaHeight);
+            logger.info("got AreaDimensions: " + areaWidth + "x" + areaHeight);
             
             done = true;
-            
-            logger.debug("action end");
         }
         
         /**
@@ -247,8 +248,6 @@ public final class FireMonitorAgent extends Agent {
         @Override
         protected void onTick() {
 
-            logger.debug("onTick start");
-            
             if (areaWidth == 0 || areaHeight == 0) {
                 // area dimensions not yet set
                 logger.error("area dimensions not yet set");
@@ -257,7 +256,7 @@ public final class FireMonitorAgent extends Agent {
             
             final AID aid = getFireStatusAID();
             if (aid == null) {
-                logger.info("no FireStatus AID");
+                logger.error("no FireStatus AID");
                 return;
             }
             
@@ -267,9 +266,9 @@ public final class FireMonitorAgent extends Agent {
             requestMsg.setOntology("FireStatus");
             requestMsg.setContent(areaColumn + " " + areaRow);
             send(requestMsg);
-            logger.info("sent FireStatus request");
+            logger.debug("sent FireStatus request");
             final ACLMessage replyMsg = blockingReceive(replyTpl);
-            logger.info("received FireStatus reply");
+            logger.debug("received FireStatus reply");
             if (Boolean.parseBoolean(replyMsg.getContent())) {
                 // position is on fire
                 logger.info("current position (" + areaColumn + ", " + areaRow + ") is on fire");
@@ -295,8 +294,6 @@ public final class FireMonitorAgent extends Agent {
                 areaColumn++;
             }
             logger.info("moved to position (" + areaColumn + ", " + areaRow + ")");
-            
-            logger.debug("onTick end");
         }
     }
     
