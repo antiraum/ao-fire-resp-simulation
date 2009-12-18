@@ -28,11 +28,11 @@ public final class EnvironmentAgent extends Agent {
      */
     static Logger logger = Logger.getLogger("it.unitn.disi.aose.firerespsim");
     
-    private static final int DEFAULT_AREA_WIDTH = 20;
-    private static final int DEFAULT_AREA_HEIGHT = 20;
+    private static final int DEFAULT_AREA_WIDTH = 5;
+    private static final int DEFAULT_AREA_HEIGHT = 5;
     private static final int DEFAULT_SPAWN_FIRE_IVAL = 10000;
-    private static final int DEFAULT_NUMBER_OF_HOSPITALS = 3;
-    private static final int DEFAULT_NUMBER_OF_FIRE_BRIGADES = 3;
+    private static final int DEFAULT_NUMBER_OF_HOSPITALS = 2;
+    private static final int DEFAULT_NUMBER_OF_FIRE_BRIGADES = 2;
     
     /**
      * Package scoped for faster access by inner classes.
@@ -46,19 +46,15 @@ public final class EnvironmentAgent extends Agent {
      * Package scoped for faster access by inner classes.
      */
     boolean[][] fireStatuses;
-    /**
-     * Package scoped for faster access by inner classes.
-     */
-    int spawnFireIval = 0;
     
     /**
      * Package scoped for faster access by inner classes.
      */
-    final ThreadedBehaviourFactory tbf = new ThreadedBehaviourFactory();
+    private final ThreadedBehaviourFactory tbf = new ThreadedBehaviourFactory();
     /**
      * Package scoped for faster access by inner classes.
      */
-    final Set<Behaviour> threadedBehaviours = new HashSet<Behaviour>();
+    private final Set<Behaviour> threadedBehaviours = new HashSet<Behaviour>();
     
     /**
      * @see jade.core.Agent#setup()
@@ -66,34 +62,21 @@ public final class EnvironmentAgent extends Agent {
     @Override
     protected void setup() {
 
-        logger.debug("setup start");
-        
         super.setup();
         
         // initialization parameters
+        int spawnFireIval = 0;
         int numberOfHospitals = 0;
-        final int numberOfFireBrigades = 0;
-        
-        final Object[] params = getArguments();
-        if (params != null) {
-            // TODO let user control initialization parameters
+        int numberOfFireBrigades = 0;
+        Object[] params = getArguments();
+        if (params == null) {
+            params = new Object[] {};
         }
-        
-        if (areaWidth == 0) {
-            areaWidth = DEFAULT_AREA_WIDTH;
-        }
-        if (areaHeight == 0) {
-            areaHeight = DEFAULT_AREA_HEIGHT;
-        }
-        if (spawnFireIval == 0) {
-            spawnFireIval = DEFAULT_SPAWN_FIRE_IVAL;
-        }
-        if (numberOfHospitals == 0) {
-            numberOfHospitals = DEFAULT_NUMBER_OF_HOSPITALS;
-        }
-        if (numberOfFireBrigades == 0) {
-            numberOfHospitals = DEFAULT_NUMBER_OF_FIRE_BRIGADES;
-        }
+        areaWidth = (params.length > 0) ? (Integer) params[0] : DEFAULT_AREA_WIDTH;
+        areaHeight = (params.length > 1) ? (Integer) params[1] : DEFAULT_AREA_HEIGHT;
+        spawnFireIval = (params.length > 2) ? (Integer) params[2] : DEFAULT_SPAWN_FIRE_IVAL;
+        numberOfFireBrigades = (params.length > 3) ? (Integer) params[3] : DEFAULT_NUMBER_OF_FIRE_BRIGADES;
+        numberOfHospitals = (params.length > 4) ? (Integer) params[4] : DEFAULT_NUMBER_OF_HOSPITALS;
         
         // initialize fire statuses
         fireStatuses = new boolean[areaHeight][areaWidth];
@@ -104,7 +87,12 @@ public final class EnvironmentAgent extends Agent {
         }
         
         // simulation initialization
-        // TODO spawn agents
+        for (int i = 0; i < numberOfFireBrigades; i++) {
+            // TODO
+        }
+        for (int i = 0; i < numberOfHospitals; i++) {
+            // TODO
+        }
         
         // add behaviors
         threadedBehaviours.addAll(Arrays.asList(new Behaviour[] {
@@ -132,8 +120,6 @@ public final class EnvironmentAgent extends Agent {
             e.printStackTrace();
             doDelete();
         }
-        
-        logger.debug("setup end");
     }
     
     /**
@@ -168,12 +154,10 @@ public final class EnvironmentAgent extends Agent {
         @Override
         public void action() {
 
-            logger.debug("action start");
-            
             final ACLMessage requestMsg = blockingReceive(requestTpl);
             if (requestMsg == null) return;
             
-            logger.info("received AreaDimensions request");
+            logger.debug("received AreaDimensions request");
             
             // send area dimensions
             final ACLMessage replyMsg = requestMsg.createReply();
@@ -182,8 +166,7 @@ public final class EnvironmentAgent extends Agent {
             replyMsg.setOntology("AreaDimensions");
             replyMsg.addReceiver(requestMsg.getSender());
             send(replyMsg);
-            
-            logger.debug("action end");
+            logger.debug("sent AreaDimensions reply");
         }
     }
     
@@ -202,17 +185,16 @@ public final class EnvironmentAgent extends Agent {
         @Override
         public void action() {
 
-            logger.debug("action start");
-            
             final ACLMessage requestMsg = blockingReceive(requestTpl);
             if (requestMsg == null) return;
             
-            logger.info("received FireStatus request");
+            logger.debug("received FireStatus request");
             
             // get requested position
             final String[] position = requestMsg.getContent().split(" ");
             final int row = Integer.parseInt(position[0]);
             final int col = Integer.parseInt(position[1]);
+            logger.debug("requested position: " + row + " x " + col);
             
             // send fire status
             final ACLMessage replyMsg = requestMsg.createReply();
@@ -221,8 +203,7 @@ public final class EnvironmentAgent extends Agent {
             replyMsg.setOntology("FireStatus");
             replyMsg.addReceiver(requestMsg.getSender());
             send(replyMsg);
-            
-            logger.debug("action end");
+            logger.debug("sent FireStatus reply");
         }
     }
     
