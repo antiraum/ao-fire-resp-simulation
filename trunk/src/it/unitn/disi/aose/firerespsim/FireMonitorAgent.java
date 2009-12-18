@@ -52,7 +52,7 @@ public final class FireMonitorAgent extends Agent {
         // add behaviors
         final SequentialBehaviour sb = new SequentialBehaviour();
         sb.addSubBehaviour(new GetAreaDimensions());
-        final ParallelBehaviour pb = new ParallelBehaviour();
+        final ParallelBehaviour pb = new ParallelBehaviour(ParallelBehaviour.WHEN_ALL);
         pb.addSubBehaviour(new ScanArea(this, 1000));
 //        pb.addSubBehaviour(new FireAlertService()); // TODO
         sb.addSubBehaviour(pb);
