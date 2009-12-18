@@ -2,9 +2,12 @@ package it.unitn.disi.aose.firerespsim;
 
 import jade.core.AID;
 import jade.core.Agent;
+import jade.core.behaviours.Behaviour;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.ParallelBehaviour;
 import jade.core.behaviours.SequentialBehaviour;
 import jade.core.behaviours.SimpleBehaviour;
+import jade.core.behaviours.ThreadedBehaviourFactory;
 import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
@@ -12,6 +15,9 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import org.apache.log4j.Logger;
 
 /**
@@ -33,6 +39,15 @@ public final class FireMonitorAgent extends Agent {
     private AID fireStatusAID = null;
     
     /**
+     * Package scoped for faster access by inner classes.
+     */
+    final ThreadedBehaviourFactory tbf = new ThreadedBehaviourFactory();
+    /**
+     * Package scoped for faster access by inner classes.
+     */
+    final Set<Behaviour> threadedBehaviours = new HashSet<Behaviour>();
+    
+    /**
      * @see jade.core.Agent#setup()
      */
     @Override
@@ -52,9 +67,11 @@ public final class FireMonitorAgent extends Agent {
         // add behaviors
         final SequentialBehaviour sb = new SequentialBehaviour();
         sb.addSubBehaviour(new GetAreaDimensions());
+        threadedBehaviours.addAll(Arrays.asList(new Behaviour[] {new ScanArea(this, 1000), new FireAlertService()}));
         final ParallelBehaviour pb = new ParallelBehaviour(ParallelBehaviour.WHEN_ALL);
-        pb.addSubBehaviour(new ScanArea(this, 1000));
-//        pb.addSubBehaviour(new FireAlertService()); // TODO
+        for (final Behaviour b : threadedBehaviours) {
+            pb.addSubBehaviour(tbf.wrap(b));
+        }
         sb.addSubBehaviour(pb);
         addBehaviour(sb);
         
@@ -73,6 +90,23 @@ public final class FireMonitorAgent extends Agent {
         }
         
         logger.debug("setup end");
+    }
+    
+    /**
+     * @see jade.core.Agent#takeDown()
+     */
+    @Override
+    protected void takeDown() {
+
+        logger.debug("takeDown");
+        
+        for (final Behaviour b : threadedBehaviours) {
+            if (b != null) {
+                tbf.getThread(b).interrupt();
+            }
+        }
+        
+        super.takeDown();
     }
     
     /**
@@ -163,7 +197,7 @@ public final class FireMonitorAgent extends Agent {
             final String[] areaDimensions = replyMsg.getContent().split(" ");
             areaWidth = Integer.parseInt(areaDimensions[0]);
             areaHeight = Integer.parseInt(areaDimensions[1]);
-            doDelete();
+            logger.info("AreaDimensions: " + areaWidth + "x" + areaHeight);
             
             done = true;
             
@@ -264,5 +298,22 @@ public final class FireMonitorAgent extends Agent {
             
             logger.debug("onTick end");
         }
+    }
+    
+    /**
+     * @author tom
+     */
+    class FireAlertService extends CyclicBehaviour {
+        
+        /**
+         * @see jade.core.behaviours.Behaviour#action()
+         */
+        @Override
+        public void action() {
+
+        // TODO Auto-generated method stub
+        
+        }
+        
     }
 }
