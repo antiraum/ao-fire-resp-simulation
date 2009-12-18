@@ -559,3 +559,151 @@
 [18 Dec 2009 17:40:26,520] ERROR (FireMonitorAgent.java:151) FireMonitorAgent$GetAreaDimensions.action() - no AreaDimensions AID
 [18 Dec 2009 17:40:26,520] DEBUG (FireMonitorAgent.java:147) FireMonitorAgent$GetAreaDimensions.action() - action start
 [18 Dec 2009 17:40:26,521] INFO (FireMonitorAgent.java:160) FireMonitorAgent$GetAreaDimensions.action() - sent AreaDimensions request
+[18 Dec 2009 18:01:51,820] DEBUG (EnvironmentAgent.java:55) EnvironmentAgent.setup() - setup start
+[18 Dec 2009 18:01:51,934] DEBUG (EnvironmentAgent.java:121) EnvironmentAgent.setup() - setup end
+[18 Dec 2009 18:01:51,935] DEBUG (EnvironmentAgent.java:135) EnvironmentAgent$ReceiveMessages.action() - action start
+[18 Dec 2009 19:05:45,512] DEBUG (EnvironmentAgent.java:68) EnvironmentAgent.setup() - setup start
+[18 Dec 2009 19:05:45,568] DEBUG (EnvironmentAgent.java:137) EnvironmentAgent.setup() - setup end
+[18 Dec 2009 19:05:45,569] DEBUG (EnvironmentAgent.java:191) EnvironmentAgent$AreaDimensionsService.action() - action start
+[18 Dec 2009 19:05:45,569] DEBUG (EnvironmentAgent.java:225) EnvironmentAgent$FireStatusService.action() - action start
+[18 Dec 2009 19:05:45,570] DEBUG (EnvironmentAgent.java:166) EnvironmentAgent$ReceiveMessages.action() - action start
+[18 Dec 2009 19:12:27,773] DEBUG (FireMonitorAgent.java:56) FireMonitorAgent.setup() - setup start
+[18 Dec 2009 19:12:27,808] DEBUG (FireMonitorAgent.java:92) FireMonitorAgent.setup() - setup end
+[18 Dec 2009 19:12:27,809] DEBUG (FireMonitorAgent.java:179) FireMonitorAgent$GetAreaDimensions.action() - action start
+[18 Dec 2009 19:12:27,829] DEBUG (FireMonitorAgent.java:128) FireMonitorAgent.getAreaDimensionsAID() - areaDimensionsAID = ( agent-identifier :name EnvironmentAgent@tommac.local:1197/JADE  :addresses (sequence http://172.22.219.108:7778/acc ))
+[18 Dec 2009 19:12:27,830] ERROR (FireMonitorAgent.java:183) FireMonitorAgent$GetAreaDimensions.action() - no AreaDimensions AID
+[18 Dec 2009 19:12:27,830] DEBUG (FireMonitorAgent.java:179) FireMonitorAgent$GetAreaDimensions.action() - action start
+[18 Dec 2009 19:12:27,831] INFO (FireMonitorAgent.java:192) FireMonitorAgent$GetAreaDimensions.action() - sent AreaDimensions request
+[18 Dec 2009 19:12:27,840] DEBUG (EnvironmentAgent.java:170) EnvironmentAgent$ReceiveMessages.action() - (REQUEST
+ :sender  ( agent-identifier :name FireMonitorAgent@tommac.local:1197/JADE  :addresses (sequence http://172.22.219.108:7778/acc ))
+ :receiver  (set ( agent-identifier :name EnvironmentAgent@tommac.local:1197/JADE  :addresses (sequence http://172.22.219.108:7778/acc )) )
+ :content  "1 1" 
+ :ontology  AreaDimensions )
+[18 Dec 2009 19:12:27,841] DEBUG (EnvironmentAgent.java:172) EnvironmentAgent$ReceiveMessages.action() - action end
+[18 Dec 2009 19:12:27,841] DEBUG (EnvironmentAgent.java:166) EnvironmentAgent$ReceiveMessages.action() - action start
+[18 Dec 2009 19:13:27,051] DEBUG (FireMonitorAgent.java:101) FireMonitorAgent.takeDown() - takeDown
+[18 Dec 2009 19:13:27,066] DEBUG (EnvironmentAgent.java:146) EnvironmentAgent.takeDown() - takeDown
+[18 Dec 2009 19:13:48,362] DEBUG (EnvironmentAgent.java:69) EnvironmentAgent.setup() - setup start
+[18 Dec 2009 19:13:48,407] DEBUG (EnvironmentAgent.java:136) EnvironmentAgent.setup() - setup end
+[18 Dec 2009 19:13:48,408] DEBUG (EnvironmentAgent.java:169) EnvironmentAgent$AreaDimensionsService.action() - action start
+[18 Dec 2009 19:13:48,408] DEBUG (EnvironmentAgent.java:203) EnvironmentAgent$FireStatusService.action() - action start
+[18 Dec 2009 19:14:05,111] DEBUG (FireMonitorAgent.java:56) FireMonitorAgent.setup() - setup start
+[18 Dec 2009 19:14:05,156] DEBUG (FireMonitorAgent.java:92) FireMonitorAgent.setup() - setup end
+[18 Dec 2009 19:14:05,156] DEBUG (FireMonitorAgent.java:179) FireMonitorAgent$GetAreaDimensions.action() - action start
+[18 Dec 2009 19:14:05,191] DEBUG (FireMonitorAgent.java:128) FireMonitorAgent.getAreaDimensionsAID() - areaDimensionsAID = ( agent-identifier :name EnvironmentAgent@tommac.local:1197/JADE  :addresses (sequence http://172.22.219.108:7778/acc ))
+[18 Dec 2009 19:14:05,192] ERROR (FireMonitorAgent.java:183) FireMonitorAgent$GetAreaDimensions.action() - no AreaDimensions AID
+[18 Dec 2009 19:14:05,192] DEBUG (FireMonitorAgent.java:179) FireMonitorAgent$GetAreaDimensions.action() - action start
+[18 Dec 2009 19:14:05,193] INFO (FireMonitorAgent.java:192) FireMonitorAgent$GetAreaDimensions.action() - sent AreaDimensions request
+[18 Dec 2009 19:14:05,202] INFO (EnvironmentAgent.java:174) EnvironmentAgent$AreaDimensionsService.action() - received AreaDimensions request
+[18 Dec 2009 19:14:05,203] DEBUG (EnvironmentAgent.java:184) EnvironmentAgent$AreaDimensionsService.action() - action end
+[18 Dec 2009 19:14:05,204] DEBUG (EnvironmentAgent.java:169) EnvironmentAgent$AreaDimensionsService.action() - action start
+[18 Dec 2009 19:14:05,213] INFO (FireMonitorAgent.java:194) FireMonitorAgent$GetAreaDimensions.action() - received AreaDimensions reply
+[18 Dec 2009 19:14:05,214] DEBUG (FireMonitorAgent.java:202) FireMonitorAgent$GetAreaDimensions.action() - action end
+[18 Dec 2009 19:14:05,215] DEBUG (FireMonitorAgent.java:101) FireMonitorAgent.takeDown() - takeDown
+[18 Dec 2009 19:17:50,536] DEBUG (FireMonitorAgent.java:56) FireMonitorAgent.setup() - setup start
+[18 Dec 2009 19:17:50,578] DEBUG (FireMonitorAgent.java:92) FireMonitorAgent.setup() - setup end
+[18 Dec 2009 19:17:50,578] DEBUG (FireMonitorAgent.java:181) FireMonitorAgent$GetAreaDimensions.action() - action start
+[18 Dec 2009 19:17:50,596] DEBUG (FireMonitorAgent.java:130) FireMonitorAgent.getAreaDimensionsAID() - areaDimensionsAID = ( agent-identifier :name EnvironmentAgent@tommac.local:1197/JADE  :addresses (sequence http://172.22.219.108:7778/acc ))
+[18 Dec 2009 19:17:50,596] ERROR (FireMonitorAgent.java:185) FireMonitorAgent$GetAreaDimensions.action() - no AreaDimensions AID
+[18 Dec 2009 19:17:50,597] DEBUG (FireMonitorAgent.java:181) FireMonitorAgent$GetAreaDimensions.action() - action start
+[18 Dec 2009 19:17:50,598] INFO (FireMonitorAgent.java:194) FireMonitorAgent$GetAreaDimensions.action() - sent AreaDimensions request
+[18 Dec 2009 19:17:50,609] INFO (EnvironmentAgent.java:174) EnvironmentAgent$AreaDimensionsService.action() - received AreaDimensions request
+[18 Dec 2009 19:17:50,610] DEBUG (EnvironmentAgent.java:184) EnvironmentAgent$AreaDimensionsService.action() - action end
+[18 Dec 2009 19:17:50,611] DEBUG (EnvironmentAgent.java:169) EnvironmentAgent$AreaDimensionsService.action() - action start
+[18 Dec 2009 19:17:50,621] INFO (FireMonitorAgent.java:196) FireMonitorAgent$GetAreaDimensions.action() - received AreaDimensions reply
+[18 Dec 2009 19:17:50,622] INFO (FireMonitorAgent.java:200) FireMonitorAgent$GetAreaDimensions.action() - AreaDimensions: 20x20
+[18 Dec 2009 19:17:50,622] DEBUG (FireMonitorAgent.java:204) FireMonitorAgent$GetAreaDimensions.action() - action end
+[18 Dec 2009 19:17:51,640] DEBUG (FireMonitorAgent.java:250) FireMonitorAgent$ScanArea.onTick() - onTick start
+[18 Dec 2009 19:17:51,672] DEBUG (FireMonitorAgent.java:152) FireMonitorAgent.getFireStatusAID() - fireStatusAID = ( agent-identifier :name EnvironmentAgent@tommac.local:1197/JADE  :addresses (sequence http://172.22.219.108:7778/acc ))
+[18 Dec 2009 19:17:51,675] INFO (FireMonitorAgent.java:270) FireMonitorAgent$ScanArea.onTick() - sent FireStatus request
+[18 Dec 2009 19:17:51,680] INFO (EnvironmentAgent.java:208) EnvironmentAgent$FireStatusService.action() - received FireStatus request
+[18 Dec 2009 19:17:51,686] INFO (FireMonitorAgent.java:272) FireMonitorAgent$ScanArea.onTick() - received FireStatus reply
+[18 Dec 2009 19:17:51,687] INFO (FireMonitorAgent.java:279) FireMonitorAgent$ScanArea.onTick() - current position (1, 1) is not on fire
+[18 Dec 2009 19:17:51,687] INFO (FireMonitorAgent.java:297) FireMonitorAgent$ScanArea.onTick() - moved to position (2, 1)
+[18 Dec 2009 19:17:51,688] DEBUG (FireMonitorAgent.java:299) FireMonitorAgent$ScanArea.onTick() - onTick end
+[18 Dec 2009 19:17:51,691] DEBUG (EnvironmentAgent.java:223) EnvironmentAgent$FireStatusService.action() - action end
+[18 Dec 2009 19:17:51,691] DEBUG (EnvironmentAgent.java:203) EnvironmentAgent$FireStatusService.action() - action start
+[18 Dec 2009 19:17:52,689] DEBUG (FireMonitorAgent.java:250) FireMonitorAgent$ScanArea.onTick() - onTick start
+[18 Dec 2009 19:17:52,690] INFO (FireMonitorAgent.java:270) FireMonitorAgent$ScanArea.onTick() - sent FireStatus request
+[18 Dec 2009 19:17:52,690] INFO (FireMonitorAgent.java:272) FireMonitorAgent$ScanArea.onTick() - received FireStatus reply
+[18 Dec 2009 19:17:52,690] INFO (FireMonitorAgent.java:279) FireMonitorAgent$ScanArea.onTick() - current position (2, 1) is not on fire
+[18 Dec 2009 19:17:52,691] INFO (FireMonitorAgent.java:297) FireMonitorAgent$ScanArea.onTick() - moved to position (3, 1)
+[18 Dec 2009 19:17:52,691] DEBUG (FireMonitorAgent.java:299) FireMonitorAgent$ScanArea.onTick() - onTick end
+[18 Dec 2009 19:17:52,713] INFO (EnvironmentAgent.java:208) EnvironmentAgent$FireStatusService.action() - received FireStatus request
+[18 Dec 2009 19:17:52,718] DEBUG (EnvironmentAgent.java:223) EnvironmentAgent$FireStatusService.action() - action end
+[18 Dec 2009 19:17:52,718] DEBUG (EnvironmentAgent.java:203) EnvironmentAgent$FireStatusService.action() - action start
+[18 Dec 2009 19:17:53,694] DEBUG (FireMonitorAgent.java:250) FireMonitorAgent$ScanArea.onTick() - onTick start
+[18 Dec 2009 19:17:53,694] INFO (FireMonitorAgent.java:270) FireMonitorAgent$ScanArea.onTick() - sent FireStatus request
+[18 Dec 2009 19:17:53,695] INFO (FireMonitorAgent.java:272) FireMonitorAgent$ScanArea.onTick() - received FireStatus reply
+[18 Dec 2009 19:17:53,696] INFO (FireMonitorAgent.java:279) FireMonitorAgent$ScanArea.onTick() - current position (3, 1) is not on fire
+[18 Dec 2009 19:17:53,697] INFO (FireMonitorAgent.java:297) FireMonitorAgent$ScanArea.onTick() - moved to position (4, 1)
+[18 Dec 2009 19:17:53,697] DEBUG (FireMonitorAgent.java:299) FireMonitorAgent$ScanArea.onTick() - onTick end
+[18 Dec 2009 19:17:53,700] INFO (EnvironmentAgent.java:208) EnvironmentAgent$FireStatusService.action() - received FireStatus request
+[18 Dec 2009 19:17:53,703] DEBUG (EnvironmentAgent.java:223) EnvironmentAgent$FireStatusService.action() - action end
+[18 Dec 2009 19:17:53,710] DEBUG (EnvironmentAgent.java:203) EnvironmentAgent$FireStatusService.action() - action start
+[18 Dec 2009 19:17:54,699] DEBUG (FireMonitorAgent.java:250) FireMonitorAgent$ScanArea.onTick() - onTick start
+[18 Dec 2009 19:17:54,700] INFO (FireMonitorAgent.java:270) FireMonitorAgent$ScanArea.onTick() - sent FireStatus request
+[18 Dec 2009 19:17:54,700] INFO (FireMonitorAgent.java:272) FireMonitorAgent$ScanArea.onTick() - received FireStatus reply
+[18 Dec 2009 19:17:54,702] INFO (FireMonitorAgent.java:279) FireMonitorAgent$ScanArea.onTick() - current position (4, 1) is not on fire
+[18 Dec 2009 19:17:54,703] INFO (FireMonitorAgent.java:297) FireMonitorAgent$ScanArea.onTick() - moved to position (5, 1)
+[18 Dec 2009 19:17:54,703] DEBUG (FireMonitorAgent.java:299) FireMonitorAgent$ScanArea.onTick() - onTick end
+[18 Dec 2009 19:17:54,734] INFO (EnvironmentAgent.java:208) EnvironmentAgent$FireStatusService.action() - received FireStatus request
+[18 Dec 2009 19:17:54,736] DEBUG (EnvironmentAgent.java:223) EnvironmentAgent$FireStatusService.action() - action end
+[18 Dec 2009 19:17:54,736] DEBUG (EnvironmentAgent.java:203) EnvironmentAgent$FireStatusService.action() - action start
+[18 Dec 2009 19:17:55,704] DEBUG (FireMonitorAgent.java:250) FireMonitorAgent$ScanArea.onTick() - onTick start
+[18 Dec 2009 19:17:55,705] INFO (FireMonitorAgent.java:270) FireMonitorAgent$ScanArea.onTick() - sent FireStatus request
+[18 Dec 2009 19:17:55,706] INFO (FireMonitorAgent.java:272) FireMonitorAgent$ScanArea.onTick() - received FireStatus reply
+[18 Dec 2009 19:17:55,706] INFO (FireMonitorAgent.java:279) FireMonitorAgent$ScanArea.onTick() - current position (5, 1) is not on fire
+[18 Dec 2009 19:17:55,707] INFO (FireMonitorAgent.java:297) FireMonitorAgent$ScanArea.onTick() - moved to position (6, 1)
+[18 Dec 2009 19:17:55,707] DEBUG (FireMonitorAgent.java:299) FireMonitorAgent$ScanArea.onTick() - onTick end
+[18 Dec 2009 19:17:55,710] INFO (EnvironmentAgent.java:208) EnvironmentAgent$FireStatusService.action() - received FireStatus request
+[18 Dec 2009 19:17:55,711] DEBUG (EnvironmentAgent.java:223) EnvironmentAgent$FireStatusService.action() - action end
+[18 Dec 2009 19:17:55,718] DEBUG (EnvironmentAgent.java:203) EnvironmentAgent$FireStatusService.action() - action start
+[18 Dec 2009 19:17:56,709] DEBUG (FireMonitorAgent.java:250) FireMonitorAgent$ScanArea.onTick() - onTick start
+[18 Dec 2009 19:17:56,712] INFO (FireMonitorAgent.java:270) FireMonitorAgent$ScanArea.onTick() - sent FireStatus request
+[18 Dec 2009 19:17:56,712] INFO (FireMonitorAgent.java:272) FireMonitorAgent$ScanArea.onTick() - received FireStatus reply
+[18 Dec 2009 19:17:56,713] INFO (FireMonitorAgent.java:279) FireMonitorAgent$ScanArea.onTick() - current position (6, 1) is not on fire
+[18 Dec 2009 19:17:56,713] INFO (FireMonitorAgent.java:297) FireMonitorAgent$ScanArea.onTick() - moved to position (7, 1)
+[18 Dec 2009 19:17:56,717] DEBUG (FireMonitorAgent.java:299) FireMonitorAgent$ScanArea.onTick() - onTick end
+[18 Dec 2009 19:17:56,717] INFO (EnvironmentAgent.java:208) EnvironmentAgent$FireStatusService.action() - received FireStatus request
+[18 Dec 2009 19:17:56,740] DEBUG (EnvironmentAgent.java:223) EnvironmentAgent$FireStatusService.action() - action end
+[18 Dec 2009 19:17:56,740] DEBUG (EnvironmentAgent.java:203) EnvironmentAgent$FireStatusService.action() - action start
+[18 Dec 2009 19:17:57,719] DEBUG (FireMonitorAgent.java:250) FireMonitorAgent$ScanArea.onTick() - onTick start
+[18 Dec 2009 19:17:57,720] INFO (FireMonitorAgent.java:270) FireMonitorAgent$ScanArea.onTick() - sent FireStatus request
+[18 Dec 2009 19:17:57,721] INFO (FireMonitorAgent.java:272) FireMonitorAgent$ScanArea.onTick() - received FireStatus reply
+[18 Dec 2009 19:17:57,721] INFO (FireMonitorAgent.java:279) FireMonitorAgent$ScanArea.onTick() - current position (7, 1) is not on fire
+[18 Dec 2009 19:17:57,722] INFO (FireMonitorAgent.java:297) FireMonitorAgent$ScanArea.onTick() - moved to position (8, 1)
+[18 Dec 2009 19:17:57,723] DEBUG (FireMonitorAgent.java:299) FireMonitorAgent$ScanArea.onTick() - onTick end
+[18 Dec 2009 19:17:57,725] INFO (EnvironmentAgent.java:208) EnvironmentAgent$FireStatusService.action() - received FireStatus request
+[18 Dec 2009 19:17:57,729] DEBUG (EnvironmentAgent.java:223) EnvironmentAgent$FireStatusService.action() - action end
+[18 Dec 2009 19:17:57,733] DEBUG (EnvironmentAgent.java:203) EnvironmentAgent$FireStatusService.action() - action start
+[18 Dec 2009 19:17:58,724] DEBUG (FireMonitorAgent.java:250) FireMonitorAgent$ScanArea.onTick() - onTick start
+[18 Dec 2009 19:17:58,724] INFO (FireMonitorAgent.java:270) FireMonitorAgent$ScanArea.onTick() - sent FireStatus request
+[18 Dec 2009 19:17:58,725] INFO (FireMonitorAgent.java:272) FireMonitorAgent$ScanArea.onTick() - received FireStatus reply
+[18 Dec 2009 19:17:58,725] INFO (FireMonitorAgent.java:279) FireMonitorAgent$ScanArea.onTick() - current position (8, 1) is not on fire
+[18 Dec 2009 19:17:58,726] INFO (FireMonitorAgent.java:297) FireMonitorAgent$ScanArea.onTick() - moved to position (9, 1)
+[18 Dec 2009 19:17:58,726] DEBUG (FireMonitorAgent.java:299) FireMonitorAgent$ScanArea.onTick() - onTick end
+[18 Dec 2009 19:17:59,728] DEBUG (FireMonitorAgent.java:250) FireMonitorAgent$ScanArea.onTick() - onTick start
+[18 Dec 2009 19:17:59,729] INFO (FireMonitorAgent.java:270) FireMonitorAgent$ScanArea.onTick() - sent FireStatus request
+[18 Dec 2009 19:17:59,731] INFO (FireMonitorAgent.java:272) FireMonitorAgent$ScanArea.onTick() - received FireStatus reply
+[18 Dec 2009 19:17:59,733] INFO (FireMonitorAgent.java:279) FireMonitorAgent$ScanArea.onTick() - current position (9, 1) is not on fire
+[18 Dec 2009 19:17:59,733] INFO (FireMonitorAgent.java:297) FireMonitorAgent$ScanArea.onTick() - moved to position (10, 1)
+[18 Dec 2009 19:17:59,733] DEBUG (FireMonitorAgent.java:299) FireMonitorAgent$ScanArea.onTick() - onTick end
+[18 Dec 2009 19:18:00,738] DEBUG (FireMonitorAgent.java:250) FireMonitorAgent$ScanArea.onTick() - onTick start
+[18 Dec 2009 19:18:00,739] INFO (FireMonitorAgent.java:270) FireMonitorAgent$ScanArea.onTick() - sent FireStatus request
+[18 Dec 2009 19:18:00,743] INFO (FireMonitorAgent.java:272) FireMonitorAgent$ScanArea.onTick() - received FireStatus reply
+[18 Dec 2009 19:18:00,744] INFO (FireMonitorAgent.java:279) FireMonitorAgent$ScanArea.onTick() - current position (10, 1) is not on fire
+[18 Dec 2009 19:18:00,744] INFO (FireMonitorAgent.java:297) FireMonitorAgent$ScanArea.onTick() - moved to position (11, 1)
+[18 Dec 2009 19:18:00,745] DEBUG (FireMonitorAgent.java:299) FireMonitorAgent$ScanArea.onTick() - onTick end
+[18 Dec 2009 19:18:01,747] DEBUG (FireMonitorAgent.java:250) FireMonitorAgent$ScanArea.onTick() - onTick start
+[18 Dec 2009 19:18:01,748] INFO (FireMonitorAgent.java:270) FireMonitorAgent$ScanArea.onTick() - sent FireStatus request
+[18 Dec 2009 19:18:01,758] INFO (FireMonitorAgent.java:272) FireMonitorAgent$ScanArea.onTick() - received FireStatus reply
+[18 Dec 2009 19:18:01,759] INFO (FireMonitorAgent.java:279) FireMonitorAgent$ScanArea.onTick() - current position (11, 1) is not on fire
+[18 Dec 2009 19:18:01,759] INFO (FireMonitorAgent.java:297) FireMonitorAgent$ScanArea.onTick() - moved to position (12, 1)
+[18 Dec 2009 19:18:01,762] DEBUG (FireMonitorAgent.java:299) FireMonitorAgent$ScanArea.onTick() - onTick end
+[18 Dec 2009 19:18:02,764] DEBUG (FireMonitorAgent.java:250) FireMonitorAgent$ScanArea.onTick() - onTick start
+[18 Dec 2009 19:18:02,765] INFO (FireMonitorAgent.java:270) FireMonitorAgent$ScanArea.onTick() - sent FireStatus request
+[18 Dec 2009 19:18:02,765] INFO (FireMonitorAgent.java:272) FireMonitorAgent$ScanArea.onTick() - received FireStatus reply
+[18 Dec 2009 19:18:02,767] INFO (FireMonitorAgent.java:279) FireMonitorAgent$ScanArea.onTick() - current position (12, 1) is not on fire
+[18 Dec 2009 19:18:02,768] INFO (FireMonitorAgent.java:297) FireMonitorAgent$ScanArea.onTick() - moved to position (13, 1)
+[18 Dec 2009 19:18:02,768] DEBUG (FireMonitorAgent.java:299) FireMonitorAgent$ScanArea.onTick() - onTick end

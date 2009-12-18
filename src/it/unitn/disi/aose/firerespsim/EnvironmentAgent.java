@@ -1,14 +1,20 @@
 package it.unitn.disi.aose.firerespsim;
 
 import jade.core.Agent;
+import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.ParallelBehaviour;
+import jade.core.behaviours.ThreadedBehaviourFactory;
+import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import org.apache.log4j.Logger;
 
 /**
@@ -24,6 +30,7 @@ public final class EnvironmentAgent extends Agent {
     
     private static final int DEFAULT_AREA_WIDTH = 20;
     private static final int DEFAULT_AREA_HEIGHT = 20;
+    private static final int DEFAULT_SPAWN_FIRE_IVAL = 10000;
     private static final int DEFAULT_NUMBER_OF_HOSPITALS = 3;
     private static final int DEFAULT_NUMBER_OF_FIRE_BRIGADES = 3;
     
@@ -39,6 +46,19 @@ public final class EnvironmentAgent extends Agent {
      * Package scoped for faster access by inner classes.
      */
     boolean[][] fireStatuses;
+    /**
+     * Package scoped for faster access by inner classes.
+     */
+    int spawnFireIval = 0;
+    
+    /**
+     * Package scoped for faster access by inner classes.
+     */
+    final ThreadedBehaviourFactory tbf = new ThreadedBehaviourFactory();
+    /**
+     * Package scoped for faster access by inner classes.
+     */
+    final Set<Behaviour> threadedBehaviours = new HashSet<Behaviour>();
     
     /**
      * @see jade.core.Agent#setup()
@@ -65,6 +85,9 @@ public final class EnvironmentAgent extends Agent {
         if (areaHeight == 0) {
             areaHeight = DEFAULT_AREA_HEIGHT;
         }
+        if (spawnFireIval == 0) {
+            spawnFireIval = DEFAULT_SPAWN_FIRE_IVAL;
+        }
         if (numberOfHospitals == 0) {
             numberOfHospitals = DEFAULT_NUMBER_OF_HOSPITALS;
         }
@@ -84,10 +107,12 @@ public final class EnvironmentAgent extends Agent {
         // TODO spawn agents
         
         // add behaviors
+        threadedBehaviours.addAll(Arrays.asList(new Behaviour[] {
+            new AreaDimensionsService(), new FireStatusService(), new SpawnFire(this, spawnFireIval)}));
         final ParallelBehaviour pb = new ParallelBehaviour(ParallelBehaviour.WHEN_ALL);
-        pb.addSubBehaviour(new ReceiveMessagesServices());
-        pb.addSubBehaviour(new AreaDimensionsService());
-        pb.addSubBehaviour(new FireStatusService());
+        for (final Behaviour b : threadedBehaviours) {
+            pb.addSubBehaviour(tbf.wrap(b));
+        }
         addBehaviour(pb);
         
         // register at DF service
@@ -112,24 +137,20 @@ public final class EnvironmentAgent extends Agent {
     }
     
     /**
-     * @author tom
+     * @see jade.core.Agent#takeDown()
      */
-    class ReceiveMessagesServices extends CyclicBehaviour {
-        
-        /**
-         * @see jade.core.behaviours.Behaviour#action()
-         */
-        @Override
-        public void action() {
+    @Override
+    protected void takeDown() {
 
-            logger.debug("action start");
-            
-            final ACLMessage requestMsg = blockingReceive();
-            if (requestMsg == null) return;
-            logger.debug(requestMsg);
-            
-            logger.debug("action end");
+        logger.debug("takeDown");
+        
+        for (final Behaviour b : threadedBehaviours) {
+            if (b != null) {
+                tbf.getThread(b).interrupt();
+            }
         }
+        
+        super.takeDown();
     }
     
     /**
@@ -155,7 +176,8 @@ public final class EnvironmentAgent extends Agent {
             logger.info("received AreaDimensions request");
             
             // send area dimensions
-            final ACLMessage replyMsg = new ACLMessage(ACLMessage.INFORM);
+            final ACLMessage replyMsg = requestMsg.createReply();
+            replyMsg.setPerformative(ACLMessage.INFORM);
             replyMsg.setContent(areaWidth + " " + areaHeight);
             replyMsg.setOntology("AreaDimensions");
             replyMsg.addReceiver(requestMsg.getSender());
@@ -193,7 +215,8 @@ public final class EnvironmentAgent extends Agent {
             final int col = Integer.parseInt(position[1]);
             
             // send fire status
-            final ACLMessage replyMsg = new ACLMessage(ACLMessage.INFORM);
+            final ACLMessage replyMsg = requestMsg.createReply();
+            replyMsg.setPerformative(ACLMessage.INFORM);
             replyMsg.setContent(Boolean.toString(fireStatuses[row][col]));
             replyMsg.setOntology("FireStatus");
             replyMsg.addReceiver(requestMsg.getSender());
@@ -201,5 +224,31 @@ public final class EnvironmentAgent extends Agent {
             
             logger.debug("action end");
         }
+    }
+    
+    /**
+     * @author tom
+     */
+    class SpawnFire extends TickerBehaviour {
+        
+        /**
+         * @param a
+         * @param period
+         */
+        public SpawnFire(final Agent a, final long period) {
+
+            super(a, period);
+        }
+        
+        /**
+         * @see jade.core.behaviours.TickerBehaviour#onTick()
+         */
+        @Override
+        protected void onTick() {
+
+        // TODO Auto-generated method stub
+        
+        }
+        
     }
 }
