@@ -2,8 +2,10 @@ package it.unitn.disi.aose.firerespsim;
 
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.CyclicBehaviour;
-import jade.core.behaviours.OneShotBehaviour;
+import jade.core.behaviours.ParallelBehaviour;
+import jade.core.behaviours.SequentialBehaviour;
+import jade.core.behaviours.SimpleBehaviour;
+import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
@@ -48,9 +50,13 @@ public final class FireMonitorAgent extends Agent {
         fireStatusAD.addServices(fireStatusSD);
         
         // add behaviors
-        addBehaviour(new GetAreaDimensions());
-        addBehaviour(new ScanArea());
-//        addBehaviour(new FireAlertService()); // TODO
+        final SequentialBehaviour sb = new SequentialBehaviour();
+        sb.addSubBehaviour(new GetAreaDimensions());
+        final ParallelBehaviour pb = new ParallelBehaviour();
+        pb.addSubBehaviour(new ScanArea(this, 1000));
+//        pb.addSubBehaviour(new FireAlertService()); // TODO
+        sb.addSubBehaviour(pb);
+        addBehaviour(sb);
         
         // register at DF service
         final DFAgentDescription descr = new DFAgentDescription();
@@ -86,7 +92,9 @@ public final class FireMonitorAgent extends Agent {
             e.printStackTrace();
         }
         
-        return areaDimensionsAID = (result != null && result.length > 0) ? result[0].getName() : null;
+        areaDimensionsAID = (result != null && result.length > 0) ? result[0].getName() : null;
+        logger.debug("areaDimensionsAID = " + areaDimensionsAID);
+        return fireStatusAID;
     }
     
     /**
@@ -106,7 +114,9 @@ public final class FireMonitorAgent extends Agent {
             e.printStackTrace();
         }
         
-        return fireStatusAID = (result != null && result.length > 0) ? result[0].getName() : null;
+        fireStatusAID = (result != null && result.length > 0) ? result[0].getName() : null;
+        logger.debug("fireStatusAID = " + fireStatusAID);
+        return fireStatusAID;
     }
     
     /**
@@ -121,8 +131,9 @@ public final class FireMonitorAgent extends Agent {
     /**
      * @author tom
      */
-    class GetAreaDimensions extends OneShotBehaviour {
+    class GetAreaDimensions extends SimpleBehaviour {
         
+        private boolean done = false;
         private final MessageTemplate replyTpl = MessageTemplate.and(
                                                                      MessageTemplate.MatchPerformative(ACLMessage.INFORM),
                                                                      MessageTemplate.MatchOntology("AreaDimensions"));
@@ -135,8 +146,8 @@ public final class FireMonitorAgent extends Agent {
 
             logger.debug("action start");
             
-            AID aid = null;
-            if ((aid = getAreaDimensionsAID()) == null) {
+            final AID aid = getAreaDimensionsAID();
+            if (aid == null) {
                 logger.error("no AreaDimensions AID");
                 return;
             }
@@ -144,7 +155,7 @@ public final class FireMonitorAgent extends Agent {
             final ACLMessage requestMsg = new ACLMessage(ACLMessage.REQUEST);
             requestMsg.addReceiver(aid);
             requestMsg.setOntology("AreaDimensions");
-            requestMsg.setContent(areaColumn + " " + areaRow);
+            requestMsg.setContent(areaColumn + " " + areaRow); // XXX
             send(requestMsg);
             logger.info("sent AreaDimensions request");
             final ACLMessage replyMsg = blockingReceive(replyTpl);
@@ -154,7 +165,18 @@ public final class FireMonitorAgent extends Agent {
             areaHeight = Integer.parseInt(areaDimensions[1]);
             doDelete();
             
+            done = true;
+            
             logger.debug("action end");
+        }
+        
+        /**
+         * @see jade.core.behaviours.Behaviour#done()
+         */
+        @Override
+        public boolean done() {
+
+            return done;
         }
     }
     
@@ -170,19 +192,28 @@ public final class FireMonitorAgent extends Agent {
     /**
      * @author tom
      */
-    class ScanArea extends CyclicBehaviour {
+    class ScanArea extends TickerBehaviour {
         
         private final MessageTemplate replyTpl = MessageTemplate.and(
                                                                      MessageTemplate.MatchPerformative(ACLMessage.INFORM),
                                                                      MessageTemplate.MatchOntology("FireStatus"));
         
         /**
-         * @see jade.core.behaviours.Behaviour#action()
+         * @param a
+         * @param period
+         */
+        public ScanArea(final Agent a, final long period) {
+
+            super(a, period);
+        }
+        
+        /**
+         * @see jade.core.behaviours.TickerBehaviour#onTick()
          */
         @Override
-        public void action() {
+        protected void onTick() {
 
-            logger.debug("action start");
+            logger.debug("onTick start");
             
             if (areaWidth == 0 || areaHeight == 0) {
                 // area dimensions not yet set
@@ -190,8 +221,8 @@ public final class FireMonitorAgent extends Agent {
                 return;
             }
             
-            AID aid = null;
-            if ((aid = getFireStatusAID()) == null) {
+            final AID aid = getFireStatusAID();
+            if (aid == null) {
                 logger.info("no FireStatus AID");
                 return;
             }
@@ -231,7 +262,7 @@ public final class FireMonitorAgent extends Agent {
             }
             logger.info("moved to position (" + areaColumn + ", " + areaRow + ")");
             
-            logger.debug("action end");
+            logger.debug("onTick end");
         }
     }
 }

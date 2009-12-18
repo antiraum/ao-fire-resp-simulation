@@ -2,6 +2,7 @@ package it.unitn.disi.aose.firerespsim;
 
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.ParallelBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
@@ -82,6 +83,13 @@ public final class EnvironmentAgent extends Agent {
         // simulation initialization
         // TODO spawn agents
         
+        // add behaviors
+        final ParallelBehaviour pb = new ParallelBehaviour();
+        pb.addSubBehaviour(new ReceiveMessagesServices());
+        pb.addSubBehaviour(new AreaDimensionsService());
+        pb.addSubBehaviour(new FireStatusService());
+        addBehaviour(pb);
+        
         // register at DF service
         final DFAgentDescription descr = new DFAgentDescription();
         final ServiceDescription areaDimensionsSD = new ServiceDescription();
@@ -100,10 +108,28 @@ public final class EnvironmentAgent extends Agent {
             doDelete();
         }
         
-        addBehaviour(new AreaDimensionsService());
-        addBehaviour(new FireStatusService());
-        
         logger.debug("setup end");
+    }
+    
+    /**
+     * @author tom
+     */
+    class ReceiveMessagesServices extends CyclicBehaviour {
+        
+        /**
+         * @see jade.core.behaviours.Behaviour#action()
+         */
+        @Override
+        public void action() {
+
+            logger.debug("action start");
+            
+            final ACLMessage requestMsg = blockingReceive();
+            if (requestMsg == null) return;
+            logger.debug(requestMsg);
+            
+            logger.debug("action end");
+        }
     }
     
     /**
