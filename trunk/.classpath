@@ -6,5 +6,6 @@
 	<classpathentry kind="lib" path="lib/jade/iiop.jar" sourcepath="lib/jade/jadesrc.zip"/>
 	<classpathentry kind="lib" path="lib/jade/jade.jar" sourcepath="lib/jade/jadesrc.zip"/>
 	<classpathentry kind="lib" path="lib/jade/jadeTools.jar" sourcepath="lib/jade/jadesrc.zip"/>
+	<classpathentry exported="true" kind="lib" path="lib/log4j-1.2.15.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

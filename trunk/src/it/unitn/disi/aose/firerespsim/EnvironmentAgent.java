@@ -8,12 +8,18 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import org.apache.log4j.Logger;
 
 /**
  * @author tom
  */
 @SuppressWarnings("serial")
 public final class EnvironmentAgent extends Agent {
+    
+    /**
+     * Package scoped for faster access by inner classes.
+     */
+    static Logger logger = Logger.getLogger("it.unitn.disi.aose.firerespsim");
     
     private static final int DEFAULT_AREA_WIDTH = 20;
     private static final int DEFAULT_AREA_HEIGHT = 20;
@@ -39,6 +45,8 @@ public final class EnvironmentAgent extends Agent {
     @Override
     protected void setup() {
 
+        logger.debug("setup start");
+        
         super.setup();
         
         // initialization parameters
@@ -87,14 +95,15 @@ public final class EnvironmentAgent extends Agent {
         try {
             DFService.register(this, descr);
         } catch (final FIPAException e) {
-            System.out.println("Cannot register environment agent.");
+            logger.error("cannot register at DF");
             e.printStackTrace();
             doDelete();
         }
-        System.out.println("registered " + getName() + " at DF");
         
         addBehaviour(new AreaDimensionsService());
         addBehaviour(new FireStatusService());
+        
+        logger.debug("setup end");
     }
     
     /**
@@ -112,15 +121,12 @@ public final class EnvironmentAgent extends Agent {
         @Override
         public void action() {
 
-            System.out.println("AreaDimensionsService.action()");
+            logger.debug("action start");
             
             final ACLMessage requestMsg = blockingReceive(requestTpl);
-            
-            System.out.println("received AreaDimensions request");
-            
             if (requestMsg == null) return;
             
-            System.out.println("received AreaDimensions request");
+            logger.info("received AreaDimensions request");
             
             // send area dimensions
             final ACLMessage replyMsg = new ACLMessage(ACLMessage.INFORM);
@@ -128,6 +134,8 @@ public final class EnvironmentAgent extends Agent {
             replyMsg.setOntology("AreaDimensions");
             replyMsg.addReceiver(requestMsg.getSender());
             send(replyMsg);
+            
+            logger.debug("action end");
         }
     }
     
@@ -146,12 +154,12 @@ public final class EnvironmentAgent extends Agent {
         @Override
         public void action() {
 
-            System.out.println("FireStatusService.action()");
+            logger.debug("action start");
             
             final ACLMessage requestMsg = blockingReceive(requestTpl);
             if (requestMsg == null) return;
             
-            System.out.println("received FireStatus request");
+            logger.info("received FireStatus request");
             
             // get requested position
             final String[] position = requestMsg.getContent().split(" ");
@@ -164,6 +172,8 @@ public final class EnvironmentAgent extends Agent {
             replyMsg.setOntology("FireStatus");
             replyMsg.addReceiver(requestMsg.getSender());
             send(replyMsg);
+            
+            logger.debug("action end");
         }
     }
 }

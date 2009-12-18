@@ -10,12 +10,18 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import org.apache.log4j.Logger;
 
 /**
  * @author tom
  */
 @SuppressWarnings("serial")
 public final class FireMonitorAgent extends Agent {
+    
+    /**
+     * Package scoped for faster access by inner classes.
+     */
+    static Logger logger = Logger.getLogger("it.unitn.disi.aose.firerespsim");
     
     private static final DFAgentDescription areaDimensionsAD = new DFAgentDescription();
     private static final ServiceDescription areaDimensionsSD = new ServiceDescription();
@@ -30,7 +36,11 @@ public final class FireMonitorAgent extends Agent {
     @Override
     protected void setup() {
 
+        logger.debug("setup start");
+        
         super.setup();
+        
+//        BasicConfigurator.configure();
         
         areaDimensionsSD.setType("AreaDimensions");
         areaDimensionsAD.addServices(areaDimensionsSD);
@@ -51,17 +61,18 @@ public final class FireMonitorAgent extends Agent {
         try {
             DFService.register(this, descr);
         } catch (final FIPAException e) {
-            System.out.println("Cannot register fire monitor agent.");
+            logger.error("cannot register at DF");
             e.printStackTrace();
             doDelete();
         }
-        System.out.println("registered " + getName() + " at DF");
+        
+        logger.debug("setup end");
     }
     
     /**
      * Package scoped for faster access by inner classes.
      * 
-     * @return
+     * @return AID of the environment agent providing an AreaDimensions service
      */
     AID getAreaDimensionsAID() {
 
@@ -71,7 +82,7 @@ public final class FireMonitorAgent extends Agent {
         try {
             result = DFService.search(this, areaDimensionsAD);
         } catch (final FIPAException e) {
-            // TODO Auto-generated catch block
+            logger.error("no environment agent with AreaDimensions service at DF");
             e.printStackTrace();
         }
         
@@ -81,7 +92,7 @@ public final class FireMonitorAgent extends Agent {
     /**
      * Package scoped for faster access by inner classes.
      * 
-     * @return
+     * @return AID of the environment agent providing an FireStatus service
      */
     AID getFireStatusAID() {
 
@@ -91,7 +102,7 @@ public final class FireMonitorAgent extends Agent {
         try {
             result = DFService.search(this, fireStatusAD);
         } catch (final FIPAException e) {
-            // TODO Auto-generated catch block
+            logger.error("no environment agent with FireStatus service at DF");
             e.printStackTrace();
         }
         
@@ -122,11 +133,11 @@ public final class FireMonitorAgent extends Agent {
         @Override
         public void action() {
 
-            System.out.println("GetAreaDimensions.action()");
+            logger.debug("action start");
             
             AID aid = null;
             if ((aid = getAreaDimensionsAID()) == null) {
-                System.out.println("no AreaDimensions AID");
+                logger.error("no AreaDimensions AID");
                 return;
             }
             
@@ -135,13 +146,15 @@ public final class FireMonitorAgent extends Agent {
             requestMsg.setOntology("AreaDimensions");
             requestMsg.setContent(areaColumn + " " + areaRow);
             send(requestMsg);
-            System.out.println("sent AreaDimensions request");
+            logger.info("sent AreaDimensions request");
             final ACLMessage replyMsg = blockingReceive(replyTpl);
-            System.out.println("received AreaDimensions reply");
+            logger.info("received AreaDimensions reply");
             final String[] areaDimensions = replyMsg.getContent().split(" ");
             areaWidth = Integer.parseInt(areaDimensions[0]);
             areaHeight = Integer.parseInt(areaDimensions[1]);
             doDelete();
+            
+            logger.debug("action end");
         }
     }
     
@@ -169,17 +182,17 @@ public final class FireMonitorAgent extends Agent {
         @Override
         public void action() {
 
-            System.out.println("ScanArea.action()");
+            logger.debug("action start");
             
             if (areaWidth == 0 || areaHeight == 0) {
                 // area dimensions not yet set
-                System.out.println("area dimensions not yet set");
+                logger.error("area dimensions not yet set");
                 return;
             }
             
             AID aid = null;
             if ((aid = getFireStatusAID()) == null) {
-                System.out.println("no FireStatus AID");
+                logger.info("no FireStatus AID");
                 return;
             }
             
@@ -189,16 +202,16 @@ public final class FireMonitorAgent extends Agent {
             requestMsg.setOntology("FireStatus");
             requestMsg.setContent(areaColumn + " " + areaRow);
             send(requestMsg);
-            System.out.println("sent FireStatus request");
+            logger.info("sent FireStatus request");
             final ACLMessage replyMsg = blockingReceive(replyTpl);
-            System.out.println("received FireStatus reply");
+            logger.info("received FireStatus reply");
             if (Boolean.parseBoolean(replyMsg.getContent())) {
                 // position is on fire
-                System.out.println("current position (" + areaColumn + ", " + areaRow + ") is on fire");
+                logger.info("current position (" + areaColumn + ", " + areaRow + ") is on fire");
                 // TODO tell registered agents
             } else {
                 // position is not on fire
-                System.out.println("current position (" + areaColumn + ", " + areaRow + ") is not on fire");
+                logger.info("current position (" + areaColumn + ", " + areaRow + ") is not on fire");
             }
             
             // move to next position
@@ -216,8 +229,9 @@ public final class FireMonitorAgent extends Agent {
                 // to next column
                 areaColumn++;
             }
-            System.out.println("moved to position (" + areaColumn + ", " + areaRow + ")");
+            logger.info("moved to position (" + areaColumn + ", " + areaRow + ")");
+            
+            logger.debug("action end");
         }
-        
     }
 }
