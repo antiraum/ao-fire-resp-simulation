@@ -84,7 +84,7 @@ public final class EnvironmentAgent extends Agent {
         // TODO spawn agents
         
         // add behaviors
-        final ParallelBehaviour pb = new ParallelBehaviour();
+        final ParallelBehaviour pb = new ParallelBehaviour(ParallelBehaviour.WHEN_ALL);
         pb.addSubBehaviour(new ReceiveMessagesServices());
         pb.addSubBehaviour(new AreaDimensionsService());
         pb.addSubBehaviour(new FireStatusService());
