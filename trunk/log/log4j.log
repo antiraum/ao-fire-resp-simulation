@@ -1,7 +1,561 @@
-[18 Dec 2009 15:40:59,605] DEBUG (EnvironmentAgent.java:48) - setup start
-[18 Dec 2009 15:40:59,943] DEBUG (EnvironmentAgent.java:106) - setup end
-[18 Dec 2009 15:40:59,943] DEBUG (EnvironmentAgent.java:124) - action start
-[18 Dec 2009 15:41:09,566] DEBUG (FireMonitorAgent.java:39) - setup start
-[18 Dec 2009 15:41:09,690] DEBUG (FireMonitorAgent.java:69) - setup end
-[18 Dec 2009 15:41:09,691] DEBUG (FireMonitorAgent.java:136) - action start
-[18 Dec 2009 15:41:09,897] INFO (FireMonitorAgent.java:149) - sent AreaDimensions request
+[18 Dec 2009 17:11:29,214] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,214] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,214] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,214] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,215] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,215] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,215] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,215] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,215] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,215] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,215] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,215] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,215] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,215] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,216] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,216] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,216] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,216] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,216] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,216] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,216] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,217] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,217] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,217] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,217] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,217] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,217] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,217] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,217] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,217] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,217] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,218] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,218] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,218] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,218] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,218] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,218] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,218] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,218] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,218] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,218] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,219] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,219] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,219] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,219] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,219] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,219] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,219] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,219] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,219] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,219] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,220] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,220] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,220] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,220] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,220] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,220] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,220] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,220] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,220] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,221] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,221] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,221] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,221] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,221] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,221] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,221] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,222] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,222] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,222] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,222] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,224] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,224] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,224] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,224] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,224] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,225] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,225] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,225] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,225] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,225] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,225] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,225] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,225] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,225] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,226] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,226] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,226] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,226] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,226] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,226] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,226] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,226] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,226] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,227] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,227] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,227] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,227] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,227] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,228] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,228] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,228] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,229] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,229] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,229] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,229] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,229] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,229] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,233] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,233] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,234] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,234] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,234] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,234] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,234] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,235] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,235] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,235] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,235] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,235] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,235] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,235] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,235] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,235] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,235] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,236] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,236] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,236] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,236] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,236] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,236] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,236] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,236] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,236] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,237] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,237] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,237] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,237] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,237] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,237] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,237] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,237] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,237] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,237] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,238] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,238] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,238] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,238] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,238] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,238] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,238] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,238] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,238] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,238] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,239] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,239] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,239] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,239] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,239] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,239] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,239] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,239] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,239] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,239] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,240] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,240] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,240] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,240] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,240] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,240] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,240] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,240] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,240] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,241] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,241] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,241] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,241] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,241] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,241] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,241] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,241] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,241] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,242] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,242] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,242] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,242] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,242] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,242] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,242] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,242] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,242] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,242] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,243] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,243] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,243] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,243] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,243] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,243] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,243] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,243] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,243] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,244] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,244] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,244] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,244] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,244] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,246] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,246] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,246] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,246] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,247] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,247] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,247] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,247] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,247] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,247] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,247] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,247] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,247] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,247] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,248] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,248] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,248] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,248] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,248] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,248] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,248] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,248] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,249] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,249] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,249] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,249] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,249] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,249] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,249] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,249] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,250] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,250] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,250] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,250] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,250] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,250] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,250] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,250] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,250] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,250] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,250] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,251] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,251] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,251] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,251] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,251] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,251] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,251] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,251] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,251] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,251] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,251] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,251] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,252] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,252] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,252] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,252] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,252] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,252] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,252] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,252] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,252] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,252] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,252] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,252] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,253] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,253] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,253] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,253] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,253] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,253] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,253] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,253] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,253] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,253] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,253] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,253] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,254] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,254] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,255] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,256] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,256] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,256] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,256] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,256] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,256] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,256] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,256] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,256] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,257] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,257] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,257] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,257] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,257] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,257] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,257] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,257] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,257] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,257] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,257] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,257] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,258] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,258] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,258] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,258] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,258] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,258] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,258] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,258] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,258] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,258] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,258] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,259] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,259] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,259] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,259] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,259] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,259] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,259] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,259] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,259] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,259] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,260] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,260] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,260] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,260] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,260] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,260] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,260] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,260] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,260] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,260] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,261] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,261] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,261] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,261] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,261] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,261] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,261] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,261] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,261] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,261] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,262] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,262] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,262] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,262] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,262] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,262] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,262] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,262] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,263] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,263] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,263] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,263] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,263] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,263] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,263] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,263] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,263] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,263] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,264] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,264] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,264] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,264] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,264] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,264] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,264] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,264] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,264] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,264] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,265] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,265] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,265] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,265] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,265] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,265] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,265] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,265] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,265] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,266] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,266] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,266] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,266] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,266] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,266] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,266] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,266] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,266] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,267] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,267] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,267] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,267] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,267] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,267] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,267] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,267] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,267] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,267] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,268] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,268] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,268] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,268] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,268] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,268] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,268] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,268] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,268] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,268] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,269] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,269] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,269] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,269] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,269] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,269] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,269] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,269] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,269] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,269] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,270] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,270] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,270] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,270] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,270] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,270] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,270] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,270] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,270] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,270] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,270] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,271] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,271] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,271] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,271] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,271] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,271] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,271] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,271] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,271] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,272] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,272] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,272] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,272] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,272] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,272] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,272] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,272] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,273] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,273] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,273] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,273] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,273] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,273] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,273] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,273] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,273] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,273] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,273] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,274] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,274] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,274] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,274] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,274] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,274] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,274] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,274] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,274] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,274] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,275] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,275] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,275] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,275] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,275] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,275] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,275] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,275] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,275] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,275] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,276] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,276] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,276] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,276] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,276] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,276] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,276] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,276] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,276] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,276] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,277] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,277] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,277] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,277] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,277] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,277] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,277] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,277] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,277] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,278] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,280] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,280] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,280] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,280] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,280] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,281] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,281] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,281] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,281] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,281] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,281] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,281] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,281] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,281] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,282] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,282] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,282] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,282] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,282] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,282] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,282] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,283] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,283] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,284] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,284] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,284] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,284] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,284] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,285] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,285] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,285] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,285] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,285] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,286] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,287] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,287] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,287] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,287] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,287] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,288] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,288] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,288] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,288] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,288] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,288] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,288] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:11:29,288] ERROR (FireMonitorAgent.java:199) FireMonitorAgent$ScanArea.action() - area dimensions not yet set
+[18 Dec 2009 17:11:29,288] DEBUG (FireMonitorAgent.java:195) FireMonitorAgent$ScanArea.action() - action start
+[18 Dec 2009 17:39:57,206] DEBUG (FireMonitorAgent.java:41) FireMonitorAgent.setup() - setup start
+[18 Dec 2009 17:39:57,251] ERROR (FireMonitorAgent.java:70) FireMonitorAgent.setup() - cannot register at DF
+[18 Dec 2009 17:39:57,252] DEBUG (FireMonitorAgent.java:75) FireMonitorAgent.setup() - setup end
+[18 Dec 2009 17:40:26,139] DEBUG (FireMonitorAgent.java:41) FireMonitorAgent.setup() - setup start
+[18 Dec 2009 17:40:26,180] DEBUG (FireMonitorAgent.java:75) FireMonitorAgent.setup() - setup end
+[18 Dec 2009 17:40:26,180] DEBUG (FireMonitorAgent.java:147) FireMonitorAgent$GetAreaDimensions.action() - action start
+[18 Dec 2009 17:40:26,519] DEBUG (FireMonitorAgent.java:96) FireMonitorAgent.getAreaDimensionsAID() - areaDimensionsAID = ( agent-identifier :name EnvironmentAgent@tommac.local:1197/JADE  :addresses (sequence http://172.31.120.215:7778/acc ))
+[18 Dec 2009 17:40:26,520] ERROR (FireMonitorAgent.java:151) FireMonitorAgent$GetAreaDimensions.action() - no AreaDimensions AID
+[18 Dec 2009 17:40:26,520] DEBUG (FireMonitorAgent.java:147) FireMonitorAgent$GetAreaDimensions.action() - action start
+[18 Dec 2009 17:40:26,521] INFO (FireMonitorAgent.java:160) FireMonitorAgent$GetAreaDimensions.action() - sent AreaDimensions request
