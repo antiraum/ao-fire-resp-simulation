@@ -199,7 +199,7 @@ public final class EnvironmentAgent extends Agent {
             // send fire status
             final ACLMessage replyMsg = requestMsg.createReply();
             replyMsg.setPerformative(ACLMessage.INFORM);
-            replyMsg.setContent(Boolean.toString(fireStatuses[row][col]));
+            replyMsg.setContent(Boolean.toString(fireStatuses[row - 1][col - 1]));
             replyMsg.setOntology("FireStatus");
             replyMsg.addReceiver(requestMsg.getSender());
             send(replyMsg);
