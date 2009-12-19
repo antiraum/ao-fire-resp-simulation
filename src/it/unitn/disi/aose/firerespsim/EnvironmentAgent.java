@@ -13,6 +13,7 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.wrapper.AgentController;
+import jade.wrapper.ControllerException;
 import jade.wrapper.StaleProxyException;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -152,8 +153,6 @@ public final class EnvironmentAgent extends Agent {
             final ACLMessage replyMsg = requestMsg.createReply();
             replyMsg.setPerformative(ACLMessage.INFORM);
             replyMsg.setContent(areaWidth + " " + areaHeight);
-            replyMsg.setOntology("AreaDimensions");
-            replyMsg.addReceiver(requestMsg.getSender());
             send(replyMsg);
             logger.debug("sent AreaDimensions reply");
         }
@@ -185,12 +184,24 @@ public final class EnvironmentAgent extends Agent {
             final int col = Integer.parseInt(position[1]);
             logger.debug("requested position (" + row + ", " + col + ")");
             
+            if (fireStatuses[row - 1][col - 1]) {
+                // check if fire agent still alive (fire still burning)
+                AgentController fireAgent = null;
+                try {
+                    fireAgent = getContainerController().getAgent("fire " + row + "-" + col);
+                } catch (final ControllerException e) {
+                    // pass
+                }
+                if (fireAgent == null) {
+                    logger.debug("fire at (" + row + ", " + col + ") no longer burning");
+                    fireStatuses[row - 1][col - 1] = false;
+                }
+            }
+            
             // send fire status
             final ACLMessage replyMsg = requestMsg.createReply();
             replyMsg.setPerformative(ACLMessage.INFORM);
             replyMsg.setContent(Boolean.toString(fireStatuses[row - 1][col - 1]));
-            replyMsg.setOntology("FireStatus");
-            replyMsg.addReceiver(requestMsg.getSender());
             send(replyMsg);
             logger.debug("sent FireStatus reply");
         }
@@ -226,8 +237,7 @@ public final class EnvironmentAgent extends Agent {
             // spawn fire agent
             try {
                 final AgentController fireAgent = getContainerController().createNewAgent(
-                                                                                          "fire (" + row + "," + col +
-                                                                                                  ")",
+                                                                                          "fire " + row + "-" + col,
                                                                                           FireAgent.class.getName(),
                                                                                           new Object[] {row, col, accel});
                 fireAgent.start();
