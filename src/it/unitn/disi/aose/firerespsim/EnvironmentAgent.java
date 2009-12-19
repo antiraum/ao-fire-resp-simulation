@@ -183,7 +183,7 @@ public final class EnvironmentAgent extends Agent {
             final String[] position = requestMsg.getContent().split(" ");
             final int row = Integer.parseInt(position[0]);
             final int col = Integer.parseInt(position[1]);
-            logger.debug("requested position: " + row + " x " + col);
+            logger.debug("requested position (" + row + ", " + col + ")");
             
             // send fire status
             final ACLMessage replyMsg = requestMsg.createReply();
@@ -220,7 +220,7 @@ public final class EnvironmentAgent extends Agent {
             do {
                 row = RandomUtils.nextInt(areaHeight - 1) + 1;
                 col = RandomUtils.nextInt(areaWidth - 1) + 1;
-            } while (fireStatuses[row][col]);
+            } while (fireStatuses[row - 1][col - 1]);
             final int accel = RandomUtils.nextInt(100);
             
             // spawn fire agent
@@ -240,7 +240,7 @@ public final class EnvironmentAgent extends Agent {
             // set fire status
             fireStatuses[row - 1][col - 1] = true;
             
-            logger.info("created fire at (" + row + " x " + col + ") with acceleration " + accel);
+            logger.info("created fire at (" + row + ", " + col + ") with acceleration " + accel);
         }
         
     }
