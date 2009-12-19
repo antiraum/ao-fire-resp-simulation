@@ -12,6 +12,8 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import jade.wrapper.AgentController;
+import jade.wrapper.StaleProxyException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -27,13 +29,11 @@ public final class EnvironmentAgent extends Agent {
     /**
      * Package scoped for faster access by inner classes.
      */
-    static Logger logger = Logger.getLogger("it.unitn.disi.aose.firerespsim");
+    static final Logger logger = Logger.getLogger("it.unitn.disi.aose.firerespsim");
     
     private static final int DEFAULT_AREA_WIDTH = 5;
     private static final int DEFAULT_AREA_HEIGHT = 5;
     private static final int DEFAULT_SPAWN_FIRE_IVAL = 100000;
-    private static final int DEFAULT_NUMBER_OF_HOSPITALS = 2;
-    private static final int DEFAULT_NUMBER_OF_FIRE_BRIGADES = 2;
     
     /**
      * Package scoped for faster access by inner classes.
@@ -67,8 +67,6 @@ public final class EnvironmentAgent extends Agent {
         
         // initialization parameters
         int spawnFireIval = 0;
-        int numberOfHospitals = 0;
-        int numberOfFireBrigades = 0;
         Object[] params = getArguments();
         if (params == null) {
             params = new Object[] {};
@@ -76,8 +74,6 @@ public final class EnvironmentAgent extends Agent {
         areaWidth = (params.length > 0) ? (Integer) params[0] : DEFAULT_AREA_WIDTH;
         areaHeight = (params.length > 1) ? (Integer) params[1] : DEFAULT_AREA_HEIGHT;
         spawnFireIval = (params.length > 2) ? (Integer) params[2] : DEFAULT_SPAWN_FIRE_IVAL;
-        numberOfFireBrigades = (params.length > 3) ? (Integer) params[3] : DEFAULT_NUMBER_OF_FIRE_BRIGADES;
-        numberOfHospitals = (params.length > 4) ? (Integer) params[4] : DEFAULT_NUMBER_OF_HOSPITALS;
         
         // initialize fire statuses
         fireStatuses = new boolean[areaHeight][areaWidth];
@@ -85,14 +81,6 @@ public final class EnvironmentAgent extends Agent {
             for (int col = 0; col < areaWidth; col++) {
                 fireStatuses[row][col] = false;
             }
-        }
-        
-        // simulation initialization
-        for (int i = 0; i < numberOfFireBrigades; i++) {
-            // TODO
-        }
-        for (int i = 0; i < numberOfHospitals; i++) {
-            // TODO
         }
         
         // add behaviors
@@ -236,7 +224,18 @@ public final class EnvironmentAgent extends Agent {
             final int accel = RandomUtils.nextInt(100);
             
             // spawn fire agent
-            // TODO
+            try {
+                final AgentController fireAgent = getContainerController().createNewAgent(
+                                                                                          "fire (" + row + "," + col +
+                                                                                                  ")",
+                                                                                          FireAgent.class.getName(),
+                                                                                          new Object[] {row, col, accel});
+                fireAgent.start();
+                logger.debug("started agent " + fireAgent.getName());
+            } catch (final StaleProxyException e) {
+                logger.error("couldn't start fire agent");
+                e.printStackTrace();
+            }
             
             // set fire status
             fireStatuses[row - 1][col - 1] = true;
