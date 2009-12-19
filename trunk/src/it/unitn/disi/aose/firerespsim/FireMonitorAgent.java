@@ -229,10 +229,6 @@ public final class FireMonitorAgent extends Agent {
      */
     class ScanArea extends TickerBehaviour {
         
-        private final MessageTemplate replyTpl = MessageTemplate.and(
-                                                                     MessageTemplate.MatchPerformative(ACLMessage.INFORM),
-                                                                     MessageTemplate.MatchOntology("FireStatus"));
-        
         /**
          * @param a
          * @param period
@@ -241,6 +237,12 @@ public final class FireMonitorAgent extends Agent {
 
             super(a, period);
         }
+        
+        private final MessageTemplate replyTpl = MessageTemplate.and(
+                                                                     MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+                                                                     MessageTemplate.MatchOntology("FireStatus"));
+        
+        private final Set<String> detectedFires = new HashSet<String>();
         
         /**
          * @see jade.core.behaviours.TickerBehaviour#onTick()
@@ -261,21 +263,29 @@ public final class FireMonitorAgent extends Agent {
             }
             
             // get fire status for current position
+            logger.debug("scanning position (" + areaRow + ", " + areaColumn + ")");
             final ACLMessage requestMsg = new ACLMessage(ACLMessage.REQUEST);
             requestMsg.addReceiver(aid);
             requestMsg.setOntology("FireStatus");
-            requestMsg.setContent(areaColumn + " " + areaRow);
+            requestMsg.setContent(areaRow + " " + areaColumn);
             send(requestMsg);
             logger.debug("sent FireStatus request");
             final ACLMessage replyMsg = blockingReceive(replyTpl);
             logger.debug("received FireStatus reply");
             if (Boolean.parseBoolean(replyMsg.getContent())) {
                 // position is on fire
-                logger.info("current position (" + areaColumn + ", " + areaRow + ") is on fire");
-                // TODO tell registered agents
+                if (detectedFires.contains(areaRow + " " + areaColumn)) {
+                    // known fire
+                    logger.debug("detected known fire at (" + areaRow + ", " + areaColumn + ")");
+                } else {
+                    // new fire
+                    logger.info("detected new fire at (" + areaRow + ", " + areaColumn + ")");
+                    detectedFires.add(areaRow + " " + areaColumn);
+                    // TODO tell registered agents
+                }
             } else {
                 // position is not on fire
-                logger.debug("current position (" + areaColumn + ", " + areaRow + ") is not on fire");
+                logger.debug("no fire at (" + areaRow + ", " + areaColumn + ")");
             }
             
             // move to next position
@@ -293,7 +303,7 @@ public final class FireMonitorAgent extends Agent {
                 // to next column
                 areaColumn++;
             }
-            logger.info("moved to position (" + areaColumn + ", " + areaRow + ")");
+            logger.debug("moved to position (" + areaRow + ", " + areaColumn + ")");
         }
     }
     

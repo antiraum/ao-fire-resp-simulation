@@ -21,10 +21,10 @@ public final class Main {
     private static final int JADE_PORT = 1199;
     
     // Configuration
-    private static final int AREA_WIDTH = 5;
-    private static final int AREA_HEIGHT = 5;
-    private static final int ENVIRONMENT_SPAWN_FIRE_IVAL = 100000;
-    private static final int MONITOR_SCAN_AREA_IVAL = 10000;
+    private static final int AREA_WIDTH = 4;
+    private static final int AREA_HEIGHT = 4;
+    private static final int ENVIRONMENT_SPAWN_FIRE_IVAL = 10000;
+    private static final int MONITOR_SCAN_AREA_IVAL = 1000;
     private static final int NUMBER_OF_FIRE_BRIGADES = 2;
     private static final int NUMBER_OF_HOSPITALS = 2;
     
@@ -33,9 +33,9 @@ public final class Main {
      */
     public static void main(final String[] args) {
 
-        final AgentContainer ac = Runtime.instance().createAgentContainer(
-                                                                          new ProfileImpl(JADE_HOST, JADE_PORT, null,
-                                                                                          false));
+        final AgentContainer ac = Runtime.instance().createMainContainer(
+                                                                         new ProfileImpl(JADE_HOST, JADE_PORT, null,
+                                                                                         false));
         
         // start the environment agent
         try {
