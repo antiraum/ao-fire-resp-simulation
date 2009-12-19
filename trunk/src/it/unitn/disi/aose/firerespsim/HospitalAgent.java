@@ -1,18 +1,12 @@
 package it.unitn.disi.aose.firerespsim;
 
 import jade.core.Agent;
-import org.apache.log4j.Logger;
 
 /**
  * @author tom
  */
 @SuppressWarnings("serial")
-public final class FireAgent extends Agent {
-    
-    /**
-     * Package scoped for faster access by inner classes.
-     */
-    static final Logger logger = Logger.getLogger("it.unitn.disi.aose.firerespsim");
+public final class HospitalAgent extends Agent {
     
     /**
      * @see jade.core.Agent#setup()
@@ -20,6 +14,8 @@ public final class FireAgent extends Agent {
     @Override
     protected void setup() {
 
+        // TODO Auto-generated method stub
         super.setup();
     }
+    
 }

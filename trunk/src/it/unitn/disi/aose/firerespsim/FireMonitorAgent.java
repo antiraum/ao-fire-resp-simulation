@@ -29,7 +29,7 @@ public final class FireMonitorAgent extends Agent {
     /**
      * Package scoped for faster access by inner classes.
      */
-    static Logger logger = Logger.getLogger("it.unitn.disi.aose.firerespsim");
+    static final Logger logger = Logger.getLogger("it.unitn.disi.aose.firerespsim");
     
     /**
      * Package scoped for faster access by inner classes.
@@ -275,7 +275,7 @@ public final class FireMonitorAgent extends Agent {
                 // TODO tell registered agents
             } else {
                 // position is not on fire
-                logger.info("current position (" + areaColumn + ", " + areaRow + ") is not on fire");
+                logger.debug("current position (" + areaColumn + ", " + areaRow + ") is not on fire");
             }
             
             // move to next position
