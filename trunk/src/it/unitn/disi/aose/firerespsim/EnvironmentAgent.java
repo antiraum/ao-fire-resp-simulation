@@ -15,6 +15,7 @@ import jade.lang.acl.MessageTemplate;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import org.apache.commons.lang.math.RandomUtils;
 import org.apache.log4j.Logger;
 
 /**
@@ -30,7 +31,7 @@ public final class EnvironmentAgent extends Agent {
     
     private static final int DEFAULT_AREA_WIDTH = 5;
     private static final int DEFAULT_AREA_HEIGHT = 5;
-    private static final int DEFAULT_SPAWN_FIRE_IVAL = 10000;
+    private static final int DEFAULT_SPAWN_FIRE_IVAL = 100000;
     private static final int DEFAULT_NUMBER_OF_HOSPITALS = 2;
     private static final int DEFAULT_NUMBER_OF_FIRE_BRIGADES = 2;
     
@@ -227,8 +228,20 @@ public final class EnvironmentAgent extends Agent {
         @Override
         protected void onTick() {
 
-        // TODO Auto-generated method stub
-        
+            int row, col;
+            do {
+                row = RandomUtils.nextInt(areaHeight - 1) + 1;
+                col = RandomUtils.nextInt(areaWidth - 1) + 1;
+            } while (fireStatuses[row][col]);
+            final int accel = RandomUtils.nextInt(100);
+            
+            // spawn fire agent
+            // TODO
+            
+            // set fire status
+            fireStatuses[row - 1][col - 1] = true;
+            
+            logger.info("created fire at (" + row + " x " + col + ") with acceleration " + accel);
         }
         
     }
