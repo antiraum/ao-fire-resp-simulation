@@ -42,12 +42,10 @@ public final class FireMonitorAgent extends Agent {
     
     private static final int DEFAULT_SCAN_AREA_IVAL = 10000;
     
-    private final DFAgentDescription areaDimensionsAD = new DFAgentDescription();
-    private final ServiceDescription areaDimensionsSD = new ServiceDescription();
-    private AID areaDimensionsAID = null;
-    private final DFAgentDescription fireStatusAD = new DFAgentDescription();
-    private final ServiceDescription fireStatusSD = new ServiceDescription();
-    private AID fireStatusAID = null;
+    /**
+     * Package scoped for faster access by inner classes.
+     */
+    Agent thisAgent = this;
     
     /**
      * @see jade.core.Agent#setup()
@@ -56,11 +54,6 @@ public final class FireMonitorAgent extends Agent {
     protected void setup() {
 
         super.setup();
-        
-        areaDimensionsSD.setType("AreaDimensions");
-        areaDimensionsAD.addServices(areaDimensionsSD);
-        fireStatusSD.setType("FireStatus");
-        fireStatusAD.addServices(fireStatusSD);
         
         // initialization parameters
         int scanAreaIval = 0;
@@ -85,8 +78,8 @@ public final class FireMonitorAgent extends Agent {
         // register at DF service
         final DFAgentDescription descr = new DFAgentDescription();
         final ServiceDescription sd = new ServiceDescription();
-        sd.setName("FireAlert");
-        sd.setType("FireMonitor");
+        sd.setName(getName());
+        sd.setType("FireAlert");
         descr.addServices(sd);
         try {
             DFService.register(this, descr);
@@ -103,7 +96,7 @@ public final class FireMonitorAgent extends Agent {
     @Override
     protected void takeDown() {
 
-        logger.debug("takeDown");
+        logger.info("shutting down");
         
         for (final Behaviour b : threadedBehaviours) {
             if (b != null) {
@@ -116,50 +109,6 @@ public final class FireMonitorAgent extends Agent {
     
     /**
      * Package scoped for faster access by inner classes.
-     * 
-     * @return AID of the environment agent providing an AreaDimensions service
-     */
-    AID getAreaDimensionsAID() {
-
-        if (areaDimensionsAID != null) return areaDimensionsAID;
-        
-        DFAgentDescription[] result = null;
-        try {
-            result = DFService.search(this, areaDimensionsAD);
-        } catch (final FIPAException e) {
-            logger.error("no environment agent with AreaDimensions service at DF");
-            e.printStackTrace();
-        }
-        
-        areaDimensionsAID = (result != null && result.length > 0) ? result[0].getName() : null;
-        logger.debug("areaDimensionsAID = " + areaDimensionsAID);
-        return fireStatusAID;
-    }
-    
-    /**
-     * Package scoped for faster access by inner classes.
-     * 
-     * @return AID of the environment agent providing an FireStatus service
-     */
-    AID getFireStatusAID() {
-
-        if (fireStatusAID != null) return fireStatusAID;
-        
-        DFAgentDescription[] result = null;
-        try {
-            result = DFService.search(this, fireStatusAD);
-        } catch (final FIPAException e) {
-            logger.error("no environment agent with FireStatus service at DF");
-            e.printStackTrace();
-        }
-        
-        fireStatusAID = (result != null && result.length > 0) ? result[0].getName() : null;
-        logger.debug("fireStatusAID = " + fireStatusAID);
-        return fireStatusAID;
-    }
-    
-    /**
-     * Package scoped for faster access by inner classes.
      */
     int areaWidth = 0;
     /**
@@ -168,14 +117,30 @@ public final class FireMonitorAgent extends Agent {
     int areaHeight = 0;
     
     /**
-     * @author tom
+     * Gets the area dimensions from the environment agent.
      */
     class GetAreaDimensions extends SimpleBehaviour {
         
+        private final static String ONTOLOGY_TYPE = "AreaDimensions";
+        
         private boolean done = false;
+        private final DFAgentDescription areaDimensionsAD = new DFAgentDescription();
+        private AID environmentAID = null;
         private final MessageTemplate replyTpl = MessageTemplate.and(
                                                                      MessageTemplate.MatchPerformative(ACLMessage.INFORM),
-                                                                     MessageTemplate.MatchOntology("AreaDimensions"));
+                                                                     MessageTemplate.MatchOntology(ONTOLOGY_TYPE));
+        
+        /**
+         * Constructor
+         */
+        public GetAreaDimensions() {
+
+            super();
+            
+            final ServiceDescription areaDimensionsSD = new ServiceDescription();
+            areaDimensionsSD.setType(ONTOLOGY_TYPE);
+            areaDimensionsAD.addServices(areaDimensionsSD);
+        }
         
         /**
          * @see jade.core.behaviours.Behaviour#action()
@@ -183,24 +148,41 @@ public final class FireMonitorAgent extends Agent {
         @Override
         public void action() {
 
-            final AID aid = getAreaDimensionsAID();
-            if (aid == null) {
+            if (environmentAID == null) {
+                DFAgentDescription[] result = null;
+                try {
+                    result = DFService.search(thisAgent, areaDimensionsAD);
+                } catch (final FIPAException e) {
+                    logger.error("no agent with AreaDimensions service at DF");
+                    e.printStackTrace();
+                    return;
+                }
+                if (result != null && result.length > 0) {
+                    environmentAID = result[0].getName();
+                }
+            }
+            if (environmentAID == null) {
                 logger.error("no AreaDimensions AID");
+                try {
+                    Thread.sleep(1000);
+                } catch (final InterruptedException e) {
+//                    done = true;
+                }
                 return;
             }
             
             final ACLMessage requestMsg = new ACLMessage(ACLMessage.REQUEST);
-            requestMsg.addReceiver(aid);
-            requestMsg.setOntology("AreaDimensions");
-            requestMsg.setContent(areaColumn + " " + areaRow); // XXX
+            requestMsg.addReceiver(environmentAID);
+            requestMsg.setOntology(ONTOLOGY_TYPE);
             send(requestMsg);
             logger.debug("sent AreaDimensions request");
+            
             final ACLMessage replyMsg = blockingReceive(replyTpl);
             logger.debug("received AreaDimensions reply");
             final String[] areaDimensions = replyMsg.getContent().split(" ");
             areaWidth = Integer.parseInt(areaDimensions[0]);
             areaHeight = Integer.parseInt(areaDimensions[1]);
-            logger.info("got AreaDimensions: " + areaWidth + "x" + areaHeight);
+            logger.info("received area dimensions: " + areaWidth + "x" + areaHeight);
             
             done = true;
         }
@@ -229,6 +211,16 @@ public final class FireMonitorAgent extends Agent {
      */
     class ScanArea extends TickerBehaviour {
         
+        private final static String ONTOLOGY_TYPE = "FireStatus";
+        
+        private final DFAgentDescription fireStatusAD = new DFAgentDescription();
+        private AID environmentAID = null;
+        private final MessageTemplate replyTpl = MessageTemplate.and(
+                                                                     MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+                                                                     MessageTemplate.MatchOntology(ONTOLOGY_TYPE));
+        
+        private final Set<String> detectedFires = new HashSet<String>();
+        
         /**
          * @param a
          * @param period
@@ -236,13 +228,11 @@ public final class FireMonitorAgent extends Agent {
         public ScanArea(final Agent a, final long period) {
 
             super(a, period);
+            
+            final ServiceDescription fireStatusSD = new ServiceDescription();
+            fireStatusSD.setType(ONTOLOGY_TYPE);
+            fireStatusAD.addServices(fireStatusSD);
         }
-        
-        private final MessageTemplate replyTpl = MessageTemplate.and(
-                                                                     MessageTemplate.MatchPerformative(ACLMessage.INFORM),
-                                                                     MessageTemplate.MatchOntology("FireStatus"));
-        
-        private final Set<String> detectedFires = new HashSet<String>();
         
         /**
          * @see jade.core.behaviours.TickerBehaviour#onTick()
@@ -256,17 +246,34 @@ public final class FireMonitorAgent extends Agent {
                 return;
             }
             
-            final AID aid = getFireStatusAID();
-            if (aid == null) {
+            if (environmentAID == null) {
+                DFAgentDescription[] result = null;
+                try {
+                    result = DFService.search(thisAgent, fireStatusAD);
+                } catch (final FIPAException e) {
+                    logger.error("no agent with FireStatus service at DF");
+                    e.printStackTrace();
+                    return;
+                }
+                if (result != null && result.length > 0) {
+                    environmentAID = result[0].getName();
+                }
+            }
+            if (environmentAID == null) {
                 logger.error("no FireStatus AID");
+                try {
+                    Thread.sleep(1000);
+                } catch (final InterruptedException e) {
+//                    done = true;
+                }
                 return;
             }
             
             // get fire status for current position
             logger.debug("scanning position (" + areaRow + ", " + areaColumn + ")");
             final ACLMessage requestMsg = new ACLMessage(ACLMessage.REQUEST);
-            requestMsg.addReceiver(aid);
-            requestMsg.setOntology("FireStatus");
+            requestMsg.addReceiver(environmentAID);
+            requestMsg.setOntology(ONTOLOGY_TYPE);
             requestMsg.setContent(areaRow + " " + areaColumn);
             send(requestMsg);
             logger.debug("sent FireStatus request");
@@ -281,11 +288,25 @@ public final class FireMonitorAgent extends Agent {
                     // new fire
                     logger.info("detected new fire at (" + areaRow + ", " + areaColumn + ")");
                     detectedFires.add(areaRow + " " + areaColumn);
-                    // TODO tell registered agents
+                    if (fireAlertSubscribers.size() > 0) {
+                        // tell registered agents
+                        final ACLMessage alertMsg = new ACLMessage(ACLMessage.INFORM);
+                        alertMsg.setOntology("FireAlert");
+                        alertMsg.setContent(areaRow + " " + areaColumn);
+                        for (final AID agentAID : fireAlertSubscribers) {
+                            alertMsg.addReceiver(agentAID);
+                        }
+                        send(alertMsg);
+                    }
                 }
             } else {
                 // position is not on fire
                 logger.debug("no fire at (" + areaRow + ", " + areaColumn + ")");
+                if (detectedFires.contains(areaRow + " " + areaColumn)) {
+                    // remove known fire
+                    logger.info("fire at (" + areaRow + ", " + areaColumn + ") no longer burning");
+                    detectedFires.remove(areaRow + " " + areaColumn);
+                }
             }
             
             // move to next position
@@ -308,9 +329,19 @@ public final class FireMonitorAgent extends Agent {
     }
     
     /**
-     * @author tom
+     * Set of all Hospitals and Fire Brigades that subscribed to be notified about new fires. Package scoped for faster
+     * access by inner classes.
+     */
+    final Set<AID> fireAlertSubscribers = new HashSet<AID>();
+    
+    /**
+     * Service for subscribing to alerts for new fires.
      */
     class FireAlertService extends CyclicBehaviour {
+        
+        private final MessageTemplate requestTpl = MessageTemplate.and(
+                                                                       MessageTemplate.MatchPerformative(ACLMessage.SUBSCRIBE),
+                                                                       MessageTemplate.MatchOntology("FireAlert"));
         
         /**
          * @see jade.core.behaviours.Behaviour#action()
@@ -318,8 +349,23 @@ public final class FireMonitorAgent extends Agent {
         @Override
         public void action() {
 
-        // TODO Auto-generated method stub
-        
+            final ACLMessage requestMsg = blockingReceive(requestTpl);
+            if (requestMsg == null) return;
+            
+            logger.debug("received FireAlert request");
+            
+            final AID aid = requestMsg.getSender();
+            final ACLMessage replyMsg = requestMsg.createReply();
+            if (fireAlertSubscribers.contains(aid)) {
+                // already subscribed
+                replyMsg.setPerformative(ACLMessage.DISCONFIRM);
+            } else {
+                // new subscriber
+                fireAlertSubscribers.add(aid);
+                replyMsg.setPerformative(ACLMessage.CONFIRM);
+            }
+            send(replyMsg);
+            logger.debug("sent FireAlert reply");
         }
         
     }
