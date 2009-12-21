@@ -21,6 +21,9 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 /**
+ * This agent scans the simulation area for new fires. Agents can subscribe to get notified about newly detected fires.
+ * Corresponds to the 911 emergency service in the real world. Start-up parameter is the scan area interval.
+ * 
  * @author tom
  */
 @SuppressWarnings("serial")
@@ -32,15 +35,12 @@ public final class FireMonitorAgent extends Agent {
     static final Logger logger = Logger.getLogger("it.unitn.disi.aose.firerespsim");
     
     /**
-     * Package scoped for faster access by inner classes.
+     * Defaults for start-up arguments.
      */
-    private final ThreadedBehaviourFactory tbf = new ThreadedBehaviourFactory();
-    /**
-     * Package scoped for faster access by inner classes.
-     */
-    private final Set<Behaviour> threadedBehaviours = new HashSet<Behaviour>();
-    
     private static final int DEFAULT_SCAN_AREA_IVAL = 10000;
+    
+    private final ThreadedBehaviourFactory tbf = new ThreadedBehaviourFactory();
+    private final Set<Behaviour> threadedBehaviours = new HashSet<Behaviour>();
     
     /**
      * Package scoped for faster access by inner classes.
@@ -55,13 +55,12 @@ public final class FireMonitorAgent extends Agent {
 
         super.setup();
         
-        // initialization parameters
-        int scanAreaIval = 0;
+        // read start-up arguments
         Object[] params = getArguments();
         if (params == null) {
             params = new Object[] {};
         }
-        scanAreaIval = (params.length > 0) ? (Integer) params[0] : DEFAULT_SCAN_AREA_IVAL;
+        final int scanAreaIval = (params.length > 0) ? (Integer) params[0] : DEFAULT_SCAN_AREA_IVAL;
         
         // add behaviors
         final SequentialBehaviour sb = new SequentialBehaviour();
@@ -75,7 +74,7 @@ public final class FireMonitorAgent extends Agent {
         sb.addSubBehaviour(pb);
         addBehaviour(sb);
         
-        // register at DF service
+        // register at the DF
         final DFAgentDescription descr = new DFAgentDescription();
         final ServiceDescription sd = new ServiceDescription();
         sd.setName(getName());
@@ -84,7 +83,7 @@ public final class FireMonitorAgent extends Agent {
         try {
             DFService.register(this, descr);
         } catch (final FIPAException e) {
-            logger.error("cannot register at DF");
+            logger.error("cannot register at the DF");
             e.printStackTrace();
             doDelete();
         }

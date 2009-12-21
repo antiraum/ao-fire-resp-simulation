@@ -14,6 +14,10 @@ import jade.lang.acl.MessageTemplate;
 import org.apache.log4j.Logger;
 
 /**
+ * This agent simulates a hospital. It subscribes to new fire alerts at the fire monitor agent, reasons with the other
+ * hospitals registered at the DF about responsibilities, and delegates its ambulance agents to the fires it is
+ * responsible for. Start-up parameters are row and column.
+ * 
  * @author tom
  */
 @SuppressWarnings("serial")
@@ -30,12 +34,31 @@ public final class HospitalAgent extends Agent {
     Agent thisAgent = this;
     
     /**
+     * Row on the simulation area. Package scoped for faster access by inner classes.
+     */
+    int row = 0;
+    /**
+     * Column on the simulation area. Package scoped for faster access by inner classes.
+     */
+    int col = 0;
+    
+    /**
      * @see jade.core.Agent#setup()
      */
     @Override
     protected void setup() {
 
         super.setup();
+        
+        // read start-up arguments
+        final Object[] params = getArguments();
+        if (params == null || params.length < 2) {
+            logger.error("start-up arguments row and column needed");
+            doDelete();
+            return;
+        }
+        row = (Integer) params[0];
+        col = (Integer) params[1];
         
         // TODO create ambulances
         
@@ -67,9 +90,11 @@ public final class HospitalAgent extends Agent {
         private boolean done = false;
         private final DFAgentDescription fireAlertAD = new DFAgentDescription();
         private AID fireMonitorAID = null;
-        private final MessageTemplate confirmTpl = MessageTemplate.and(
-                                                                       MessageTemplate.MatchPerformative(ACLMessage.CONFIRM),
-                                                                       MessageTemplate.MatchOntology(ONTOLOGY_TYPE));
+        private final MessageTemplate replyTpl = MessageTemplate.and(
+                                                                     MessageTemplate.or(
+                                                                                        MessageTemplate.MatchPerformative(ACLMessage.CONFIRM),
+                                                                                        MessageTemplate.MatchPerformative(ACLMessage.DISCONFIRM)),
+                                                                     MessageTemplate.MatchOntology(ONTOLOGY_TYPE));
         
         /**
          * Constructor
@@ -118,8 +143,12 @@ public final class HospitalAgent extends Agent {
             send(subscribeMsg);
             logger.debug("sent FireAlert subscribtion");
             
-            blockingReceive(confirmTpl);
-            logger.info("subscribed for new fire alerts at monitor agent");
+            final ACLMessage replyMsg = blockingReceive(replyTpl);
+            if (replyMsg.getPerformative() == ACLMessage.CONFIRM) {
+                logger.info("subscribed for new fire alerts at monitor agent");
+            } else {
+                logger.error("subscription was disconfirmed - assume this is because already subscribed");
+            }
             
             done = true;
         }

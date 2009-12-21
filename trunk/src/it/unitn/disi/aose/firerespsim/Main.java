@@ -5,6 +5,7 @@ import jade.core.Runtime;
 import jade.wrapper.AgentContainer;
 import jade.wrapper.AgentController;
 import jade.wrapper.StaleProxyException;
+import org.apache.commons.lang.math.RandomUtils;
 import org.apache.log4j.Logger;
 
 /**
@@ -27,6 +28,7 @@ public final class Main {
     private static final int MONITOR_SCAN_AREA_IVAL = 1000;
     private static final int NUMBER_OF_FIRE_BRIGADES = 2;
     private static final int NUMBER_OF_HOSPITALS = 2;
+    private static final int FIRE_INCREASE_IVAL = 10000;
     
     /**
      * @param args
@@ -41,7 +43,8 @@ public final class Main {
         try {
             final AgentController env = ac.createNewAgent("environment", EnvironmentAgent.class.getName(),
                                                           new Object[] {
-                                                              AREA_WIDTH, AREA_HEIGHT, ENVIRONMENT_SPAWN_FIRE_IVAL});
+                                                              AREA_WIDTH, AREA_HEIGHT, ENVIRONMENT_SPAWN_FIRE_IVAL,
+                                                              FIRE_INCREASE_IVAL});
             env.start();
         } catch (final StaleProxyException e) {
             logger.error("couldn't start the environment agent");
@@ -62,14 +65,20 @@ public final class Main {
         
         // start the fire brigade agents
         for (int i = 1; i <= NUMBER_OF_FIRE_BRIGADES; i++) {
+            @SuppressWarnings("unused")
+            final int row = RandomUtils.nextInt(AREA_HEIGHT - 1) + 1;
+            @SuppressWarnings("unused")
+            final int col = RandomUtils.nextInt(AREA_WIDTH - 1) + 1;
             // TODO
         }
         
         // start the hospital agents
         for (int i = 1; i <= NUMBER_OF_HOSPITALS; i++) {
+            final int row = RandomUtils.nextInt(AREA_HEIGHT - 1) + 1;
+            final int col = RandomUtils.nextInt(AREA_WIDTH - 1) + 1;
             try {
                 final AgentController hospital = ac.createNewAgent("hospital " + i, HospitalAgent.class.getName(),
-                                                                   new Object[] {});
+                                                                   new Object[] {row, col});
                 hospital.start();
             } catch (final StaleProxyException e) {
                 logger.error("couldn't start the " + i + "st hospital agent");
