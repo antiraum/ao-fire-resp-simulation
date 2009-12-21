@@ -107,16 +107,16 @@ public final class FireMonitorAgent extends Agent {
     }
     
     /**
-     * Package scoped for faster access by inner classes.
+     * With of the simulation area. Package scoped for faster access by inner classes.
      */
     int areaWidth = 0;
     /**
-     * Package scoped for faster access by inner classes.
+     * Height of the simulation area. Package scoped for faster access by inner classes.
      */
     int areaHeight = 0;
     
     /**
-     * Gets the area dimensions from the environment agent.
+     * Gets the simulation area dimensions from the environment agent.
      */
     class GetAreaDimensions extends SimpleBehaviour {
         
@@ -197,16 +197,8 @@ public final class FireMonitorAgent extends Agent {
     }
     
     /**
-     * Package scoped for faster access by inner classes.
-     */
-    int areaColumn = 1;
-    /**
-     * Package scoped for faster access by inner classes.
-     */
-    int areaRow = 1;
-    
-    /**
-     * @author tom
+     * Scans the simulation area for new fires. Stores a set of the known burning fires. If a new fire is detected the
+     * {@link #fireAlertSubscribers} get notified.
      */
     class ScanArea extends TickerBehaviour {
         
@@ -217,6 +209,9 @@ public final class FireMonitorAgent extends Agent {
         private final MessageTemplate replyTpl = MessageTemplate.and(
                                                                      MessageTemplate.MatchPerformative(ACLMessage.INFORM),
                                                                      MessageTemplate.MatchOntology(ONTOLOGY_TYPE));
+        
+        private int areaColumn = 1;
+        private int areaRow = 1;
         
         private final Set<String> detectedFires = new HashSet<String>();
         
