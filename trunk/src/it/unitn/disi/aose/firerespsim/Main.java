@@ -35,6 +35,8 @@ public final class Main {
      */
     public static void main(final String[] args) {
 
+        logger.info("starting simulation");
+        
         final AgentContainer ac = Runtime.instance().createMainContainer(
                                                                          new ProfileImpl(JADE_HOST, JADE_PORT, null,
                                                                                          false));
