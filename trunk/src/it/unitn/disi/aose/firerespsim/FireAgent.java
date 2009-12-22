@@ -40,7 +40,7 @@ public final class FireAgent extends Agent {
     /**
      * Fire intensity. From 1 to infinite. Package scoped for faster access by inner classes.
      */
-    int intensity = 0;
+    SyncedInt intensity = new SyncedInt();
     /**
      * Intensity increase per {@link Increase#onTick()}. From 1 to 10. Package scoped for faster access by inner
      * classes.
@@ -49,7 +49,7 @@ public final class FireAgent extends Agent {
     /**
      * Current number of casualties. From 0 to infinite. Package scoped for faster access by inner classes.
      */
-    int casualties = 0;
+    SyncedInt casualties = new SyncedInt();
     /**
      * Casualties increase per {@link Increase#onTick()}. From 1 to 3. Package scoped for faster access by inner
      * classes.
@@ -214,16 +214,16 @@ public final class FireAgent extends Agent {
             boolean takeDown = false;
             if (Math.abs(row - engineRow) <= 1 && Math.abs(col - engineCol) <= 1) {
                 // fire engine is next to the fire and can put out
-                if (intensity > 0) {
-                    intensity -= decrease; // TODO thread synchronization
+                if (intensity.get() > 0) {
+                    intensity.add(-decrease);
                     replyMsg.setPerformative(ACLMessage.CONFIRM);
-                    if (intensity < 1) {
+                    if (intensity.get() < 1) {
                         // fire is put out
                         increaseBehaviour.stop();
                         tbf.getThread(increaseBehaviour).interrupt();
                         pb.removeSubBehaviour(increaseBehaviour);
                         threadedBehaviours.remove(increaseBehaviour);
-                        if (casualties < 1) {
+                        if (casualties.get() < 1) {
                             takeDown = true;
                         }
                     }
@@ -242,7 +242,6 @@ public final class FireAgent extends Agent {
                 doDelete();
             }
         }
-        
     }
     
     /**
@@ -284,10 +283,10 @@ public final class FireAgent extends Agent {
             boolean takeDown = false;
             if (Math.abs(row - ambulanceRow) <= 1 && Math.abs(col - ambulanceCol) <= 1) {
                 // ambulance is next to the fire and can pick up a casualty
-                if (casualties > 0) {
-                    casualties -= 1; // TODO thread synchronization
+                if (casualties.get() > 0) {
+                    casualties.add(-1);
                     replyMsg.setPerformative(ACLMessage.CONFIRM);
-                    if (casualties < 1 && intensity < 1) {
+                    if (casualties.get() < 1 && intensity.get() < 1) {
                         takeDown = true;
                     }
                 } else {
@@ -310,7 +309,7 @@ public final class FireAgent extends Agent {
     /**
      * Increases the fire intensity by {@link #intensityIncrease}.
      */
-    class Increase extends TickerBehaviour {
+    private class Increase extends TickerBehaviour {
         
         /**
          * @param a
@@ -327,8 +326,50 @@ public final class FireAgent extends Agent {
         @Override
         protected void onTick() {
 
-            intensity += intensityIncrease; // TODO thread synchronization
+            intensity.add(intensityIncrease);
+        }
+    }
+    
+    /**
+     * Integer object with thread synchronization. Used for {@link #intensity} and {@link #casualties}.
+     */
+    class SyncedInt {
+        
+        private int value = 0;
+        private boolean available = false;
+        
+        /**
+         * @return value
+         */
+        public synchronized int get() {
+
+            while (available == false) {
+                try {
+                    wait();
+                } catch (final InterruptedException e) {
+                    // pass
+                }
+            }
+            available = false;
+            notifyAll();
+            return value;
         }
         
+        /**
+         * @param amount
+         */
+        public synchronized void add(final int amount) {
+
+            while (available == true) {
+                try {
+                    wait();
+                } catch (final InterruptedException e) {
+                    // pass
+                }
+            }
+            value += amount;
+            available = true;
+            notifyAll();
+        }
     }
 }
