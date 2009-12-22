@@ -57,7 +57,18 @@ public final class FireAgent extends Agent {
     int casualtiesIncrease = 0;
     
     private final ThreadedBehaviourFactory tbf = new ThreadedBehaviourFactory();
-    private final Set<Behaviour> threadedBehaviours = new HashSet<Behaviour>();
+    /**
+     * Set of the threaded parallel behaviors. Package scoped for faster access by inner classes.
+     */
+    final Set<Behaviour> threadedBehaviours = new HashSet<Behaviour>();
+    /**
+     * Behavior containing all the {@link #threadedBehaviours}. Package scoped for faster access by inner classes.
+     */
+    final ParallelBehaviour pb = new ParallelBehaviour(ParallelBehaviour.WHEN_ALL);
+    /**
+     * Instance of the {@link Increase} behavior. Package scoped for faster access by inner classes.
+     */
+    Increase increaseBehaviour;
     
     /**
      * @see jade.core.Agent#setup()
@@ -83,9 +94,9 @@ public final class FireAgent extends Agent {
         casualtiesIncrease = RandomUtils.nextInt(2) + 1;
         
         // add behaviors
+        increaseBehaviour = new Increase(this, increaseIval);
         threadedBehaviours.addAll(Arrays.asList(new Behaviour[] {
-            new StatusService(), new PutOutService(), new PickUpCasualtyService(), new Increase(this, increaseIval)}));
-        final ParallelBehaviour pb = new ParallelBehaviour(ParallelBehaviour.WHEN_ALL);
+            new StatusService(), new PutOutService(), new PickUpCasualtyService(), increaseBehaviour}));
         for (final Behaviour b : threadedBehaviours) {
             pb.addSubBehaviour(tbf.wrap(b));
         }
@@ -162,7 +173,7 @@ public final class FireAgent extends Agent {
     /**
      * Service for fire engines to reduce the fire intensity. If the intensity reaches 0 the fire is put out the agent
      * deletes itself. Content of the request message must consist of fire engine row, fire engine column, and intensity
-     * decrease (0 to 10) separated by spaces.
+     * decrease (0 to 10) separated by spaces. Reply message content is the new intensity.
      */
     class PutOutService extends CyclicBehaviour {
         
@@ -197,22 +208,33 @@ public final class FireAgent extends Agent {
             logger.debug("engine position (" + engineRow + ", " + engineCol + "), decrease = " + decrease);
             
             final ACLMessage replyMsg = requestMsg.createReply();
-            boolean fireOut = false;
+            boolean takeDown = false;
             if (Math.abs(row - engineRow) <= 1 && Math.abs(col - engineCol) <= 1) {
                 // fire engine is next to the fire and can put out
-                intensity -= decrease; // TODO thread synchronization
-                replyMsg.setPerformative(ACLMessage.CONFIRM);
-                if (decrease < 1) {
-                    // fire is put out
-                    fireOut = true;
+                if (intensity > 0) {
+                    intensity -= decrease; // TODO thread synchronization
+                    replyMsg.setPerformative(ACLMessage.CONFIRM);
+                    if (intensity < 1) {
+                        // fire is put out
+                        increaseBehaviour.stop();
+                        pb.removeSubBehaviour(increaseBehaviour);
+                        threadedBehaviours.remove(increaseBehaviour);
+                        if (casualties < 1) {
+                            takeDown = true;
+                        }
+                    }
+                } else {
+                    logger.debug("fire is already put out");
+                    replyMsg.setPerformative(ACLMessage.DISCONFIRM);
                 }
+                replyMsg.setContent(intensity + "");
             } else {
                 logger.debug("fire engine is too far away");
                 replyMsg.setPerformative(ACLMessage.DISCONFIRM);
             }
             send(replyMsg);
             logger.debug("sent PutOut reply");
-            if (fireOut) {
+            if (takeDown) {
                 doDelete();
             }
         }
@@ -221,7 +243,7 @@ public final class FireAgent extends Agent {
     
     /**
      * Service for ambulances to pick up a casualty. Content of the request message must consist of ambulance row and
-     * ambulance column separated by a space.
+     * ambulance column separated by a space. Reply message content is the new number of casualties.
      */
     class PickUpCasualtyService extends CyclicBehaviour {
         
@@ -255,21 +277,29 @@ public final class FireAgent extends Agent {
             logger.debug("ambulance position (" + ambulanceRow + ", " + ambulanceCol + ")");
             
             final ACLMessage replyMsg = requestMsg.createReply();
+            boolean takeDown = false;
             if (Math.abs(row - ambulanceRow) <= 1 && Math.abs(col - ambulanceCol) <= 1) {
                 // ambulance is next to the fire and can pick up a casualty
                 if (casualties > 0) {
                     casualties -= 1; // TODO thread synchronization
                     replyMsg.setPerformative(ACLMessage.CONFIRM);
+                    if (casualties < 1 && intensity < 1) {
+                        takeDown = true;
+                    }
                 } else {
                     logger.debug("no casualty to pick up");
                     replyMsg.setPerformative(ACLMessage.DISCONFIRM);
                 }
+                replyMsg.setContent(casualties + "");
             } else {
                 logger.debug("ambulance is too far away");
                 replyMsg.setPerformative(ACLMessage.DISCONFIRM);
             }
             send(replyMsg);
             logger.debug("sent PickUpCasualty reply");
+            if (takeDown) {
+                doDelete();
+            }
         }
     }
     
