@@ -56,7 +56,10 @@ public final class FireAgent extends Agent {
      */
     int casualtiesIncrease = 0;
     
-    private final ThreadedBehaviourFactory tbf = new ThreadedBehaviourFactory();
+    /**
+     * Package scoped for faster access by inner classes.
+     */
+    final ThreadedBehaviourFactory tbf = new ThreadedBehaviourFactory();
     /**
      * Set of the threaded parallel behaviors. Package scoped for faster access by inner classes.
      */
@@ -217,6 +220,7 @@ public final class FireAgent extends Agent {
                     if (intensity < 1) {
                         // fire is put out
                         increaseBehaviour.stop();
+                        tbf.getThread(increaseBehaviour).interrupt();
                         pb.removeSubBehaviour(increaseBehaviour);
                         threadedBehaviours.remove(increaseBehaviour);
                         if (casualties < 1) {
