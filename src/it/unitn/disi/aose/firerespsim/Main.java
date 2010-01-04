@@ -29,6 +29,7 @@ public final class Main {
     private static final int NUMBER_OF_FIRE_BRIGADES = 2;
     private static final int NUMBER_OF_HOSPITALS = 2;
     private static final int FIRE_INCREASE_IVAL = 10000;
+    private static final int VEHICLE_MOVE_IVAL = 10000;
     
     /**
      * @param args
@@ -80,7 +81,7 @@ public final class Main {
             final int col = RandomUtils.nextInt(AREA_WIDTH - 1) + 1;
             try {
                 final AgentController hospital = ac.createNewAgent("hospital " + i, HospitalAgent.class.getName(),
-                                                                   new Object[] {row, col});
+                                                                   new Object[] {i, row, col, VEHICLE_MOVE_IVAL});
                 hospital.start();
             } catch (final StaleProxyException e) {
                 logger.error("couldn't start the " + i + "st hospital agent");

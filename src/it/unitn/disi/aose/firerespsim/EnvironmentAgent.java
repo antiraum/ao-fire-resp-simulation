@@ -268,6 +268,5 @@ public final class EnvironmentAgent extends Agent {
             
             logger.info("created fire at (" + row + ", " + col + ")");
         }
-        
     }
 }
