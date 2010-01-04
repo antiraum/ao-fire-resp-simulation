@@ -11,6 +11,9 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import jade.wrapper.AgentController;
+import jade.wrapper.StaleProxyException;
+import org.apache.commons.lang.math.RandomUtils;
 import org.apache.log4j.Logger;
 
 /**
@@ -34,6 +37,11 @@ public final class HospitalAgent extends Agent {
     Agent thisAgent = this;
     
     /**
+     * Defaults for start-up arguments.
+     */
+    private static final int DEFAULT_VEHICLE_MOVE_IVAL = 10000;
+    
+    /**
      * Row on the simulation area. Package scoped for faster access by inner classes.
      */
     int row = 0;
@@ -52,15 +60,32 @@ public final class HospitalAgent extends Agent {
         
         // read start-up arguments
         final Object[] params = getArguments();
-        if (params == null || params.length < 2) {
-            logger.error("start-up arguments row and column needed");
+        if (params == null || params.length < 3) {
+            logger.error("start-up arguments id, row, and column needed");
             doDelete();
             return;
         }
-        row = (Integer) params[0];
-        col = (Integer) params[1];
+        final int id = (Integer) params[0];
+        row = (Integer) params[1];
+        col = (Integer) params[2];
+        final int vehicleMoveIval = (params.length > 3) ? (Integer) params[3] : DEFAULT_VEHICLE_MOVE_IVAL;
         
-        // TODO create ambulances
+        // create ambulance agents
+        final int numAmbulances = RandomUtils.nextInt(4) + 1; // between 1 and 5
+        final AgentController[] ambulanceAgents = new AgentController[numAmbulances];
+        for (int i = 0; i < numAmbulances; i++) {
+            try {
+                ambulanceAgents[i] = getContainerController().createNewAgent("ambulance " + id + "-" + i,
+                                                                             AmbulanceAgent.class.getName(),
+                                                                             new Object[] {row, col, vehicleMoveIval});
+                ambulanceAgents[i].start();
+                logger.debug("started agent " + ambulanceAgents[i].getName());
+                
+            } catch (final StaleProxyException e) {
+                logger.error("couldn't start ambulance agent");
+                e.printStackTrace();
+            }
+        }
         
         // add behaviors
         final SequentialBehaviour sb = new SequentialBehaviour();
