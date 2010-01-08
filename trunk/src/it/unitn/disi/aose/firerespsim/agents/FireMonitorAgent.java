@@ -1,5 +1,7 @@
-package it.unitn.disi.aose.firerespsim;
+package it.unitn.disi.aose.firerespsim.agents;
 
+import it.unitn.disi.aose.firerespsim.model.Position;
+import it.unitn.disi.aose.firerespsim.model.SimulationArea;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
@@ -28,6 +30,15 @@ import org.apache.log4j.Logger;
  */
 @SuppressWarnings("serial")
 public final class FireMonitorAgent extends Agent {
+    
+    /**
+     * DF type of this agent.
+     */
+    final static String DF_TYPE = "FireMonitor";
+    /**
+     * Ontology type for fire alert messages. Package scoped for faster access by inner classes.
+     */
+    final static String FIRE_ALERT_ONT_TYPE = "FireAlert";
     
     /**
      * Package scoped for faster access by inner classes.
@@ -78,7 +89,7 @@ public final class FireMonitorAgent extends Agent {
         final DFAgentDescription descr = new DFAgentDescription();
         final ServiceDescription sd = new ServiceDescription();
         sd.setName(getName());
-        sd.setType("FireAlert");
+        sd.setType(DF_TYPE);
         descr.addServices(sd);
         try {
             DFService.register(this, descr);
@@ -120,14 +131,12 @@ public final class FireMonitorAgent extends Agent {
      */
     class GetAreaDimensions extends SimpleBehaviour {
         
-        private final static String ONTOLOGY_TYPE = "AreaDimensions";
-        
         private boolean done = false;
         private final DFAgentDescription areaDimensionsAD = new DFAgentDescription();
         private AID environmentAID = null;
         private final MessageTemplate replyTpl = MessageTemplate.and(
                                                                      MessageTemplate.MatchPerformative(ACLMessage.INFORM),
-                                                                     MessageTemplate.MatchOntology(ONTOLOGY_TYPE));
+                                                                     MessageTemplate.MatchOntology(EnvironmentAgent.AREA_DIMENSIONS_ONT_TYPE));
         
         /**
          * Constructor
@@ -137,7 +146,7 @@ public final class FireMonitorAgent extends Agent {
             super();
             
             final ServiceDescription areaDimensionsSD = new ServiceDescription();
-            areaDimensionsSD.setType(ONTOLOGY_TYPE);
+            areaDimensionsSD.setType(EnvironmentAgent.AREA_DIM_DF_TYPE);
             areaDimensionsAD.addServices(areaDimensionsSD);
         }
         
@@ -152,7 +161,7 @@ public final class FireMonitorAgent extends Agent {
                 try {
                     result = DFService.search(thisAgent, areaDimensionsAD);
                 } catch (final FIPAException e) {
-                    logger.error("no agent with AreaDimensions service at DF");
+                    logger.error("error searching for agent with AreaDimensions service at DF");
                     e.printStackTrace();
                     return;
                 }
@@ -172,13 +181,19 @@ public final class FireMonitorAgent extends Agent {
             
             final ACLMessage requestMsg = new ACLMessage(ACLMessage.REQUEST);
             requestMsg.addReceiver(environmentAID);
-            requestMsg.setOntology(ONTOLOGY_TYPE);
+            requestMsg.setOntology(EnvironmentAgent.AREA_DIMENSIONS_ONT_TYPE);
             send(requestMsg);
             logger.debug("sent AreaDimensions request");
             
             final ACLMessage replyMsg = blockingReceive(replyTpl);
+            
             logger.debug("received AreaDimensions reply");
-            final String[] areaDimensions = replyMsg.getContent().split(" ");
+            
+            if (replyMsg.getContent() == null) {
+                logger.error("reply message has no content");
+                return;
+            }
+            final String[] areaDimensions = replyMsg.getContent().split(SimulationArea.FIELD_SEPARATOR);
             areaWidth = Integer.parseInt(areaDimensions[0]);
             areaHeight = Integer.parseInt(areaDimensions[1]);
             logger.info("received area dimensions: " + areaWidth + "x" + areaHeight);
@@ -202,18 +217,15 @@ public final class FireMonitorAgent extends Agent {
      */
     class ScanArea extends TickerBehaviour {
         
-        private final static String ONTOLOGY_TYPE = "FireStatus";
-        
         private final DFAgentDescription fireStatusAD = new DFAgentDescription();
         private AID environmentAID = null;
         private final MessageTemplate replyTpl = MessageTemplate.and(
                                                                      MessageTemplate.MatchPerformative(ACLMessage.INFORM),
-                                                                     MessageTemplate.MatchOntology(ONTOLOGY_TYPE));
+                                                                     MessageTemplate.MatchOntology(EnvironmentAgent.ON_FIRE_STATUS_ONT_TYPE));
         
-        private int areaColumn = 1;
-        private int areaRow = 1;
+        private final Position areaPosition = new Position(1, 1);
         
-        private final Set<String> detectedFires = new HashSet<String>();
+        private final Set<Position> detectedFires = new HashSet<Position>();
         
         /**
          * @param a
@@ -224,7 +236,7 @@ public final class FireMonitorAgent extends Agent {
             super(a, period);
             
             final ServiceDescription fireStatusSD = new ServiceDescription();
-            fireStatusSD.setType(ONTOLOGY_TYPE);
+            fireStatusSD.setType(EnvironmentAgent.ON_FIRE_STATUS_DF_TYPE);
             fireStatusAD.addServices(fireStatusSD);
         }
         
@@ -245,7 +257,7 @@ public final class FireMonitorAgent extends Agent {
                 try {
                     result = DFService.search(thisAgent, fireStatusAD);
                 } catch (final FIPAException e) {
-                    logger.error("no agent with FireStatus service at DF");
+                    logger.error("error searching for agent with FireStatus service at DF");
                     e.printStackTrace();
                     return;
                 }
@@ -264,29 +276,35 @@ public final class FireMonitorAgent extends Agent {
             }
             
             // get fire status for current position
-            logger.debug("scanning position (" + areaRow + ", " + areaColumn + ")");
+            logger.debug("scanning position (" + areaPosition + ")");
             final ACLMessage requestMsg = new ACLMessage(ACLMessage.REQUEST);
             requestMsg.addReceiver(environmentAID);
-            requestMsg.setOntology(ONTOLOGY_TYPE);
-            requestMsg.setContent(areaRow + " " + areaColumn);
+            requestMsg.setOntology(EnvironmentAgent.ON_FIRE_STATUS_ONT_TYPE);
+            requestMsg.setContent(areaPosition.toString());
             send(requestMsg);
-            logger.debug("sent FireStatus request");
+            logger.debug("sent fire status request");
+            
             final ACLMessage replyMsg = blockingReceive(replyTpl);
-            logger.debug("received FireStatus reply");
+            
+            logger.debug("received fire status reply");
+            if (replyMsg.getContent() == null) {
+                logger.error("reply message has no content");
+                return;
+            }
             if (Boolean.parseBoolean(replyMsg.getContent())) {
                 // position is on fire
-                if (detectedFires.contains(areaRow + " " + areaColumn)) {
+                if (detectedFires.contains(areaPosition)) {
                     // known fire
-                    logger.debug("detected known fire at (" + areaRow + ", " + areaColumn + ")");
+                    logger.debug("detected known fire at (" + areaPosition + ")");
                 } else {
                     // new fire
-                    logger.info("detected new fire at (" + areaRow + ", " + areaColumn + ")");
-                    detectedFires.add(areaRow + " " + areaColumn);
+                    logger.info("detected new fire at (" + areaPosition + ")");
+                    detectedFires.add(areaPosition);
                     if (fireAlertSubscribers.size() > 0) {
                         // tell registered agents
                         final ACLMessage alertMsg = new ACLMessage(ACLMessage.INFORM);
-                        alertMsg.setOntology("FireAlert");
-                        alertMsg.setContent(areaRow + " " + areaColumn);
+                        alertMsg.setOntology(FIRE_ALERT_ONT_TYPE);
+                        alertMsg.setContent(areaPosition.toString());
                         for (final AID agentAID : fireAlertSubscribers) {
                             alertMsg.addReceiver(agentAID);
                         }
@@ -295,36 +313,36 @@ public final class FireMonitorAgent extends Agent {
                 }
             } else {
                 // position is not on fire
-                logger.debug("no fire at (" + areaRow + ", " + areaColumn + ")");
-                if (detectedFires.contains(areaRow + " " + areaColumn)) {
+                logger.debug("no fire at (" + areaPosition + ")");
+                if (detectedFires.contains(areaPosition)) {
                     // remove known fire
-                    logger.info("fire at (" + areaRow + ", " + areaColumn + ") no longer burning");
-                    detectedFires.remove(areaRow + " " + areaColumn);
+                    logger.info("fire at (" + areaPosition + ") no longer burning");
+                    detectedFires.remove(areaPosition);
                 }
             }
             
             // move to next position
-            if (areaColumn == areaWidth) {
+            if (areaPosition.getCol() == areaWidth) {
                 // to new row
-                areaColumn = 1;
-                if (areaRow == areaHeight) {
+                areaPosition.setCol(1);
+                if (areaPosition.getRow() == areaHeight) {
                     // to first row
-                    areaRow = 1;
+                    areaPosition.setRow(1);
                 } else {
                     // to next row
-                    areaRow++;
+                    areaPosition.increaseRow(1);
                 }
             } else {
                 // to next column
-                areaColumn++;
+                areaPosition.increaseCol(1);
             }
-            logger.debug("moved to position (" + areaRow + ", " + areaColumn + ")");
+            logger.debug("moved to position (" + areaPosition + ")");
         }
     }
     
     /**
-     * Set of all Hospitals and Fire Brigades that subscribed to be notified about new fires. Package scoped for faster
-     * access by inner classes.
+     * Set of all agents that subscribed to be notified about new fires. Package scoped for faster access by inner
+     * classes.
      */
     final Set<AID> fireAlertSubscribers = new HashSet<AID>();
     
@@ -335,7 +353,7 @@ public final class FireMonitorAgent extends Agent {
         
         private final MessageTemplate requestTpl = MessageTemplate.and(
                                                                        MessageTemplate.MatchPerformative(ACLMessage.SUBSCRIBE),
-                                                                       MessageTemplate.MatchOntology("FireAlert"));
+                                                                       MessageTemplate.MatchOntology(FIRE_ALERT_ONT_TYPE));
         
         /**
          * @see jade.core.behaviours.Behaviour#action()
@@ -346,7 +364,7 @@ public final class FireMonitorAgent extends Agent {
             final ACLMessage requestMsg = blockingReceive(requestTpl);
             if (requestMsg == null) return;
             
-            logger.debug("received FireAlert request");
+            logger.debug("received FireAlert subscription request");
             
             final AID aid = requestMsg.getSender();
             final ACLMessage replyMsg = requestMsg.createReply();
@@ -359,7 +377,7 @@ public final class FireMonitorAgent extends Agent {
                 replyMsg.setPerformative(ACLMessage.CONFIRM);
             }
             send(replyMsg);
-            logger.debug("sent FireAlert reply");
+            logger.debug("sent FireAlert subscription reply");
         }
         
     }
