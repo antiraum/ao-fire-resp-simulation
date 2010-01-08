@@ -75,6 +75,7 @@ public final class AmbulanceAgent extends VehicleAgent {
         } else {
             logger.info("is idle");
             vehicle.setState(Vehicle.STATE_IDLE);
+            vehicle.target = null;
         }
     }
     
