@@ -51,11 +51,15 @@ public abstract class StationaryAgent extends Agent {
     Agent thisAgent = this;
     
     /**
-     * Class of the vehicle agents this agent owns. Set in concrete subclasses.
+     * Class of the vehicle agents this agent owns. Must be set in concrete subclasses.
      */
     protected String vehicleAgentClass;
     /**
-     * DF type of the coordinator to use. Set in the concrete subclasses.
+     * Nickname of the vehicle agents this agent owns. Must be set in concrete subclasses.
+     */
+    protected String vehicleName;
+    /**
+     * DF type of the coordinator to use. Must be set in the concrete subclasses.
      */
     protected String coordinatorDfType;
     
@@ -106,7 +110,7 @@ public abstract class StationaryAgent extends Agent {
         final int numVehicles = RandomUtils.nextInt(4) + 1; // between 1 and 5
         for (int i = 0; i < numVehicles; i++) {
             
-            final String nickname = "vehicle " + id + "-" + i;
+            final String nickname = vehicleName + " " + id + "-" + i;
             try {
                 final AgentController vehicleAC = getContainerController().createNewAgent(
                                                                                           nickname,
@@ -118,9 +122,9 @@ public abstract class StationaryAgent extends Agent {
                                                                                               vehicleMoveIval});
                 vehicleAC.start();
                 vehicleAgents.put(i, vehicleAC);
-                logger.debug("started agent " + nickname);
+                logger.debug("created '" + nickname + "'");
             } catch (final StaleProxyException e) {
-                logger.error("couldn't start vehicle agent " + nickname);
+                logger.error("couldn't create '" + nickname + "'");
                 e.printStackTrace();
             }
             
@@ -340,7 +344,6 @@ public abstract class StationaryAgent extends Agent {
                     } catch (final StaleProxyException e) {
                         e.printStackTrace();
                     }
-                    fireAssignments.get(firePositionStr).add(vehicleEntry.getKey());
                 }
             }
         }
@@ -399,10 +402,12 @@ public abstract class StationaryAgent extends Agent {
             logger.info("received status from vehicle " + vehicleStatus.id);
             vehicles.put(vehicleStatus.id, vehicleStatus);
             
-            if (vehicleStatus.getState() == Vehicle.STATE_IDLE) {
-                // no longer assigned
-                for (final Set<Integer> vehicles : fireAssignments.values()) {
-                    vehicles.remove(vehicleStatus.id);
+            // update assignments
+            for (final Map.Entry<String, Set<Integer>> fireAssignment : fireAssignments.entrySet()) {
+                if (vehicleStatus.target != null && fireAssignment.getKey() == vehicleStatus.target.toString()) {
+                    fireAssignment.getValue().add(vehicleStatus.id);
+                } else {
+                    fireAssignment.getValue().remove(vehicleStatus.id);
                 }
             }
         }
@@ -431,7 +436,7 @@ public abstract class StationaryAgent extends Agent {
                 return;
             }
             final Fire fireStatus = Fire.fromString(statusMsg.getContent());
-            logger.info("received status from fire at (" + fireStatus.position + ")");
+            logger.info("received status for fire at (" + fireStatus.position + ")");
             
             fires.put(fireStatus.position.toString(), fireStatus);
         }

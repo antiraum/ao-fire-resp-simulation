@@ -130,7 +130,12 @@ public abstract class VehicleAgent extends Agent {
             final ACLMessage requestMsg = blockingReceive(requestTpl);
             if (requestMsg == null) return;
             
-            logger.debug("received send to request");
+            logger.debug("received set-target request");
+            
+            if (vehicle.isAcceptingTarget()) {
+                logger.debug("currently not accepting set-target requests");
+                return;
+            }
             
             // get target position
             if (requestMsg.getContent() == null) {
@@ -139,21 +144,14 @@ public abstract class VehicleAgent extends Agent {
             }
             final Position newTargetPosition = Position.fromString(requestMsg.getContent());
             
-            // set target and send confirmation
-            final ACLMessage replyMsg = requestMsg.createReply();
-            if (vehicle.isAcceptingTarget()) {
-                replyMsg.setPerformative(ACLMessage.CONFIRM);
-                vehicle.target.set(newTargetPosition);
-                vehicle.setState(Vehicle.STATE_TO_TARGET);
-                logger.debug("target set to (" + vehicle.target + ")");
-                if (vehicle.position.equals(vehicle.target)) {
-                    arrivedAtTarget();
-                }
-                sendStatus();
-            } else {
-                replyMsg.setPerformative(ACLMessage.DISCONFIRM);
+            // set target
+            vehicle.target.set(newTargetPosition);
+            vehicle.setState(Vehicle.STATE_TO_TARGET);
+            logger.debug("target set to (" + vehicle.target + ")");
+            if (vehicle.position.equals(vehicle.target)) {
+                arrivedAtTarget();
             }
-            send(replyMsg);
+            sendStatus();
         }
     }
     
