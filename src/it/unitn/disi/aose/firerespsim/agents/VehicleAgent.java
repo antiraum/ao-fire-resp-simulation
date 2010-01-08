@@ -189,7 +189,7 @@ public abstract class VehicleAgent extends Agent {
         @Override
         protected void onTick() {
 
-            if (vehicle.getState() == Vehicle.STATE_AT_TARGET) return;
+            if (vehicle.target == null || vehicle.getState() == Vehicle.STATE_AT_TARGET) return;
             if (vehicle.position.getRow() > vehicle.target.getRow()) {
                 vehicle.position.decreaseRow(1);
             } else if (vehicle.position.getRow() < vehicle.target.getRow()) {
