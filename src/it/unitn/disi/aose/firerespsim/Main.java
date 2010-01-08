@@ -1,5 +1,11 @@
 package it.unitn.disi.aose.firerespsim;
 
+import it.unitn.disi.aose.firerespsim.agents.EnvironmentAgent;
+import it.unitn.disi.aose.firerespsim.agents.FireBrigadeAgent;
+import it.unitn.disi.aose.firerespsim.agents.FireBrigadeCoordinatorAgent;
+import it.unitn.disi.aose.firerespsim.agents.FireMonitorAgent;
+import it.unitn.disi.aose.firerespsim.agents.HospitalAgent;
+import it.unitn.disi.aose.firerespsim.agents.HospitalCoordinatorAgent;
 import jade.core.ProfileImpl;
 import jade.core.Runtime;
 import jade.wrapper.AgentContainer;
@@ -9,13 +15,11 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.apache.log4j.Logger;
 
 /**
- * This class starts the emergency response simulation.
+ * This class launches the JADE runtime and starts the emergency response simulation.
  * 
  * @author tom
  */
 public final class Main {
-    
-    private static final Logger logger = Logger.getLogger("it.unitn.disi.aose.firerespsim");
     
     // JADE Runtime
     private static final String JADE_HOST = "localhost";
@@ -31,6 +35,12 @@ public final class Main {
     private static final int FIRE_INCREASE_IVAL = 10000;
     private static final int VEHICLE_MOVE_IVAL = 10000;
     
+    private static final Logger logger = Logger.getLogger("it.unitn.disi.aose.firerespsim");
+    private final static AgentContainer ac = Runtime.instance().createMainContainer(
+                                                                                    new ProfileImpl(JADE_HOST,
+                                                                                                    JADE_PORT, null,
+                                                                                                    false));
+    
     /**
      * @param args
      */
@@ -38,56 +48,44 @@ public final class Main {
 
         logger.info("starting simulation");
         
-        final AgentContainer ac = Runtime.instance().createMainContainer(
-                                                                         new ProfileImpl(JADE_HOST, JADE_PORT, null,
-                                                                                         false));
-        
         // start the environment agent
-        try {
-            final AgentController env = ac.createNewAgent("environment", EnvironmentAgent.class.getName(),
-                                                          new Object[] {
-                                                              AREA_WIDTH, AREA_HEIGHT, ENVIRONMENT_SPAWN_FIRE_IVAL,
-                                                              FIRE_INCREASE_IVAL});
-            env.start();
-        } catch (final StaleProxyException e) {
-            logger.error("couldn't start the environment agent");
-            e.printStackTrace();
-            return;
-        }
+        startAgent("environment", EnvironmentAgent.class.getName(), new Object[] {
+            AREA_WIDTH, AREA_HEIGHT, ENVIRONMENT_SPAWN_FIRE_IVAL, FIRE_INCREASE_IVAL});
         
         // start the monitor agent
-        try {
-            final AgentController monitor = ac.createNewAgent("fire monitor", FireMonitorAgent.class.getName(),
-                                                              new Object[] {MONITOR_SCAN_AREA_IVAL});
-            monitor.start();
-        } catch (final StaleProxyException e) {
-            logger.error("couldn't start the monitor agent");
-            e.printStackTrace();
-            return;
-        }
+        startAgent("fire monitor", FireMonitorAgent.class.getName(), new Object[] {MONITOR_SCAN_AREA_IVAL});
+        
+        // start the fire brigade coordinator
+        startAgent("fire brigade coordinator", FireBrigadeCoordinatorAgent.class.getName(), null);
         
         // start the fire brigade agents
         for (int i = 1; i <= NUMBER_OF_FIRE_BRIGADES; i++) {
-            @SuppressWarnings("unused")
             final int row = RandomUtils.nextInt(AREA_HEIGHT - 1) + 1;
-            @SuppressWarnings("unused")
             final int col = RandomUtils.nextInt(AREA_WIDTH - 1) + 1;
-            // TODO
+            startAgent("fire brigade " + i, FireBrigadeAgent.class.getName(), new Object[] {
+                i, row, col, VEHICLE_MOVE_IVAL});
         }
+        
+        // start the hospital coordinator
+        startAgent("hospital coordinator", HospitalCoordinatorAgent.class.getName(), null);
         
         // start the hospital agents
         for (int i = 1; i <= NUMBER_OF_HOSPITALS; i++) {
             final int row = RandomUtils.nextInt(AREA_HEIGHT - 1) + 1;
             final int col = RandomUtils.nextInt(AREA_WIDTH - 1) + 1;
-            try {
-                final AgentController hospital = ac.createNewAgent("hospital " + i, HospitalAgent.class.getName(),
-                                                                   new Object[] {i, row, col, VEHICLE_MOVE_IVAL});
-                hospital.start();
-            } catch (final StaleProxyException e) {
-                logger.error("couldn't start the " + i + "st hospital agent");
-                e.printStackTrace();
-                return;
-            }
+            startAgent("hospital " + i, HospitalAgent.class.getName(), new Object[] {i, row, col, VEHICLE_MOVE_IVAL});
+        }
+    }
+    
+    private static void startAgent(final String nickname, final String className, final Object[] args) {
+
+        try {
+            final AgentController a = ac.createNewAgent(nickname, className, args);
+            a.start();
+        } catch (final StaleProxyException e) {
+            logger.error("couldn't start the " + nickname + " agent");
+            e.printStackTrace();
+            return;
         }
     }
 }
