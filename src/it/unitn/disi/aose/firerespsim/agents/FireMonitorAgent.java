@@ -374,11 +374,11 @@ public final class FireMonitorAgent extends Agent {
             final ACLMessage replyMsg = requestMsg.createReply();
             if (fireAlertSubscribers.contains(aid)) {
                 // already subscribed
-                replyMsg.setPerformative(ACLMessage.DISCONFIRM);
+                replyMsg.setPerformative(ACLMessage.REFUSE);
             } else {
                 // new subscriber
                 fireAlertSubscribers.add(aid);
-                replyMsg.setPerformative(ACLMessage.CONFIRM);
+                replyMsg.setPerformative(ACLMessage.AGREE);
             }
             send(replyMsg);
             logger.debug("sent fire alert subscription reply");

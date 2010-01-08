@@ -175,8 +175,8 @@ public abstract class StationaryAgent extends Agent {
         private AID coordinatorAID = null;
         private final MessageTemplate replyTpl = MessageTemplate.and(
                                                                      MessageTemplate.or(
-                                                                                        MessageTemplate.MatchPerformative(ACLMessage.CONFIRM),
-                                                                                        MessageTemplate.MatchPerformative(ACLMessage.DISCONFIRM)),
+                                                                                        MessageTemplate.MatchPerformative(ACLMessage.AGREE),
+                                                                                        MessageTemplate.MatchPerformative(ACLMessage.REFUSE)),
                                                                      MessageTemplate.MatchOntology(CoordinatorAgent.COORDINATION_ONT_TYPE));
         
         /**
@@ -227,7 +227,7 @@ public abstract class StationaryAgent extends Agent {
             logger.debug("sent coordinator registration request");
             
             final ACLMessage replyMsg = blockingReceive(replyTpl);
-            if (replyMsg.getPerformative() == ACLMessage.CONFIRM) {
+            if (replyMsg.getPerformative() == ACLMessage.AGREE) {
                 logger.info("registered at coordinator");
             } else {
                 logger.error("coordinator registration disconfirmed - assume this is because already registered");
