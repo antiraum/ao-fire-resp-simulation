@@ -57,7 +57,7 @@ public abstract class CoordinatorAgent extends Agent {
      * Set of the names (GUID) of all stationary agents that are registered to be coordinated by this agent. Package
      * scoped for faster access by inner classes.
      */
-    final Set<String> stationaryAgents = new HashSet<String>();
+    final Set<AID> stationaryAgents = new HashSet<AID>();
     
     private final ThreadedBehaviourFactory tbf = new ThreadedBehaviourFactory();
     private final Set<Behaviour> threadedBehaviours = new HashSet<Behaviour>();
@@ -137,15 +137,14 @@ public abstract class CoordinatorAgent extends Agent {
             
             logger.debug("received coordination registration request");
             
-            final String agentName = requestMsg.getSender().getName();
             final ACLMessage replyMsg = requestMsg.createReply();
-            if (stationaryAgents.contains(agentName)) {
+            if (stationaryAgents.contains(requestMsg.getSender())) {
                 // already registered
-                replyMsg.setPerformative(ACLMessage.DISCONFIRM);
+                replyMsg.setPerformative(ACLMessage.REFUSE);
             } else {
                 // new agent
-                stationaryAgents.add(agentName);
-                replyMsg.setPerformative(ACLMessage.CONFIRM);
+                stationaryAgents.add(requestMsg.getSender());
+                replyMsg.setPerformative(ACLMessage.AGREE);
             }
             send(replyMsg);
             logger.debug("sent coordination registration reply");
@@ -162,8 +161,8 @@ public abstract class CoordinatorAgent extends Agent {
         private AID fireMonitorAID = null;
         private final MessageTemplate replyTpl = MessageTemplate.and(
                                                                      MessageTemplate.or(
-                                                                                        MessageTemplate.MatchPerformative(ACLMessage.CONFIRM),
-                                                                                        MessageTemplate.MatchPerformative(ACLMessage.DISCONFIRM)),
+                                                                                        MessageTemplate.MatchPerformative(ACLMessage.AGREE),
+                                                                                        MessageTemplate.MatchPerformative(ACLMessage.REFUSE)),
                                                                      MessageTemplate.MatchOntology(FireMonitorAgent.FIRE_ALERT_ONT_TYPE));
         
         /**
@@ -216,7 +215,7 @@ public abstract class CoordinatorAgent extends Agent {
             logger.debug("sent fire alert subscribtion request");
             
             final ACLMessage replyMsg = blockingReceive(replyTpl);
-            if (replyMsg.getPerformative() == ACLMessage.CONFIRM) {
+            if (replyMsg.getPerformative() == ACLMessage.AGREE) {
                 logger.info("subscribed for new fire alerts at monitor");
             } else {
                 logger.error("fire alert subscription was disconfirmed - assume this is because already subscribed");
@@ -282,8 +281,8 @@ public abstract class CoordinatorAgent extends Agent {
             final ACLMessage cfpMsg = new ACLMessage(ACLMessage.CFP);
             cfpMsg.setOntology(COORDINATION_ONT_TYPE);
             cfpMsg.setContent(firePosition.toString());
-            for (final String sa : stationaryAgents) {
-                cfpMsg.addReceiver(new AID(sa, true));
+            for (final AID aid : stationaryAgents) {
+                cfpMsg.addReceiver(aid);
             }
             send(cfpMsg);
         }
