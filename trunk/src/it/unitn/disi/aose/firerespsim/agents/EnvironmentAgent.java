@@ -258,9 +258,9 @@ public final class EnvironmentAgent extends Agent {
                                                                                               firePosition.getCol(),
                                                                                               fireIncreaseIval});
                 fireAgent.start();
-                logger.debug("started agent " + fireAgent.getName());
+                logger.debug("started fire at (" + firePosition + ")");
             } catch (final StaleProxyException e) {
-                logger.error("couldn't start fire agent");
+                logger.error("couldn't start fire");
                 e.printStackTrace();
             }
             

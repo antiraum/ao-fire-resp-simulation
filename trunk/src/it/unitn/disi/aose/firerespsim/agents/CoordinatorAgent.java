@@ -217,7 +217,7 @@ public abstract class CoordinatorAgent extends Agent {
             
             final ACLMessage replyMsg = blockingReceive(replyTpl);
             if (replyMsg.getPerformative() == ACLMessage.CONFIRM) {
-                logger.info("subscribed for new fire alerts at monitor agent");
+                logger.info("subscribed for new fire alerts at monitor");
             } else {
                 logger.error("fire alert subscription was disconfirmed - assume this is because already subscribed");
             }
