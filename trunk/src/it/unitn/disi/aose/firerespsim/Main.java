@@ -63,7 +63,7 @@ public final class Main {
             final int row = RandomUtils.nextInt(AREA_HEIGHT - 1) + 1;
             final int col = RandomUtils.nextInt(AREA_WIDTH - 1) + 1;
             startAgent("fire brigade " + i, FireBrigadeAgent.class.getName(), new Object[] {
-                i, row, col, VEHICLE_MOVE_IVAL});
+                "fb" + i, row, col, VEHICLE_MOVE_IVAL});
         }
         
         // start the hospital coordinator
@@ -73,7 +73,8 @@ public final class Main {
         for (int i = 1; i <= NUMBER_OF_HOSPITALS; i++) {
             final int row = RandomUtils.nextInt(AREA_HEIGHT - 1) + 1;
             final int col = RandomUtils.nextInt(AREA_WIDTH - 1) + 1;
-            startAgent("hospital " + i, HospitalAgent.class.getName(), new Object[] {i, row, col, VEHICLE_MOVE_IVAL});
+            startAgent("hospital " + i, HospitalAgent.class.getName(), new Object[] {
+                "h" + i, row, col, VEHICLE_MOVE_IVAL});
         }
     }
     
