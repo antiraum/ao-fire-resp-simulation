@@ -1,5 +1,6 @@
 package it.unitn.disi.aose.firerespsim;
 
+import it.unitn.disi.aose.firerespsim.util.SyncedInteger;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
@@ -40,7 +41,7 @@ public final class FireAgent extends Agent {
     /**
      * Fire intensity. From 1 to infinite. Package scoped for faster access by inner classes.
      */
-    SyncedInt intensity = new SyncedInt();
+    SyncedInteger intensity = new SyncedInteger(0);
     /**
      * Intensity increase per {@link Increase#onTick()}. From 1 to 10. Package scoped for faster access by inner
      * classes.
@@ -49,7 +50,7 @@ public final class FireAgent extends Agent {
     /**
      * Current number of casualties. From 0 to infinite. Package scoped for faster access by inner classes.
      */
-    SyncedInt casualties = new SyncedInt();
+    SyncedInteger casualties = new SyncedInteger(0);
     /**
      * Casualties increase per {@link Increase#onTick()}. From 1 to 3. Package scoped for faster access by inner
      * classes.
@@ -327,49 +328,6 @@ public final class FireAgent extends Agent {
         protected void onTick() {
 
             intensity.add(intensityIncrease);
-        }
-    }
-    
-    /**
-     * Integer object with thread synchronization. Used for {@link #intensity} and {@link #casualties}.
-     */
-    class SyncedInt {
-        
-        private int value = 0;
-        private boolean available = false;
-        
-        /**
-         * @return value
-         */
-        public synchronized int get() {
-
-            while (available == false) {
-                try {
-                    wait();
-                } catch (final InterruptedException e) {
-                    // pass
-                }
-            }
-            available = false;
-            notifyAll();
-            return value;
-        }
-        
-        /**
-         * @param amount
-         */
-        public synchronized void add(final int amount) {
-
-            while (available == true) {
-                try {
-                    wait();
-                } catch (final InterruptedException e) {
-                    // pass
-                }
-            }
-            value += amount;
-            available = true;
-            notifyAll();
         }
     }
 }
