@@ -16,6 +16,7 @@ public final class FireBrigadeAgent extends StationaryAgent {
         super();
         
         vehicleAgentClass = FireEngineAgent.class.getName();
+        vehicleName = "fire engine";
         coordinatorDfType = FireBrigadeCoordinatorAgent.DF_TYPE;
     }
 }

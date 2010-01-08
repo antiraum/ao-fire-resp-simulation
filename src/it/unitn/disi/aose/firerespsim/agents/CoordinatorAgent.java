@@ -49,7 +49,7 @@ public abstract class CoordinatorAgent extends Agent {
     Agent thisAgent = this;
     
     /**
-     * DF Type of this coordinator. Set it in the concrete subclasses.
+     * DF Type of this coordinator. Must be set it in the concrete subclasses.
      */
     protected String dfType;
     
@@ -213,7 +213,7 @@ public abstract class CoordinatorAgent extends Agent {
             subscribeMsg.addReceiver(fireMonitorAID);
             subscribeMsg.setOntology(FireMonitorAgent.FIRE_ALERT_ONT_TYPE);
             send(subscribeMsg);
-            logger.debug("sent fire alert subscribtion");
+            logger.debug("sent fire alert subscribtion request");
             
             final ACLMessage replyMsg = blockingReceive(replyTpl);
             if (replyMsg.getPerformative() == ACLMessage.CONFIRM) {
@@ -271,7 +271,7 @@ public abstract class CoordinatorAgent extends Agent {
                 return;
             }
             final Position firePosition = Position.fromString(alertMsg.getContent());
-            logger.info("received new fire alert at position (" + firePosition + ")");
+            logger.info("received fire alert for position (" + firePosition + ")");
             
             if (knownFires.contains(firePosition)) return; // not new
             knownFires.add(firePosition);
