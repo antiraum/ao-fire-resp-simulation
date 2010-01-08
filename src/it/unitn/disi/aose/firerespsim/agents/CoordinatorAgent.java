@@ -68,6 +68,8 @@ public abstract class CoordinatorAgent extends Agent {
     @Override
     protected void setup() {
 
+        logger.debug("starting up");
+        
         super.setup();
         
         // add behaviors
@@ -193,6 +195,8 @@ public abstract class CoordinatorAgent extends Agent {
                 }
                 if (result != null && result.length > 0) {
                     fireMonitorAID = result[0].getName();
+                } else {
+                    logger.debug("no agent with " + FireMonitorAgent.DF_TYPE + " service at DF");
                 }
             }
             if (fireMonitorAID == null) {

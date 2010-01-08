@@ -87,6 +87,8 @@ public abstract class StationaryAgent extends Agent {
     @Override
     protected void setup() {
 
+        logger.debug("starting up");
+        
         super.setup();
         
         // read start-up arguments

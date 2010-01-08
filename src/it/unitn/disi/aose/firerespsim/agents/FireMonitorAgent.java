@@ -64,6 +64,8 @@ public final class FireMonitorAgent extends Agent {
     @Override
     protected void setup() {
 
+        logger.debug("starting up");
+        
         super.setup();
         
         // read start-up arguments
@@ -183,11 +185,11 @@ public final class FireMonitorAgent extends Agent {
             requestMsg.addReceiver(environmentAID);
             requestMsg.setOntology(EnvironmentAgent.AREA_DIMENSIONS_ONT_TYPE);
             send(requestMsg);
-            logger.debug("sent AreaDimensions request");
+            logger.debug("sent area dimensions request");
             
             final ACLMessage replyMsg = blockingReceive(replyTpl);
             
-            logger.debug("received AreaDimensions reply");
+            logger.debug("received area dimensions reply");
             
             if (replyMsg.getContent() == null) {
                 logger.error("reply message has no content");
@@ -257,7 +259,8 @@ public final class FireMonitorAgent extends Agent {
                 try {
                     result = DFService.search(thisAgent, fireStatusAD);
                 } catch (final FIPAException e) {
-                    logger.error("error searching for agent with FireStatus service at DF");
+                    logger.error("error searching for agent with " + EnvironmentAgent.ON_FIRE_STATUS_DF_TYPE +
+                                 " service at DF");
                     e.printStackTrace();
                     return;
                 }
@@ -266,7 +269,7 @@ public final class FireMonitorAgent extends Agent {
                 }
             }
             if (environmentAID == null) {
-                logger.error("no FireStatus AID");
+                logger.error("no on fire status AID");
                 try {
                     Thread.sleep(1000);
                 } catch (final InterruptedException e) {
