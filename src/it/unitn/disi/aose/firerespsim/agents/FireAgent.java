@@ -1,6 +1,8 @@
-package it.unitn.disi.aose.firerespsim;
+package it.unitn.disi.aose.firerespsim.agents;
 
-import it.unitn.disi.aose.firerespsim.util.SyncedInteger;
+import it.unitn.disi.aose.firerespsim.model.Fire;
+import it.unitn.disi.aose.firerespsim.model.Position;
+import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
@@ -26,31 +28,36 @@ import org.apache.log4j.Logger;
 public final class FireAgent extends Agent {
     
     /**
+     * Prefix for the local name of fire agents.
+     */
+    static final String FIRE_AGENT_NAME_PREFIX = "fire ";
+    /**
+     * Ontology type for fire status messages. Package scoped for faster access by inner classes.
+     */
+    final static String FIRE_STATUS_ONT_TYPE = "FireStatus";
+    /**
+     * Ontology type for put out messages. Package scoped for faster access by inner classes.
+     */
+    final static String PUT_OUT_ONT_TYPE = "PutOut";
+    /**
+     * Ontology type for pick up casualty messages. Package scoped for faster access by inner classes.
+     */
+    final static String PICK_UP_ONT_TYPE = "PickUpCasualty";
+    
+    /**
      * Package scoped for faster access by inner classes.
      */
     static final Logger logger = Logger.getLogger("it.unitn.disi.aose.firerespsim");
     
     /**
-     * Row on the simulation area. Package scoped for faster access by inner classes.
+     * Status of the fire. Package scoped for faster access by inner classes.
      */
-    int row = 0;
-    /**
-     * Column on the simulation area. Package scoped for faster access by inner classes.
-     */
-    int col = 0;
-    /**
-     * Fire intensity. From 1 to infinite. Package scoped for faster access by inner classes.
-     */
-    SyncedInteger intensity = new SyncedInteger(0);
+    Fire fire;
     /**
      * Intensity increase per {@link Increase#onTick()}. From 1 to 10. Package scoped for faster access by inner
      * classes.
      */
     int intensityIncrease = 0;
-    /**
-     * Current number of casualties. From 0 to infinite. Package scoped for faster access by inner classes.
-     */
-    SyncedInteger casualties = new SyncedInteger(0);
     /**
      * Casualties increase per {@link Increase#onTick()}. From 1 to 3. Package scoped for faster access by inner
      * classes.
@@ -89,8 +96,7 @@ public final class FireAgent extends Agent {
             doDelete();
             return;
         }
-        row = (Integer) params[0];
-        col = (Integer) params[1];
+        fire = new Fire(new Position((Integer) params[0], (Integer) params[1]), 0, 0);
         final int increaseIval = (Integer) params[2];
         
         // randomized initialization value
@@ -100,7 +106,7 @@ public final class FireAgent extends Agent {
         // add behaviors
         increaseBehaviour = new Increase(this, increaseIval);
         threadedBehaviours.addAll(Arrays.asList(new Behaviour[] {
-            new StatusService(), new PutOutService(), new PickUpCasualtyService(), increaseBehaviour}));
+            new PutOutService(), new PickUpCasualtyService(), increaseBehaviour}));
         for (final Behaviour b : threadedBehaviours) {
             pb.addSubBehaviour(tbf.wrap(b));
         }
@@ -125,65 +131,16 @@ public final class FireAgent extends Agent {
     }
     
     /**
-     * Service that provides the current fire status to fire engines and ambulances. Content of the request message must
-     * consist of the fire engine/ambulance row and column separated by a space. Content of the reply message consists
-     * of the intensity and number of casualties separated by a space.
-     */
-    class StatusService extends CyclicBehaviour {
-        
-        private final MessageTemplate requestTpl = MessageTemplate.and(
-                                                                       MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
-                                                                       MessageTemplate.MatchOntology("Status"));
-        
-        /**
-         * @see jade.core.behaviours.Behaviour#action()
-         */
-        @Override
-        public void action() {
-
-            final ACLMessage requestMsg = blockingReceive(requestTpl);
-            if (requestMsg == null) return;
-            
-            logger.debug("received Status request");
-            
-            // get content
-            if (requestMsg.getContent() == null) {
-                logger.error("request message has no content");
-                return;
-            }
-            final String[] requestContent = requestMsg.getContent().split(" ");
-            if (requestContent.length != 2) {
-                logger.error("request message has wrong format");
-                return;
-            }
-            final int requesterRow = Integer.parseInt(requestContent[0]);
-            final int requesterCol = Integer.parseInt(requestContent[1]);
-            logger.debug("requester position (" + requesterRow + ", " + requesterCol + ")");
-            
-            final ACLMessage replyMsg = requestMsg.createReply();
-            if (Math.abs(row - requesterRow) <= 1 && Math.abs(col - requesterCol) <= 1) {
-                // requester is next to the fire and can get the status
-                replyMsg.setPerformative(ACLMessage.INFORM);
-                replyMsg.setContent(intensity + " " + casualties);
-            } else {
-                logger.debug("requester is too far away");
-                replyMsg.setPerformative(ACLMessage.REFUSE);
-            }
-            send(replyMsg);
-            logger.debug("sent Status reply");
-        }
-    }
-    
-    /**
      * Service for fire engines to reduce the fire intensity. If the intensity reaches 0 the fire is put out the agent
-     * deletes itself. Content of the request message must consist of fire engine row, fire engine column, and intensity
-     * decrease (0 to 10) separated by spaces. Reply message content is the new intensity.
+     * deletes itself. Content of the request message must be {@link Position#toString()} of the fire engine position.
+     * The fire engine must be at the fires position to be able to decrease its intensity. If it is a message with the
+     * new fire status ({@link Fire#toString()}) is send to the engine agent.
      */
     class PutOutService extends CyclicBehaviour {
         
         private final MessageTemplate requestTpl = MessageTemplate.and(
                                                                        MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
-                                                                       MessageTemplate.MatchOntology("PutOut"));
+                                                                       MessageTemplate.MatchOntology(PUT_OUT_ONT_TYPE));
         
         /**
          * @see jade.core.behaviours.Behaviour#action()
@@ -194,50 +151,40 @@ public final class FireAgent extends Agent {
             final ACLMessage requestMsg = blockingReceive(requestTpl);
             if (requestMsg == null) return;
             
-            logger.debug("received PutOut request");
+            logger.debug("received put out request");
             
             // get content
             if (requestMsg.getContent() == null) {
                 logger.error("request message has no content");
                 return;
             }
-            final String[] requestContent = requestMsg.getContent().split(" ");
-            if (requestContent.length != 3) {
-                logger.error("request message has wrong format");
-                return;
-            }
-            final int engineRow = Integer.parseInt(requestContent[0]);
-            final int engineCol = Integer.parseInt(requestContent[1]);
-            final int decrease = Math.min(10, Math.max(0, Integer.parseInt(requestContent[2]))); // must be from 0 to 10
-            logger.debug("engine position (" + engineRow + ", " + engineCol + "), decrease = " + decrease);
+            final Position enginePosition = Position.fromString(requestMsg.getContent());
+            logger.debug("engine position (" + enginePosition + ")");
             
-            final ACLMessage replyMsg = requestMsg.createReply();
             boolean takeDown = false;
-            if (Math.abs(row - engineRow) <= 1 && Math.abs(col - engineCol) <= 1) {
-                // fire engine is next to the fire and can put out
-                if (intensity.get() > 0) {
-                    intensity.add(-decrease);
-                    replyMsg.setPerformative(ACLMessage.CONFIRM);
-                    if (intensity.get() < 1) {
+            if (fire.position.equals(enginePosition)) {
+                // fire engine is at the fire and can put out
+                if (fire.getIntensity() > 0) {
+                    fire.decreaseIntensity(1);
+                    if (fire.getIntensity() < 1) {
                         // fire is put out
                         increaseBehaviour.stop();
+                        fire.setIntensity(0);
                         tbf.getThread(increaseBehaviour).interrupt();
                         pb.removeSubBehaviour(increaseBehaviour);
                         threadedBehaviours.remove(increaseBehaviour);
-                        if (casualties.get() < 1) {
+                        if (fire.getCasualties() < 1) {
+                            fire.setCasualties(0);
                             takeDown = true;
                         }
                     }
                 } else {
                     logger.debug("fire is already put out");
-                    replyMsg.setPerformative(ACLMessage.DISCONFIRM);
                 }
-                replyMsg.setContent(intensity + "");
+                sendStatus(requestMsg.getSender());
             } else {
                 logger.debug("fire engine is too far away");
-                replyMsg.setPerformative(ACLMessage.DISCONFIRM);
             }
-            send(replyMsg);
             logger.debug("sent PutOut reply");
             if (takeDown) {
                 doDelete();
@@ -246,14 +193,16 @@ public final class FireAgent extends Agent {
     }
     
     /**
-     * Service for ambulances to pick up a casualty. Content of the request message must consist of ambulance row and
-     * ambulance column separated by a space. Reply message content is the new number of casualties.
+     * Service for ambulances to pick up a casualty. Content of the request message must be {@link Position#toString()}
+     * of the ambulance position. The ambulance must be at the fires position to be able to pick up a casualty. The
+     * reply message confirms or disconfirms if a casualty is picked up. If the ambulance is at the fires position, a
+     * message with the new fire status ({@link Fire#toString()}) is send to the ambulance agent.
      */
     class PickUpCasualtyService extends CyclicBehaviour {
         
         private final MessageTemplate requestTpl = MessageTemplate.and(
                                                                        MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
-                                                                       MessageTemplate.MatchOntology("PickUpCasualty"));
+                                                                       MessageTemplate.MatchOntology(PICK_UP_ONT_TYPE));
         
         /**
          * @see jade.core.behaviours.Behaviour#action()
@@ -271,30 +220,26 @@ public final class FireAgent extends Agent {
                 logger.error("request message has no content");
                 return;
             }
-            final String[] requestContent = requestMsg.getContent().split(" ");
-            if (requestContent.length != 2) {
-                logger.error("request message has wrong format");
-                return;
-            }
-            final int ambulanceRow = Integer.parseInt(requestContent[0]);
-            final int ambulanceCol = Integer.parseInt(requestContent[1]);
-            logger.debug("ambulance position (" + ambulanceRow + ", " + ambulanceCol + ")");
+            final Position ambulancePosition = Position.fromString(requestMsg.getContent());
+            logger.debug("ambulance position (" + ambulancePosition + ")");
             
             final ACLMessage replyMsg = requestMsg.createReply();
             boolean takeDown = false;
-            if (Math.abs(row - ambulanceRow) <= 1 && Math.abs(col - ambulanceCol) <= 1) {
-                // ambulance is next to the fire and can pick up a casualty
-                if (casualties.get() > 0) {
-                    casualties.add(-1);
+            if (fire.position.equals(ambulancePosition)) {
+                // ambulance is at the fire and can pick up a casualty
+                if (fire.getCasualties() > 0) {
+                    fire.decreaseCasualties(1);
                     replyMsg.setPerformative(ACLMessage.CONFIRM);
-                    if (casualties.get() < 1 && intensity.get() < 1) {
+                    if (fire.getCasualties() < 1 && fire.getIntensity() < 1) {
+                        fire.setIntensity(0);
+                        fire.setCasualties(0);
                         takeDown = true;
                     }
                 } else {
                     logger.debug("no casualty to pick up");
                     replyMsg.setPerformative(ACLMessage.DISCONFIRM);
                 }
-                replyMsg.setContent(casualties + "");
+                sendStatus(requestMsg.getSender());
             } else {
                 logger.debug("ambulance is too far away");
                 replyMsg.setPerformative(ACLMessage.DISCONFIRM);
@@ -308,7 +253,21 @@ public final class FireAgent extends Agent {
     }
     
     /**
-     * Increases the fire intensity by {@link #intensityIncrease}.
+     * Sends the current fire status. Package scoped for faster access by inner classes.
+     * 
+     * @param receiver
+     */
+    void sendStatus(final AID receiver) {
+
+        final ACLMessage statusMsg = new ACLMessage(ACLMessage.INFORM);
+        statusMsg.setOntology(FIRE_STATUS_ONT_TYPE);
+        statusMsg.setContent(fire.toString());
+        statusMsg.addReceiver(receiver);
+        send(statusMsg);
+    }
+    
+    /**
+     * Increases the fire intensity by {@link #intensityIncrease} and the casualties by {@link #casualtiesIncrease}.
      */
     private class Increase extends TickerBehaviour {
         
@@ -327,7 +286,8 @@ public final class FireAgent extends Agent {
         @Override
         protected void onTick() {
 
-            intensity.add(intensityIncrease);
+            fire.increaseIntensity(intensityIncrease);
+            fire.increaseCasualties(casualtiesIncrease);
         }
     }
 }
