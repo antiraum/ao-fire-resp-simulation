@@ -94,7 +94,7 @@ public final class SyncedInteger {
     @Override
     public String toString() {
 
-        return Integer.toString(get());
+        return Integer.toString(value);
     }
     
     /**
