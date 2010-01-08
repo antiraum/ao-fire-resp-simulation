@@ -69,6 +69,10 @@ public abstract class StationaryAgent extends Agent {
     private static final int DEFAULT_VEHICLE_MOVE_IVAL = 10000;
     
     /**
+     * Id of this stationary agent. Package scoped for faster access by inner classes.
+     */
+    String id;
+    /**
      * Position on the simulation area. Package scoped for faster access by inner classes.
      */
     Position position;
@@ -102,7 +106,7 @@ public abstract class StationaryAgent extends Agent {
             doDelete();
             return;
         }
-        final String id = (String) params[0];
+        id = (String) params[0];
         position = new Position((Integer) params[1], (Integer) params[2]);
         final int vehicleMoveIval = (params.length > 3) ? (Integer) params[3] : DEFAULT_VEHICLE_MOVE_IVAL;
         
@@ -275,7 +279,7 @@ public abstract class StationaryAgent extends Agent {
                     idleVehicles++;
                 }
             }
-            final Proposal prop = new Proposal(firePosition, thisAgent.getName(), position, idleVehicles);
+            final Proposal prop = new Proposal(firePosition, id, position, idleVehicles);
             
             // send proposal
             final ACLMessage proposalMsg = cfpMsg.createReply();

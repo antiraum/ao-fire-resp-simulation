@@ -163,7 +163,8 @@ public final class FireMonitorAgent extends Agent {
                 try {
                     result = DFService.search(thisAgent, areaDimensionsAD);
                 } catch (final FIPAException e) {
-                    logger.error("error searching for agent with AreaDimensions service at DF");
+                    logger.error("error searching for agent with " + EnvironmentAgent.AREA_DIM_DF_TYPE +
+                                 " service at DF");
                     e.printStackTrace();
                     return;
                 }
