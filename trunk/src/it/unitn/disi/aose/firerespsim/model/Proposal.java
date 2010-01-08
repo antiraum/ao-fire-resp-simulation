@@ -1,6 +1,5 @@
 package it.unitn.disi.aose.firerespsim.model;
 
-import it.unitn.disi.aose.firerespsim.util.DistanceUtil;
 import org.apache.commons.lang.StringUtils;
 
 /**
@@ -52,7 +51,7 @@ public final class Proposal {
 
         this.firePosition = firePosition;
         this.agentName = agentName;
-        distance = DistanceUtil.getDistance(stationaryAgentPosition, firePosition);
+        distance = SimulationArea.getDistance(stationaryAgentPosition, firePosition);
         this.numVehicles = numVehicles;
     }
     
