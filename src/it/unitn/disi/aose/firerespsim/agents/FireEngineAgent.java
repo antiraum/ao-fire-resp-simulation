@@ -35,6 +35,7 @@ public final class FireEngineAgent extends VehicleAgent {
 
         logger.info("is idle");
         vehicle.setState(Vehicle.STATE_IDLE);
+        vehicle.target = null;
     }
     
     /**
