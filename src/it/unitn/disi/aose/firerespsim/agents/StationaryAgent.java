@@ -98,7 +98,7 @@ public abstract class StationaryAgent extends Agent {
             doDelete();
             return;
         }
-        final int id = (Integer) params[0];
+        final String id = (String) params[0];
         position = new Position((Integer) params[1], (Integer) params[2]);
         final int vehicleMoveIval = (params.length > 3) ? (Integer) params[3] : DEFAULT_VEHICLE_MOVE_IVAL;
         
@@ -106,9 +106,10 @@ public abstract class StationaryAgent extends Agent {
         final int numVehicles = RandomUtils.nextInt(4) + 1; // between 1 and 5
         for (int i = 0; i < numVehicles; i++) {
             
+            final String nickname = "vehicle " + id + "-" + i;
             try {
                 final AgentController vehicleAC = getContainerController().createNewAgent(
-                                                                                          "vehicle " + id + "-" + i,
+                                                                                          nickname,
                                                                                           vehicleAgentClass,
                                                                                           new Object[] {
                                                                                               i, getName(),
@@ -117,9 +118,9 @@ public abstract class StationaryAgent extends Agent {
                                                                                               vehicleMoveIval});
                 vehicleAC.start();
                 vehicleAgents.put(i, vehicleAC);
-                logger.debug("started agent " + vehicleAC.getName());
+                logger.debug("started agent " + nickname);
             } catch (final StaleProxyException e) {
-                logger.error("couldn't start vehicle agent");
+                logger.error("couldn't start vehicle agent " + nickname);
                 e.printStackTrace();
             }
             
@@ -215,7 +216,7 @@ public abstract class StationaryAgent extends Agent {
             subscribeMsg.addReceiver(coordinatorAID);
             subscribeMsg.setOntology(CoordinatorAgent.COORDINATION_ONT_TYPE);
             send(subscribeMsg);
-            logger.debug("sent FireAlert subscribtion");
+            logger.debug("sent coordinator registration request");
             
             final ACLMessage replyMsg = blockingReceive(replyTpl);
             if (replyMsg.getPerformative() == ACLMessage.CONFIRM) {
