@@ -1,19 +1,19 @@
 package it.unitn.disi.aose.firerespsim.util;
 
 /**
- * Integer object with thread synchronization.
+ * Boolean object with thread synchronization.
  * 
  * @author tom
  */
-public final class SyncedInteger {
+public final class SyncedBoolean {
     
-    private int value = 0;
+    private boolean value;
     private boolean available = false;
     
     /**
      * @param value Initial value
      */
-    public SyncedInteger(final int value) {
+    public SyncedBoolean(final boolean value) {
 
         super();
         
@@ -23,7 +23,7 @@ public final class SyncedInteger {
     /**
      * @return value
      */
-    public synchronized int get() {
+    public synchronized boolean get() {
 
         while (available == false) {
             try {
@@ -40,7 +40,7 @@ public final class SyncedInteger {
     /**
      * @param value
      */
-    public synchronized void set(final int value) {
+    public synchronized void set(final boolean value) {
 
         while (available == true) {
             try {
@@ -55,46 +55,12 @@ public final class SyncedInteger {
     }
     
     /**
-     * @param amount
-     */
-    public synchronized void increase(final int amount) {
-
-        while (available == true) {
-            try {
-                wait();
-            } catch (final InterruptedException e) {
-                // pass
-            }
-        }
-        value += amount;
-        available = true;
-        notifyAll();
-    }
-    
-    /**
-     * @param amount
-     */
-    public synchronized void decrease(final int amount) {
-
-        while (available == true) {
-            try {
-                wait();
-            } catch (final InterruptedException e) {
-                // pass
-            }
-        }
-        value -= amount;
-        available = true;
-        notifyAll();
-    }
-    
-    /**
      * @see java.lang.Object#toString()
      */
     @Override
     public String toString() {
 
-        return Integer.toString(get());
+        return Boolean.toString(get());
     }
     
     /**
@@ -103,7 +69,7 @@ public final class SyncedInteger {
     @Override
     public boolean equals(final Object obj) {
 
-        final SyncedInteger other = (SyncedInteger) obj;
+        final SyncedBoolean other = (SyncedBoolean) obj;
         return (other.get() == get()) ? true : false;
     }
     
