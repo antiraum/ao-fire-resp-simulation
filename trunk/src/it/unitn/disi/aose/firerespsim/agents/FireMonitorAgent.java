@@ -367,7 +367,7 @@ public final class FireMonitorAgent extends Agent {
             final ACLMessage requestMsg = blockingReceive(requestTpl);
             if (requestMsg == null) return;
             
-            logger.debug("received FireAlert subscription request");
+            logger.debug("received fire alert subscription request");
             
             final AID aid = requestMsg.getSender();
             final ACLMessage replyMsg = requestMsg.createReply();
@@ -380,7 +380,7 @@ public final class FireMonitorAgent extends Agent {
                 replyMsg.setPerformative(ACLMessage.CONFIRM);
             }
             send(replyMsg);
-            logger.debug("sent FireAlert subscription reply");
+            logger.debug("sent fire alert subscription reply");
         }
         
     }

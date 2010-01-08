@@ -16,6 +16,7 @@ public final class HospitalAgent extends StationaryAgent {
         super();
         
         vehicleAgentClass = AmbulanceAgent.class.getName();
+        vehicleName = "ambulance";
         coordinatorDfType = HospitalCoordinatorAgent.DF_TYPE;
     }
 }
