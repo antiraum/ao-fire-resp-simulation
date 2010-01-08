@@ -80,6 +80,8 @@ public final class EnvironmentAgent extends Agent {
     @Override
     protected void setup() {
 
+        logger.debug("starting up");
+        
         super.setup();
         
         // read start-up arguments
@@ -126,7 +128,7 @@ public final class EnvironmentAgent extends Agent {
     @Override
     protected void takeDown() {
 
-        logger.debug("takeDown");
+        logger.info("shutting down");
         
         for (final Behaviour b : threadedBehaviours) {
             if (b != null) {

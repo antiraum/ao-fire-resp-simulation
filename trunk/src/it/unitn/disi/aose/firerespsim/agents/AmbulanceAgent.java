@@ -31,15 +31,6 @@ public final class AmbulanceAgent extends VehicleAgent {
     private Position firePosition;
     
     /**
-     * @see jade.core.Agent#setup()
-     */
-    @Override
-    protected void setup() {
-
-        super.setup();
-    }
-    
-    /**
      * @see it.unitn.disi.aose.firerespsim.agents.VehicleAgent#arrivedAtFire()
      */
     @Override
