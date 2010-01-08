@@ -12,11 +12,11 @@ public final class Position {
     /**
      * Position on the simulation area.
      */
-    private final SyncedInteger row = new SyncedInteger(0);
+    private final SyncedInteger row;
     /**
      * Column on the simulation area.
      */
-    private final SyncedInteger col = new SyncedInteger(0);
+    private final SyncedInteger col;
     
     /**
      * @param row
@@ -24,8 +24,8 @@ public final class Position {
      */
     public Position(final int row, final int col) {
 
-        setRow(row);
-        setCol(col);
+        this.row = new SyncedInteger(row);
+        this.col = new SyncedInteger(col);
     }
     
     /**

@@ -36,7 +36,7 @@ public final class Vehicle {
     /**
      * Current state.
      */
-    private final SyncedInteger state = new SyncedInteger(STATE_IDLE);
+    private final SyncedInteger state;
     /**
      * Position where the vehicle is stationed.
      */
@@ -60,7 +60,7 @@ public final class Vehicle {
         id = vehicleId;
         this.position = position;
         home = position;
-        setState(state);
+        this.state = new SyncedInteger(state);
     }
     
     /**

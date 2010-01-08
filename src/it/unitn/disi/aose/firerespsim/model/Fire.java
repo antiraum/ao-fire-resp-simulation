@@ -17,11 +17,11 @@ public final class Fire {
     /**
      * Current fire intensity.
      */
-    private final SyncedInteger intensity = new SyncedInteger(0);
+    private final SyncedInteger intensity;
     /**
      * Current number of casualties at the fire.
      */
-    private final SyncedInteger casualties = new SyncedInteger(0);
+    private final SyncedInteger casualties;
     
     /**
      * @param position
@@ -31,8 +31,8 @@ public final class Fire {
     public Fire(final Position position, final int intensity, final int casualties) {
 
         this.position = position;
-        setIntensity(intensity);
-        setCasualties(casualties);
+        this.intensity = new SyncedInteger(intensity);
+        this.casualties = new SyncedInteger(casualties);
     }
     
     /**
