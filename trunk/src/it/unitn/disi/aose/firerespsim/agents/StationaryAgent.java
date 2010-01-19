@@ -266,7 +266,7 @@ public abstract class StationaryAgent extends Agent {
                 return;
             }
             final Position firePosition = Position.fromString(cfpMsg.getContent());
-            logger.info("received CFP for fire at position (" + firePosition + ")");
+            logger.debug("received CFP for fire at position (" + firePosition + ")");
             
             // create proposal
             int idleVehicles = 0;
@@ -282,7 +282,7 @@ public abstract class StationaryAgent extends Agent {
             proposalMsg.setPerformative(ACLMessage.PROPOSE);
             proposalMsg.setContent(prop.toString());
             send(proposalMsg);
-            logger.info("sent proposal (" + prop + ") for fire at position (" + firePosition + ")");
+            logger.info("sent proposal (" + prop.toPrettyString() + ")");
         }
     }
     
@@ -405,7 +405,12 @@ public abstract class StationaryAgent extends Agent {
                 return;
             }
             final Vehicle vehicleStatus = Vehicle.fromString(statusMsg.getContent());
-            logger.info("received status from vehicle " + vehicleStatus.id);
+            if (vehicles.get(vehicleStatus.id) == null) {
+                // initial status
+                logger.debug("received status from vehicle " + vehicleStatus.id);
+            } else {
+                logger.info("received status from vehicle " + vehicleStatus.id);
+            }
             vehicles.put(vehicleStatus.id, vehicleStatus);
             
             // update assignments

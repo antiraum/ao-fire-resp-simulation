@@ -186,11 +186,9 @@ public final class FireMonitorAgent extends Agent {
             requestMsg.addReceiver(environmentAID);
             requestMsg.setOntology(EnvironmentAgent.AREA_DIMENSIONS_ONT_TYPE);
             send(requestMsg);
-            logger.debug("sent area dimensions request");
+//            logger.debug("sent area dimensions request");
             
             final ACLMessage replyMsg = blockingReceive(replyTpl);
-            
-            logger.debug("received area dimensions reply");
             
             if (replyMsg.getContent() == null) {
                 logger.error("reply message has no content");
@@ -199,7 +197,7 @@ public final class FireMonitorAgent extends Agent {
             final String[] areaDimensions = replyMsg.getContent().split(SimulationArea.FIELD_SEPARATOR);
             areaWidth = Integer.parseInt(areaDimensions[0]);
             areaHeight = Integer.parseInt(areaDimensions[1]);
-            logger.info("received area dimensions: " + areaWidth + "x" + areaHeight);
+            logger.info("received area dimensions (" + areaWidth + " " + areaHeight + ")");
             
             done = true;
         }
@@ -313,9 +311,9 @@ public final class FireMonitorAgent extends Agent {
                             alertMsg.addReceiver(agentAID);
                         }
                         send(alertMsg);
-                        logger.info("sent new fire alert");
+                        logger.info("sent out fire alert to coordinators");
                     } else {
-                        logger.debug("nobody registered to send new fire alert to");
+                        logger.debug("no coordinator is registered to send fire alert to");
                     }
                 }
             } else {
