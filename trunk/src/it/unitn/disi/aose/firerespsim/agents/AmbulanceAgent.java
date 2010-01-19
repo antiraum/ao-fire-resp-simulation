@@ -49,8 +49,7 @@ public final class AmbulanceAgent extends VehicleAgent {
             logger.info("picked up casualty from fire at (" + firePosition + "), bringing it back to hospital");
             hasCasualty = true;
             vehicle.setAcceptingTarget(false);
-            vehicle.target.set(vehicle.home);
-            vehicle.setState(Vehicle.STATE_TO_TARGET);
+            setTarget(vehicle.home);
         } else {
             logger.info("no casualty picked up from fire at (" + firePosition + ")");
         }
@@ -69,13 +68,11 @@ public final class AmbulanceAgent extends VehicleAgent {
             logger.info("delivered casualty");
             if (firePosition != null) {
                 logger.info("returning to fire");
-                vehicle.target.set(firePosition);
-                vehicle.setState(Vehicle.STATE_TO_TARGET);
+                setTarget(firePosition);
             }
         } else {
             logger.info("is idle");
             vehicle.setState(Vehicle.STATE_IDLE);
-            vehicle.target = null;
         }
     }
     
@@ -90,9 +87,7 @@ public final class AmbulanceAgent extends VehicleAgent {
             firePosition = null;
             if (!vehicle.target.equals(vehicle.home)) {
                 logger.info("returning to hospital");
-                vehicle.target.set(vehicle.home);
-                vehicle.setState(Vehicle.STATE_TO_TARGET);
-                sendStatus();
+                setTarget(vehicle.home);
             }
         }
     }

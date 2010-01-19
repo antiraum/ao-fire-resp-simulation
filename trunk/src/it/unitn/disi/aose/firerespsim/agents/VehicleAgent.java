@@ -133,8 +133,6 @@ public abstract class VehicleAgent extends Agent {
             final ACLMessage requestMsg = blockingReceive(requestTpl);
             if (requestMsg == null) return;
             
-            logger.debug("received set-target request");
-            
             if (!vehicle.isAcceptingTarget()) {
                 logger.debug("currently not accepting set-target requests");
                 return;
@@ -145,17 +143,28 @@ public abstract class VehicleAgent extends Agent {
                 logger.error("request message has no content");
                 return;
             }
-            final Position newTargetPosition = Position.fromString(requestMsg.getContent());
+            final Position newTarget = Position.fromString(requestMsg.getContent());
             
-            // set target
-            vehicle.target.set(newTargetPosition);
-            vehicle.setState(Vehicle.STATE_TO_TARGET);
-            logger.debug("target set to (" + vehicle.target + ")");
-            if (vehicle.position.equals(vehicle.target)) {
-                arrivedAtTarget();
-            }
-            sendStatus();
+            logger.debug("received set-target request with new target (" + newTarget + ")");
+            
+            setTarget(newTarget);
         }
+    }
+    
+    /**
+     * Package scoped for faster access by inner classes.
+     * 
+     * @param target
+     */
+    void setTarget(final Position target) {
+
+        vehicle.target.set(target);
+        vehicle.setState(Vehicle.STATE_TO_TARGET);
+        logger.debug("target set to (" + vehicle.target + ")");
+        if (vehicle.position.equals(vehicle.target)) {
+            arrivedAtTarget();
+        }
+        sendStatus();
     }
     
     /**
@@ -192,7 +201,7 @@ public abstract class VehicleAgent extends Agent {
         @Override
         protected void onTick() {
 
-            if (vehicle.target == null || vehicle.getState() == Vehicle.STATE_AT_TARGET) return;
+            if (vehicle.getState() == Vehicle.STATE_AT_TARGET) return;
             if (vehicle.position.getRow() > vehicle.target.getRow()) {
                 vehicle.position.decreaseRow(1);
             } else if (vehicle.position.getRow() < vehicle.target.getRow()) {

@@ -410,7 +410,7 @@ public abstract class StationaryAgent extends Agent {
             
             // update assignments
             for (final Map.Entry<String, Set<Integer>> fireAssignment : fireAssignments.entrySet()) {
-                if (vehicleStatus.target != null && fireAssignment.getKey() == vehicleStatus.target.toString()) {
+                if (fireAssignment.getKey() == vehicleStatus.target.toString()) {
                     fireAssignment.getValue().add(vehicleStatus.id);
                 } else {
                     fireAssignment.getValue().remove(vehicleStatus.id);
