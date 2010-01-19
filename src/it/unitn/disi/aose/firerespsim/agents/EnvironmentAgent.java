@@ -188,15 +188,13 @@ public final class EnvironmentAgent extends Agent {
             final ACLMessage requestMsg = blockingReceive(requestTpl);
             if (requestMsg == null) return;
             
-            logger.debug("received on fire status request");
-            
             // get requested position
             if (requestMsg.getContent() == null) {
                 logger.error("request message has no content");
                 return;
             }
             final Position requestPosition = Position.fromString(requestMsg.getContent());
-            logger.debug("requested position (" + requestPosition + ")");
+            logger.debug("received on fire status request for position (" + requestPosition + ")");
             
             if (area.getOnFireState(requestPosition)) {
                 // check if fire agent still alive (fire still burning)
@@ -217,7 +215,7 @@ public final class EnvironmentAgent extends Agent {
             replyMsg.setPerformative(ACLMessage.INFORM);
             replyMsg.setContent(Boolean.toString(area.getOnFireState(requestPosition)));
             send(replyMsg);
-            logger.debug("sent on fire status reply");
+//            logger.debug("sent on fire status reply");
         }
     }
     

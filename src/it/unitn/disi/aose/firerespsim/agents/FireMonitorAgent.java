@@ -286,11 +286,11 @@ public final class FireMonitorAgent extends Agent {
             requestMsg.setOntology(EnvironmentAgent.ON_FIRE_STATUS_ONT_TYPE);
             requestMsg.setContent(areaPosition.toString());
             send(requestMsg);
-            logger.debug("sent fire status request");
+//            logger.debug("sent fire status request");
             
             final ACLMessage replyMsg = blockingReceive(replyTpl);
             
-            logger.debug("received fire status reply");
+//            logger.debug("received fire status reply");
             if (replyMsg.getContent() == null) {
                 logger.error("reply message has no content");
                 return;
@@ -343,7 +343,7 @@ public final class FireMonitorAgent extends Agent {
                 // to next column
                 areaPosition.increaseCol(1);
             }
-            logger.debug("moved to position (" + areaPosition + ")");
+//            logger.debug("moved to position (" + areaPosition + ")");
         }
     }
     
