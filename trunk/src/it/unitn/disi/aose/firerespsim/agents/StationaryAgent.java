@@ -346,6 +346,8 @@ public abstract class StationaryAgent extends Agent {
                     }
                 }
             }
+            send(sendToMsg);
+            logger.info("sent all idle vehicles to the new fire");
         }
     }
     
@@ -369,8 +371,12 @@ public abstract class StationaryAgent extends Agent {
         protected void onTick() {
 
             for (final Fire fire : fires.values()) {
-                if (fire.getCasualties() == 0 && fire.getIntensity() == 0) {
-                    // TODO
+                if (fire == null) {
+                    // no info about fire yet
+                } else {
+                    if (fire.getCasualties() == 0 && fire.getIntensity() == 0) {
+                        // TODO
+                    }
                 }
             }
         }
