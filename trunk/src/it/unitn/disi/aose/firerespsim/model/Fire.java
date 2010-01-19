@@ -117,7 +117,7 @@ public final class Fire {
     public static Fire fromString(final String str) {
 
         final String[] fields = str.split(FIELD_SEPARATOR);
-        // TODO checking
+        if (fields.length != 3) return null;
         return new Fire(Position.fromString(fields[0]), Integer.parseInt(fields[1]), Integer.parseInt(fields[2]));
     }
     
