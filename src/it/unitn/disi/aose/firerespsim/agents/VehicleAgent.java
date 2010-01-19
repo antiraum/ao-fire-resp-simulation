@@ -135,7 +135,7 @@ public abstract class VehicleAgent extends Agent {
             
             logger.debug("received set-target request");
             
-            if (vehicle.isAcceptingTarget()) {
+            if (!vehicle.isAcceptingTarget()) {
                 logger.debug("currently not accepting set-target requests");
                 return;
             }
