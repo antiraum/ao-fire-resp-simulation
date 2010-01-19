@@ -250,7 +250,7 @@ public abstract class CoordinatorAgent extends Agent {
      */
     class ReceiveFireAlerts extends CyclicBehaviour {
         
-        private final Set<Position> knownFires = new HashSet<Position>();
+        private final Set<String> knownFires = new HashSet<String>();
         
         private final MessageTemplate alertTpl = MessageTemplate.and(
                                                                      MessageTemplate.MatchPerformative(ACLMessage.INFORM),
@@ -272,8 +272,8 @@ public abstract class CoordinatorAgent extends Agent {
             final Position firePosition = Position.fromString(alertMsg.getContent());
             logger.info("received fire alert for position (" + firePosition + ")");
             
-            if (knownFires.contains(firePosition)) return; // not new
-            knownFires.add(firePosition);
+            if (knownFires.contains(firePosition.toString())) return; // not new
+            knownFires.add(firePosition.toString());
             
             // request proposals from stationary agents
             fireProposals.put(firePosition.toString(), new HashSet<Proposal>());
