@@ -49,7 +49,7 @@ public final class Vehicle {
     /**
      * Current target position on the simulation area.
      */
-    public Position target = null;
+    public Position target;
     /**
      * If currently accepting a new target.
      */
@@ -65,6 +65,7 @@ public final class Vehicle {
         id = vehicleId;
         this.position = position;
         home = position;
+        target = position;
         this.state = new SyncedInteger(state);
     }
     

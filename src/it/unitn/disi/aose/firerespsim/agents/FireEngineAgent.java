@@ -35,7 +35,6 @@ public final class FireEngineAgent extends VehicleAgent {
 
         logger.info("is idle");
         vehicle.setState(Vehicle.STATE_IDLE);
-        vehicle.target = null;
     }
     
     /**
@@ -46,9 +45,7 @@ public final class FireEngineAgent extends VehicleAgent {
 
         if (fire.getIntensity() < 1) {
             logger.info("fire is put out, returning to fire brigade");
-            vehicle.target.set(vehicle.home);
-            vehicle.setState(Vehicle.STATE_TO_TARGET);
-            sendStatus();
+            setTarget(vehicle.home);
         }
     }
 }
