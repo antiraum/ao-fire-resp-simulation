@@ -313,14 +313,14 @@ public abstract class CoordinatorAgent extends Agent {
             final ACLMessage proposalMsg = blockingReceive(proposalTpl);
             if (proposalMsg == null) return;
             
-            logger.debug("received proposal");
-            
             // save proposal
             if (proposalMsg.getContent() == null) {
                 logger.error("proposal message has no content");
                 return;
             }
             final Proposal prop = Proposal.fromString(proposalMsg.getContent());
+            logger.debug("received proposal for fire (" + prop.firePosition + ") from '" + prop.agentName + "'");
+            
             if (!fireProposals.containsKey(prop.firePosition.toString())) {
                 // fire is not currently coordinated
                 logger.debug("proposal is for fire that's currently not coordinated");
@@ -330,6 +330,7 @@ public abstract class CoordinatorAgent extends Agent {
             
             if (fireProposals.get(prop.firePosition.toString()).size() == stationaryAgents.size()) {
                 // all proposals received
+                logger.debug("received all proposals for fire (" + prop.firePosition + ")");
                 assignFire(prop.firePosition.toString());
             }
         }
@@ -406,7 +407,7 @@ public abstract class CoordinatorAgent extends Agent {
             }
             send(recjectMsg);
             
-            logger.info("accepted proposal from " + bestProp.agentName + " for fire at " + fireKey);
+            logger.info("accepted proposal from '" + bestProp.agentName + "' for fire at " + fireKey);
         }
         
         // remove from temporary maps
