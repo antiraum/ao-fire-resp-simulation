@@ -84,6 +84,9 @@ public abstract class VehicleAgent extends Agent {
         owner = new AID((String) params[1], true);
         final int vehicleMoveIval = (params.length > 4) ? (Integer) params[4] : DEFAULT_MOVE_IVAL;
         
+        // status to owner
+        sendStatus();
+        
         // add behaviors
         threadedBehaviours.addAll(Arrays.asList(new Behaviour[] {
             new SetTargetService(), new Move(this, vehicleMoveIval), new ReceiveFireStatus()}));

@@ -275,7 +275,7 @@ public abstract class StationaryAgent extends Agent {
             // create proposal
             int idleVehicles = 0;
             for (final Vehicle v : vehicles.values()) {
-                if (v != null && v.getState() == Vehicle.STATE_IDLE) {
+                if (v == null || v.getState() == Vehicle.STATE_IDLE) {
                     idleVehicles++;
                 }
             }
