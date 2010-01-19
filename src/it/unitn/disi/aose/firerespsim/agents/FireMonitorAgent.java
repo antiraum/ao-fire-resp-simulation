@@ -313,6 +313,9 @@ public final class FireMonitorAgent extends Agent {
                             alertMsg.addReceiver(agentAID);
                         }
                         send(alertMsg);
+                        logger.info("sent new fire alert");
+                    } else {
+                        logger.debug("nobody registered to send new fire alert to");
                     }
                 }
             } else {
