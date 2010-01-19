@@ -26,7 +26,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import org.apache.commons.lang.math.RandomUtils;
 import org.apache.log4j.Logger;
 
 /**
@@ -107,7 +106,7 @@ public abstract class StationaryAgent extends Agent {
         final int vehicleMoveIval = (params.length > 3) ? (Integer) params[3] : DEFAULT_VEHICLE_MOVE_IVAL;
         
         // create vehicle agents
-        final int numVehicles = RandomUtils.nextInt(4) + 1; // between 1 and 5
+        final int numVehicles = 1; //RandomUtils.nextInt(4) + 1; // between 1 and 5
         for (int i = 0; i < numVehicles; i++) {
             
             final String nickname = vehicleName + " " + id + "-" + i;
@@ -130,6 +129,7 @@ public abstract class StationaryAgent extends Agent {
             
             vehicles.put(i, null);
         }
+        logger.info("created " + numVehicles + " vehicles");
         
         // add behaviors
         final SequentialBehaviour sb = new SequentialBehaviour();
