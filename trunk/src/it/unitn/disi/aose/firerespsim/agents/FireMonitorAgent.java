@@ -228,7 +228,7 @@ public final class FireMonitorAgent extends Agent {
         
         private final Position areaPosition = new Position(1, 1);
         
-        private final Set<Position> detectedFires = new HashSet<Position>();
+        private final Set<String> detectedFires = new HashSet<String>();
         
         /**
          * @param a
@@ -297,13 +297,13 @@ public final class FireMonitorAgent extends Agent {
             }
             if (Boolean.parseBoolean(replyMsg.getContent())) {
                 // position is on fire
-                if (detectedFires.contains(areaPosition)) {
+                if (detectedFires.contains(areaPosition.toString())) {
                     // known fire
                     logger.debug("detected known fire at (" + areaPosition + ")");
                 } else {
                     // new fire
                     logger.info("detected new fire at (" + areaPosition + ")");
-                    detectedFires.add(areaPosition);
+                    detectedFires.add(areaPosition.toString());
                     if (fireAlertSubscribers.size() > 0) {
                         // tell registered agents
                         final ACLMessage alertMsg = new ACLMessage(ACLMessage.INFORM);
@@ -318,10 +318,10 @@ public final class FireMonitorAgent extends Agent {
             } else {
                 // position is not on fire
                 logger.debug("no fire at (" + areaPosition + ")");
-                if (detectedFires.contains(areaPosition)) {
+                if (detectedFires.contains(areaPosition.toString())) {
                     // remove known fire
                     logger.info("fire at (" + areaPosition + ") no longer burning");
-                    detectedFires.remove(areaPosition);
+                    detectedFires.remove(areaPosition.toString());
                 }
             }
             
