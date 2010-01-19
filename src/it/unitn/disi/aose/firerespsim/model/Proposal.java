@@ -67,6 +67,15 @@ public final class Proposal {
     }
     
     /**
+     * @return Human readable string
+     */
+    public String toPrettyString() {
+
+        return "fire: " + firePosition + ", agent: " + agentName.replaceFirst("@.*$", "") + ", distance: " + distance +
+               ", #vehicles: " + numVehicles;
+    }
+    
+    /**
      * @param str
      * @return {@link Proposal}
      */

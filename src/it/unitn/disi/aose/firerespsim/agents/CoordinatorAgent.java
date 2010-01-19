@@ -288,7 +288,7 @@ public abstract class CoordinatorAgent extends Agent {
                 send(cfpMsg);
                 logger.info("sent CFP to stationary agents");
             } else {
-                logger.debug("nobody registered to send CFP for this fire to");
+                logger.debug("no stationary agent registered to send CFP to");
             }
         }
     }
@@ -319,7 +319,7 @@ public abstract class CoordinatorAgent extends Agent {
                 return;
             }
             final Proposal prop = Proposal.fromString(proposalMsg.getContent());
-            logger.debug("received proposal for fire (" + prop.firePosition + ") from '" + prop.agentName + "'");
+            logger.debug("received proposal (" + prop.toPrettyString() + ")");
             
             if (!fireProposals.containsKey(prop.firePosition.toString())) {
                 // fire is not currently coordinated
@@ -407,7 +407,7 @@ public abstract class CoordinatorAgent extends Agent {
             }
             send(recjectMsg);
             
-            logger.info("accepted proposal from '" + bestProp.agentName + "' for fire at " + fireKey);
+            logger.info("accepted proposal (" + bestProp.toPrettyString() + ")");
         }
         
         // remove from temporary maps
