@@ -3,6 +3,8 @@ package it.unitn.disi.aose.firerespsim.model;
 import it.unitn.disi.aose.firerespsim.agents.VehicleAgent;
 import it.unitn.disi.aose.firerespsim.util.SyncedBoolean;
 import it.unitn.disi.aose.firerespsim.util.SyncedInteger;
+import java.util.Arrays;
+import java.util.List;
 import org.apache.commons.lang.StringUtils;
 
 /**
@@ -24,6 +26,9 @@ public final class Vehicle {
      * State if vehicle is at its target.
      */
     public static final int STATE_AT_TARGET = 2;
+    
+    private static final List<Integer> allowedStates = Arrays.asList(new Integer[] {
+        STATE_IDLE, STATE_TO_TARGET, STATE_AT_TARGET});
     
     /**
      * Id of the vehicle.
@@ -76,7 +81,8 @@ public final class Vehicle {
      */
     public final void setState(final int state) {
 
-        this.state.set(state); // TODO check
+        if (!allowedStates.contains(state)) return;
+        this.state.set(state);
     }
     
     /**
@@ -113,7 +119,7 @@ public final class Vehicle {
     public final static Vehicle fromString(final String str) {
 
         final String[] fields = str.split(FIELD_SEPARATOR);
-        // TODO checking
+        if (fields.length != 3) return null;
         return new Vehicle(Integer.parseInt(fields[0]), Position.fromString(fields[1]), Integer.parseInt(fields[2]));
     }
 }

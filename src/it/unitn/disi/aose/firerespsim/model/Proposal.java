@@ -46,8 +46,8 @@ public final class Proposal {
      * @param stationaryAgentPosition
      * @param numVehicles
      */
-    public Proposal(final Position firePosition, final String agentName,
-                    final Position stationaryAgentPosition, final int numVehicles) {
+    public Proposal(final Position firePosition, final String agentName, final Position stationaryAgentPosition,
+                    final int numVehicles) {
 
         this.firePosition = firePosition;
         this.agentName = agentName;
@@ -73,7 +73,7 @@ public final class Proposal {
     public static Proposal fromString(final String str) {
 
         final String[] fields = str.split(FIELD_SEPARATOR);
-        // TODO checking
+        if (fields.length != 4) return null;
         return new Proposal(Position.fromString(fields[0]), fields[1], Integer.parseInt(fields[2]),
                             Integer.parseInt(fields[3]));
     }

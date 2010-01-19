@@ -117,7 +117,7 @@ public final class Position {
     public static Position fromString(final String str) {
 
         final String[] fields = str.split(" ");
-        // TODO checking
+        if (fields.length != 2) return null;
         return new Position(Integer.parseInt(fields[0]), Integer.parseInt(fields[1]));
     }
     
