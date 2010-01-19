@@ -300,7 +300,7 @@ public final class FireMonitorAgent extends Agent {
                     logger.debug("detected known fire at (" + areaPosition + ")");
                 } else {
                     // new fire
-                    logger.info("detected new fire at (" + areaPosition + ")");
+                    logger.info("detected new fire at (" + areaPosition + ") - sending fire alert to coordinators");
                     detectedFires.add(areaPosition.toString());
                     if (fireAlertSubscribers.size() > 0) {
                         // tell registered agents
@@ -311,9 +311,8 @@ public final class FireMonitorAgent extends Agent {
                             alertMsg.addReceiver(agentAID);
                         }
                         send(alertMsg);
-                        logger.info("sent out fire alert to coordinators");
                     } else {
-                        logger.debug("no coordinator is registered to send fire alert to");
+                        logger.error("no coordinator is registered to send fire alert to");
                     }
                 }
             } else {
