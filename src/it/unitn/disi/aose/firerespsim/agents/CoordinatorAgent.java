@@ -313,16 +313,22 @@ public abstract class CoordinatorAgent extends Agent {
             final ACLMessage proposalMsg = blockingReceive(proposalTpl);
             if (proposalMsg == null) return;
             
+            logger.debug("received proposal");
+            
             // save proposal
             if (proposalMsg.getContent() == null) {
                 logger.error("proposal message has no content");
                 return;
             }
             final Proposal prop = Proposal.fromString(proposalMsg.getContent());
-            if (!fireProposals.containsKey(prop.firePosition.toString())) return; // fire is not currently coordinated
+            if (!fireProposals.containsKey(prop.firePosition.toString())) {
+                // fire is not currently coordinated
+                logger.debug("proposal is for fire that's currently not coordinated");
+                return;
+            }
             fireProposals.get(prop.firePosition.toString()).add(prop);
             
-            if (fireProposals.get(prop.firePosition).size() == stationaryAgents.size()) {
+            if (fireProposals.get(prop.firePosition.toString()).size() == stationaryAgents.size()) {
                 // all proposals received
                 assignFire(prop.firePosition.toString());
             }
