@@ -1,8 +1,6 @@
 package it.unitn.disi.aose.firerespsim.agents;
 
 import it.unitn.disi.aose.firerespsim.model.Fire;
-import it.unitn.disi.aose.firerespsim.model.Position;
-import it.unitn.disi.aose.firerespsim.model.Vehicle;
 import jade.core.AID;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
@@ -25,35 +23,6 @@ public final class AmbulanceAgent extends VehicleAgent {
      * If currently transporting a casualty.
      */
     private boolean hasCasualty = false;
-    /**
-     * Position of the fire currently assigned to.
-     */
-    private Position firePosition;
-    
-    /**
-     * @see it.unitn.disi.aose.firerespsim.agents.VehicleAgent#arrivedAtFire()
-     */
-    @Override
-    void arrivedAtFire() {
-
-        firePosition = vehicle.position;
-        final ACLMessage pickUpMsg = new ACLMessage(ACLMessage.REQUEST);
-        pickUpMsg.setOntology(FireAgent.PICK_UP_ONT_TYPE);
-        pickUpMsg.setContent(vehicle.position.toString());
-        pickUpMsg.addReceiver(new AID(FireAgent.FIRE_AGENT_NAME_PREFIX + firePosition, false));
-        send(pickUpMsg);
-        logger.debug("sent pick up casualty request to fire at (" + firePosition + ")");
-        
-        final ACLMessage replyMsg = blockingReceive(pickUpReplyTpl);
-        if (replyMsg.getPerformative() == ACLMessage.CONFIRM) {
-            logger.info("picked up casualty from fire at (" + firePosition + "), bringing it back to hospital");
-            hasCasualty = true;
-            vehicle.setAcceptingTarget(false);
-            setTarget(vehicle.home);
-        } else {
-            logger.info("no casualty picked up from fire at (" + firePosition + ")");
-        }
-    }
     
     /**
      * @see it.unitn.disi.aose.firerespsim.agents.VehicleAgent#arrivedAtHome()
@@ -66,14 +35,57 @@ public final class AmbulanceAgent extends VehicleAgent {
             hasCasualty = false;
             vehicle.setAcceptingTarget(true);
             logger.info("delivered casualty");
-            if (firePosition != null) {
+            if (vehicle.fire == null) {
+                setIdle();
+            } else {
                 logger.info("returning to fire");
-                setTarget(firePosition);
+                setTarget(vehicle.fire);
             }
         } else {
-            logger.info("is idle");
-            vehicle.setState(Vehicle.STATE_IDLE);
+            setIdle();
         }
+    }
+    
+    /**
+     * @see it.unitn.disi.aose.firerespsim.agents.VehicleAgent#arrivedAtFire()
+     */
+    @Override
+    void arrivedAtFire() {
+
+        if (vehicle.fire == null) {
+            vehicle.fire = vehicle.position.clone();
+            sendStatus();
+        } else if (!vehicle.fire.equals(vehicle.position)) {
+            vehicle.fire.set(vehicle.position);
+            sendStatus();
+        }
+        
+        final ACLMessage pickUpMsg = new ACLMessage(ACLMessage.REQUEST);
+        pickUpMsg.setOntology(FireAgent.PICK_UP_ONT_TYPE);
+        pickUpMsg.setContent(vehicle.position.toString());
+        pickUpMsg.addReceiver(new AID(FireAgent.FIRE_AGENT_NAME_PREFIX + vehicle.fire, false));
+        send(pickUpMsg);
+//        logger.debug("sent pick up casualty request to fire at (" + vehicle.fire + ")");
+        
+        final ACLMessage replyMsg = blockingReceive(pickUpReplyTpl);
+        
+        if (replyMsg.getPerformative() == ACLMessage.CONFIRM) {
+            logger.info("picked up casualty from fire at (" + vehicle.fire + "), bringing it back to hospital");
+            hasCasualty = true;
+            vehicle.setAcceptingTarget(false);
+            setTarget(vehicle.home);
+        } else {
+            logger.info("no casualty picked up from fire at (" + vehicle.fire + ")");
+        }
+    }
+    
+    /**
+     * @see it.unitn.disi.aose.firerespsim.agents.VehicleAgent#continuousAction()
+     */
+    @Override
+    void continuousAction() {
+
+    // nothing
     }
     
     /**
@@ -82,13 +94,10 @@ public final class AmbulanceAgent extends VehicleAgent {
     @Override
     void receivedFireStatus(final Fire fire) {
 
-        if (fire.getIntensity() < 1 && fire.getCasualties() < 1) {
-            logger.info("fire is put out and all casualties have been picked up");
-            firePosition = null;
-            if (!vehicle.target.equals(vehicle.home)) {
-                logger.info("returning to hospital");
-                setTarget(vehicle.home);
-            }
-        }
+        if (fire.getIntensity() >= 1 || fire.getCasualties() >= 1) return;
+        
+        logger.info("fire is put out and all casualties have been picked up - returning to hospital");
+        vehicle.fire = null;
+        setTarget(vehicle.home);
     }
 }

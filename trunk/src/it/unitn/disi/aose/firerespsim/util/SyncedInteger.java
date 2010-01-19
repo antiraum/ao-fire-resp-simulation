@@ -9,8 +9,6 @@ public final class SyncedInteger {
     
     private int value = 0;
     
-//    private boolean available = false;
-    
     /**
      * @param value Initial value
      */
@@ -26,21 +24,6 @@ public final class SyncedInteger {
      */
     public synchronized int get() {
 
-//        boolean needToWait = false;
-//        while (available == false) {
-//            needToWait = true;
-//            System.err.println(this.getClass().getSimpleName() + " waiting to become available");
-//            try {
-//                wait();
-//            } catch (final InterruptedException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//        if (needToWait) {
-//            System.err.println(this.getClass().getSimpleName() + " became available");
-//        }
-//        available = false;
-//        notifyAll();
         return value;
     }
     
@@ -49,22 +32,7 @@ public final class SyncedInteger {
      */
     public synchronized void set(final int value) {
 
-//        boolean needToWait = false;
-//        while (available == true) {
-//            needToWait = true;
-//            System.err.println(this.getClass().getSimpleName() + " waiting to become unavailable");
-//            try {
-//                wait();
-//            } catch (final InterruptedException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//        if (needToWait) {
-//            System.err.println(this.getClass().getSimpleName() + " became unavailable");
-//        }
         this.value = value;
-//        available = true;
-//        notifyAll();
     }
     
     /**
@@ -72,22 +40,7 @@ public final class SyncedInteger {
      */
     public synchronized void increase(final int amount) {
 
-//        boolean needToWait = false;
-//        while (available == true) {
-//            needToWait = true;
-//            System.err.println(this.getClass().getSimpleName() + " waiting to become unavailable");
-//            try {
-//                wait();
-//            } catch (final InterruptedException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//        if (needToWait) {
-//            System.err.println(this.getClass().getSimpleName() + " became unavailable");
-//        }
         value += amount;
-//        available = true;
-//        notifyAll();
     }
     
     /**
@@ -95,22 +48,7 @@ public final class SyncedInteger {
      */
     public synchronized void decrease(final int amount) {
 
-//        boolean needToWait = false;
-//        while (available == true) {
-//            needToWait = true;
-//            System.err.println(this.getClass().getSimpleName() + " waiting to become unavailable");
-//            try {
-//                wait();
-//            } catch (final InterruptedException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//        if (needToWait) {
-//            System.err.println(this.getClass().getSimpleName() + " became unavailable");
-//        }
         value -= amount;
-//        available = true;
-//        notifyAll();
     }
     
     /**

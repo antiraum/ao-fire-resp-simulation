@@ -220,7 +220,7 @@ public abstract class StationaryAgent extends Agent {
             subscribeMsg.addReceiver(coordinatorAID);
             subscribeMsg.setOntology(CoordinatorAgent.COORDINATION_ONT_TYPE);
             send(subscribeMsg);
-            logger.debug("sent coordinator registration request");
+//            logger.debug("sent coordinator registration request");
             
             final ACLMessage replyMsg = blockingReceive(replyTpl);
             if (replyMsg.getPerformative() == ACLMessage.AGREE) {
@@ -320,7 +320,7 @@ public abstract class StationaryAgent extends Agent {
                 return;
             }
             final String firePositionStr = replyMsg.getContent();
-            logger.debug("received proposal reply for fire at position (" + firePositionStr + ")");
+//            logger.debug("received proposal reply for fire at position (" + firePositionStr + ")");
             
             if (replyMsg.getPerformative() == ACLMessage.REJECT_PROPOSAL) {
                 logger.info("proposal for fire at position (" + firePositionStr + ") got rejected");
@@ -415,7 +415,7 @@ public abstract class StationaryAgent extends Agent {
             
             // update assignments
             for (final Map.Entry<String, Set<Integer>> fireAssignment : fireAssignments.entrySet()) {
-                if (fireAssignment.getKey() == vehicleStatus.target.toString()) {
+                if (vehicleStatus.target != null && fireAssignment.getKey() == vehicleStatus.target.toString()) {
                     fireAssignment.getValue().add(vehicleStatus.id);
                 } else {
                     fireAssignment.getValue().remove(vehicleStatus.id);

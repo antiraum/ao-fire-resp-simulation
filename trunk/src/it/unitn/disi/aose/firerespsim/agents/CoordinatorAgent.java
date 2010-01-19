@@ -135,7 +135,7 @@ public abstract class CoordinatorAgent extends Agent {
             final ACLMessage requestMsg = blockingReceive(requestTpl);
             if (requestMsg == null) return;
             
-            logger.debug("received coordination registration request");
+//            logger.debug("received coordination registration request");
             
             final ACLMessage replyMsg = requestMsg.createReply();
             if (stationaryAgents.contains(requestMsg.getSender())) {
@@ -147,7 +147,7 @@ public abstract class CoordinatorAgent extends Agent {
                 replyMsg.setPerformative(ACLMessage.AGREE);
             }
             send(replyMsg);
-            logger.debug("sent coordination registration reply");
+//            logger.debug("sent coordination registration reply");
         }
     }
     
@@ -212,7 +212,7 @@ public abstract class CoordinatorAgent extends Agent {
             subscribeMsg.addReceiver(fireMonitorAID);
             subscribeMsg.setOntology(FireMonitorAgent.FIRE_ALERT_ONT_TYPE);
             send(subscribeMsg);
-            logger.debug("sent fire alert subscribtion request");
+//            logger.debug("sent fire alert subscription request");
             
             final ACLMessage replyMsg = blockingReceive(replyTpl);
             if (replyMsg.getPerformative() == ACLMessage.AGREE) {

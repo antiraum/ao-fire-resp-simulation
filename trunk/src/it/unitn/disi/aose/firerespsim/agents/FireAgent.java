@@ -153,7 +153,7 @@ public final class FireAgent extends Agent {
             final ACLMessage requestMsg = blockingReceive(requestTpl);
             if (requestMsg == null) return;
             
-            logger.debug("received put-out request");
+//            logger.debug("received put-out request");
             
             // get content
             if (requestMsg.getContent() == null) {
@@ -187,7 +187,7 @@ public final class FireAgent extends Agent {
             } else {
                 logger.debug("fire engine is too far away");
             }
-            logger.debug("sent put-out reply");
+//            logger.debug("sent put-out reply");
             if (takeDown) {
                 doDelete();
             }
@@ -215,7 +215,7 @@ public final class FireAgent extends Agent {
             final ACLMessage requestMsg = blockingReceive(requestTpl);
             if (requestMsg == null) return;
             
-            logger.debug("received casualty-pick-up request");
+//            logger.debug("received casualty-pick-up request");
             
             // get content
             if (requestMsg.getContent() == null) {
@@ -247,7 +247,7 @@ public final class FireAgent extends Agent {
                 replyMsg.setPerformative(ACLMessage.DISCONFIRM);
             }
             send(replyMsg);
-            logger.debug("sent casualty-pick-up reply");
+//            logger.debug("sent casualty-pick-up reply");
             if (takeDown) {
                 doDelete();
             }

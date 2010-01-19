@@ -89,7 +89,8 @@ public abstract class VehicleAgent extends Agent {
         
         // add behaviors
         threadedBehaviours.addAll(Arrays.asList(new Behaviour[] {
-            new SetTargetService(), new Move(this, vehicleMoveIval), new ReceiveFireStatus()}));
+            new SetTargetService(), new Move(this, vehicleMoveIval), new ContinuousAction(this, vehicleMoveIval),
+            new ReceiveFireStatus()}));
         final ParallelBehaviour pb = new ParallelBehaviour(ParallelBehaviour.WHEN_ALL);
         for (final Behaviour b : threadedBehaviours) {
             pb.addSubBehaviour(tbf.wrap(b));
@@ -143,11 +144,12 @@ public abstract class VehicleAgent extends Agent {
                 logger.error("request message has no content");
                 return;
             }
-            final Position newTarget = Position.fromString(requestMsg.getContent());
+            final Position target = Position.fromString(requestMsg.getContent());
             
-            logger.debug("received set-target request with new target (" + newTarget + ")");
+            logger.debug("received set-target request with new target (" + target + ")");
             
-            setTarget(newTarget);
+            vehicle.fire = target;
+            setTarget(target);
         }
     }
     
@@ -158,13 +160,27 @@ public abstract class VehicleAgent extends Agent {
      */
     void setTarget(final Position target) {
 
-        vehicle.target.set(target);
+        if (vehicle.target == null) {
+            vehicle.target = target.clone();
+        } else {
+            vehicle.target.set(target);
+        }
         vehicle.setState(Vehicle.STATE_TO_TARGET);
         logger.debug("target set to (" + vehicle.target + ")");
         if (vehicle.position.equals(vehicle.target)) {
             arrivedAtTarget();
         }
         sendStatus();
+    }
+    
+    /**
+     * Sets the vehicle to idle.
+     */
+    protected void setIdle() {
+
+        vehicle.setState(Vehicle.STATE_IDLE);
+        vehicle.target = null;
+        logger.info("is now idle");
     }
     
     /**
@@ -178,7 +194,7 @@ public abstract class VehicleAgent extends Agent {
         statusMsg.setOntology(VEHICLE_STATUS_ONT_TYPE);
         statusMsg.setContent(vehicle.toString());
         send(statusMsg);
-        logger.debug("sent status to owner");
+        logger.debug("sent vehicle status to owner");
     }
     
     /**
@@ -202,6 +218,13 @@ public abstract class VehicleAgent extends Agent {
         protected void onTick() {
 
             if (vehicle.getState() != Vehicle.STATE_TO_TARGET) return;
+            final Position oldPosition = vehicle.position.clone();
+            String oldPositionStr = "(" + oldPosition.toString() + ")";
+            if (oldPosition.equals(vehicle.home)) {
+                oldPositionStr = "home";
+            } else if (vehicle.fire != null && oldPosition.equals(vehicle.fire)) {
+                oldPositionStr = "fire";
+            }
             if (vehicle.position.getRow() > vehicle.target.getRow()) {
                 vehicle.position.decreaseRow(1);
             } else if (vehicle.position.getRow() < vehicle.target.getRow()) {
@@ -212,10 +235,16 @@ public abstract class VehicleAgent extends Agent {
             } else if (vehicle.position.getCol() < vehicle.target.getCol()) {
                 vehicle.position.increaseCol(1);
             }
+            final Position newPosition = vehicle.position.clone();
+            String newPositionStr = "(" + newPosition.toString() + ")";
+            if (newPosition.equals(vehicle.home)) {
+                newPositionStr = "home";
+            } else if (vehicle.fire != null && newPosition.equals(vehicle.fire)) {
+                newPositionStr = "fire";
+            }
+            logger.debug("moved from " + oldPositionStr + " to (" + newPositionStr + ")");
             if (vehicle.position.equals(vehicle.target)) {
                 arrivedAtTarget();
-            } else {
-                logger.debug("moved to (" + vehicle.position.getRow() + ", " + vehicle.position.getCol() + ")");
             }
             sendStatus();
         }
@@ -227,12 +256,12 @@ public abstract class VehicleAgent extends Agent {
     void arrivedAtTarget() {
 
         vehicle.setState(Vehicle.STATE_AT_TARGET);
-        if (vehicle.position.equals(vehicle.home)) {
-            logger.info("arrived at home");
-            arrivedAtHome();
-        } else {
+        if (vehicle.fire != null && vehicle.position.equals(vehicle.fire)) {
             logger.info("arrived at fire");
             arrivedAtFire();
+        } else {
+            logger.info("arrived at home");
+            arrivedAtHome();
         }
     }
     
@@ -245,6 +274,35 @@ public abstract class VehicleAgent extends Agent {
      * Gets called when arrived at fire. Package scoped for faster access by inner classes.
      */
     abstract void arrivedAtFire();
+    
+    /**
+     * Behavior for continuous actions that can be defined in the concrete subclasses.
+     */
+    class ContinuousAction extends TickerBehaviour {
+        
+        /**
+         * @param a
+         * @param period
+         */
+        public ContinuousAction(final Agent a, final long period) {
+
+            super(a, period);
+        }
+        
+        /**
+         * @see jade.core.behaviours.TickerBehaviour#onTick()
+         */
+        @Override
+        protected void onTick() {
+
+            continuousAction();
+        }
+    }
+    
+    /**
+     * Gets called every move interval. Package scoped for faster access by inner classes.
+     */
+    abstract void continuousAction();
     
     /**
      * Receives the status messages from fire agents.
