@@ -29,6 +29,15 @@ public final class Position {
     }
     
     /**
+     * @see java.lang.Object#clone()
+     */
+    @Override
+    public Position clone() {
+
+        return new Position(getRow(), getCol());
+    }
+    
+    /**
      * @param position
      */
     public void set(final Position position) {
@@ -128,7 +137,8 @@ public final class Position {
     public boolean equals(final Object obj) {
 
         final Position other = (Position) obj;
-        return (other.row.equals(row) && other.col.equals(col)) ? true : false;
+        final boolean equal = (other.row.equals(row) && other.col.equals(col)) ? true : false;
+        return equal;
     }
     
     /**

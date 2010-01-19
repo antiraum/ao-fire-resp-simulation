@@ -47,9 +47,13 @@ public final class Vehicle {
      */
     public Position home;
     /**
+     * Position of the fire currently assigned to.
+     */
+    public Position fire = null;
+    /**
      * Current target position on the simulation area.
      */
-    public Position target;
+    public Position target = null;
     /**
      * If currently accepting a new target.
      */
@@ -63,9 +67,8 @@ public final class Vehicle {
     public Vehicle(final int vehicleId, final Position position, final int state) {
 
         id = vehicleId;
-        this.position = position;
-        home = position;
-        target = position;
+        this.position = position.clone();
+        home = position.clone();
         this.state = new SyncedInteger(state);
     }
     

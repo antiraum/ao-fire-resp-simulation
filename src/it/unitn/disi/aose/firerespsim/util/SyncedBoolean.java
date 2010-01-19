@@ -9,8 +9,6 @@ public final class SyncedBoolean {
     
     private boolean value;
     
-//    private boolean available = false;
-    
     /**
      * @param value Initial value
      */
@@ -26,21 +24,6 @@ public final class SyncedBoolean {
      */
     public synchronized boolean get() {
 
-//        boolean needToWait = false;
-//        while (available == false) {
-//            needToWait = true;
-//            System.err.println(this.getClass().getSimpleName() + " waiting to become available");
-//            try {
-//                wait();
-//            } catch (final InterruptedException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//        if (needToWait) {
-//            System.err.println(this.getClass().getSimpleName() + " became available");
-//        }
-//        available = false;
-//        notifyAll();
         return value;
     }
     
@@ -49,22 +32,7 @@ public final class SyncedBoolean {
      */
     public synchronized void set(final boolean value) {
 
-//        boolean needToWait = false;
-//        while (available == true) {
-//            needToWait = true;
-//            System.err.println(this.getClass().getSimpleName() + " waiting to become un-available");
-//            try {
-//                wait();
-//            } catch (final InterruptedException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//        if (needToWait) {
-//            System.err.println(this.getClass().getSimpleName() + " became un-available");
-//        }
         this.value = value;
-//        available = true;
-//        notifyAll();
     }
     
     /**

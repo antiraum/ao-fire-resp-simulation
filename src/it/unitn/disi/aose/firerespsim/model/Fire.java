@@ -30,7 +30,7 @@ public final class Fire {
      */
     public Fire(final Position position, final int intensity, final int casualties) {
 
-        this.position = position;
+        this.position = position.clone();
         this.intensity = new SyncedInteger(intensity);
         this.casualties = new SyncedInteger(casualties);
     }

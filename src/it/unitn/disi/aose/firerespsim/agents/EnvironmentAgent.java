@@ -158,14 +158,14 @@ public final class EnvironmentAgent extends Agent {
             final ACLMessage requestMsg = blockingReceive(requestTpl);
             if (requestMsg == null) return;
             
-            logger.debug("received request for area dimensions");
+//            logger.debug("received request for area dimensions");
             
             // send area dimensions
             final ACLMessage replyMsg = requestMsg.createReply();
             replyMsg.setPerformative(ACLMessage.INFORM);
             replyMsg.setContent(area.toString());
             send(replyMsg);
-            logger.debug("sent area dimensions reply");
+//            logger.debug("sent area dimensions reply");
         }
     }
     
@@ -194,7 +194,7 @@ public final class EnvironmentAgent extends Agent {
                 return;
             }
             final Position requestPosition = Position.fromString(requestMsg.getContent());
-            logger.debug("received on fire status request for position (" + requestPosition + ")");
+//            logger.debug("received on fire status request for position (" + requestPosition + ")");
             
             if (area.getOnFireState(requestPosition)) {
                 // check if fire agent still alive (fire still burning)
@@ -256,7 +256,6 @@ public final class EnvironmentAgent extends Agent {
                                                                                               firePosition.getCol(),
                                                                                               fireIncreaseIval});
                 fireAgent.start();
-                logger.debug("started fire at (" + firePosition + ")");
             } catch (final StaleProxyException e) {
                 logger.error("couldn't start fire");
                 e.printStackTrace();
@@ -265,7 +264,7 @@ public final class EnvironmentAgent extends Agent {
             // set fire state
             area.setOnFireState(firePosition, true);
             
-            logger.info("created fire at (" + firePosition + ")");
+            logger.info("started fire at (" + firePosition + ")");
         }
     }
 }

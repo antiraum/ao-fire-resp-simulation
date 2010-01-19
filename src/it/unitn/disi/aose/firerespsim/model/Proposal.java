@@ -34,7 +34,7 @@ public final class Proposal {
      */
     public Proposal(final Position firePosition, final String agentName, final int distance, final int numVehicles) {
 
-        this.firePosition = firePosition;
+        this.firePosition = firePosition.clone();
         this.agentName = agentName;
         this.distance = distance;
         this.numVehicles = numVehicles;
@@ -49,10 +49,7 @@ public final class Proposal {
     public Proposal(final Position firePosition, final String agentName, final Position stationaryAgentPosition,
                     final int numVehicles) {
 
-        this.firePosition = firePosition;
-        this.agentName = agentName;
-        distance = SimulationArea.getDistance(stationaryAgentPosition, firePosition);
-        this.numVehicles = numVehicles;
+        this(firePosition, agentName, SimulationArea.getDistance(stationaryAgentPosition, firePosition), numVehicles);
     }
     
     private static final String FIELD_SEPARATOR = " / ";
