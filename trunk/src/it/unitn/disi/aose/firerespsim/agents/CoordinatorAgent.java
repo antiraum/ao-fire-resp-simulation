@@ -76,7 +76,7 @@ public abstract class CoordinatorAgent extends Agent {
         final SequentialBehaviour sb = new SequentialBehaviour();
         sb.addSubBehaviour(new SubscribeToFireAlerts());
         threadedBehaviours.addAll(Arrays.asList(new Behaviour[] {
-            new ReceiveProposals(), new CoordinationService(), new ReceiveProposals(),
+            new ReceiveFireAlerts(), new ReceiveProposals(), new CoordinationService(), new ReceiveProposals(),
             new CheckCoordinationTimeouts(this)}));
         final ParallelBehaviour pb = new ParallelBehaviour(ParallelBehaviour.WHEN_ALL);
         for (final Behaviour b : threadedBehaviours) {
@@ -275,16 +275,21 @@ public abstract class CoordinatorAgent extends Agent {
             if (knownFires.contains(firePosition.toString())) return; // not new
             knownFires.add(firePosition.toString());
             
-            // request proposals from stationary agents
-            fireProposals.put(firePosition.toString(), new HashSet<Proposal>());
-            fireCfpStartTimes.put(firePosition.toString(), System.currentTimeMillis());
-            final ACLMessage cfpMsg = new ACLMessage(ACLMessage.CFP);
-            cfpMsg.setOntology(COORDINATION_ONT_TYPE);
-            cfpMsg.setContent(firePosition.toString());
-            for (final AID aid : stationaryAgents) {
-                cfpMsg.addReceiver(aid);
+            if (stationaryAgents.size() > 0) {
+                // request proposals from stationary agents
+                fireProposals.put(firePosition.toString(), new HashSet<Proposal>());
+                fireCfpStartTimes.put(firePosition.toString(), System.currentTimeMillis());
+                final ACLMessage cfpMsg = new ACLMessage(ACLMessage.CFP);
+                cfpMsg.setOntology(COORDINATION_ONT_TYPE);
+                cfpMsg.setContent(firePosition.toString());
+                for (final AID aid : stationaryAgents) {
+                    cfpMsg.addReceiver(aid);
+                }
+                send(cfpMsg);
+                logger.info("sent CFP to stationary agents");
+            } else {
+                logger.debug("nobody registered to send CFP for this fire to");
             }
-            send(cfpMsg);
         }
     }
     
