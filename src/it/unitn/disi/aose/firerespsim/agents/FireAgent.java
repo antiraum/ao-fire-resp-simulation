@@ -22,7 +22,7 @@ import org.apache.log4j.Logger;
  * to it can read it's current status (intensity and number of casualties). Fire engines next to it can decrease its
  * intensity. Start-up parameters are the row, column, and the increase interval.
  * 
- * @author tom
+ * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
 public final class FireAgent extends Agent {

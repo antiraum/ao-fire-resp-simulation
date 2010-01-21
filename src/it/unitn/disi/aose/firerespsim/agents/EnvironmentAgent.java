@@ -27,7 +27,7 @@ import org.apache.log4j.Logger;
  * This agent maintains the area of the simulation and generates new fires. Start-up parameters area simulation area
  * width, simulation area height, and fire spawn interval.
  * 
- * @author tom
+ * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
 public final class EnvironmentAgent extends Agent {

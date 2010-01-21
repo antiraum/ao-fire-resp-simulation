@@ -8,7 +8,7 @@ import jade.lang.acl.ACLMessage;
 /**
  * This agent simulates an fire engine.
  * 
- * @author tom
+ * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
 public final class FireEngineAgent extends VehicleAgent {

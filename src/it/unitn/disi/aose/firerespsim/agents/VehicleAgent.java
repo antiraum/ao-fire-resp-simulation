@@ -21,7 +21,7 @@ import org.apache.log4j.Logger;
  * This is the super class for the fire engine and ambulance agents. Start-up parameters are id, owner (GUID name of the
  * owning stationary agent), row, column, and the movement interval.
  * 
- * @author tom
+ * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
 public abstract class VehicleAgent extends Agent {

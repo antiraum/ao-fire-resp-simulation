@@ -28,7 +28,7 @@ import org.apache.log4j.Logger;
  * Coordinator for {@link StationaryAgent}s. Subscribes at the {@link FireMonitorAgent} for fire alerts. Distribute the
  * responsibilities for the fires among the registered stationary agents. No start-up parameters.
  * 
- * @author tom
+ * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
 public abstract class CoordinatorAgent extends Agent {

@@ -8,7 +8,7 @@ import jade.lang.acl.MessageTemplate;
 /**
  * This agent simulates an ambulance.
  * 
- * @author tom
+ * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
 public final class AmbulanceAgent extends VehicleAgent {

@@ -34,7 +34,7 @@ import org.apache.log4j.Logger;
  * is responsible for. Concrete subclasses can customize the behavior by implementing the abstract methods. Start-up
  * parameters are an id, the row, column, and the vehicle move interval.
  * 
- * @author tom
+ * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
 public abstract class StationaryAgent extends Agent {

@@ -26,7 +26,7 @@ import org.apache.log4j.Logger;
  * This agent scans the simulation area for new fires. Agents can subscribe to get notified about newly detected fires.
  * Corresponds to the 911 emergency service in the real world. Start-up parameter is the scan area interval.
  * 
- * @author tom
+ * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
 public final class FireMonitorAgent extends Agent {

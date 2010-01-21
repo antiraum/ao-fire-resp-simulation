@@ -3,7 +3,7 @@ package it.unitn.disi.aose.firerespsim.agents;
 /**
  * This agent simulates a fire brigade.
  * 
- * @author tom
+ * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
 public final class FireBrigadeAgent extends StationaryAgent {

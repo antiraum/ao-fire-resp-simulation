@@ -10,7 +10,7 @@ import org.apache.commons.lang.StringUtils;
 /**
  * Represents the status of a {@link VehicleAgent}. Thread-safe.
  * 
- * @author tom
+ * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 public final class Vehicle {
     

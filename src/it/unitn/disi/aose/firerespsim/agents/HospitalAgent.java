@@ -3,7 +3,7 @@ package it.unitn.disi.aose.firerespsim.agents;
 /**
  * This agent simulates a hospital.
  * 
- * @author tom
+ * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
 public final class HospitalAgent extends StationaryAgent {
