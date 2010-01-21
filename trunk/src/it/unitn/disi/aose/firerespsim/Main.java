@@ -18,7 +18,7 @@ import org.apache.log4j.Logger;
 /**
  * This class launches the JADE runtime and starts the emergency response simulation.
  * 
- * @author tom
+ * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 public final class Main {
     

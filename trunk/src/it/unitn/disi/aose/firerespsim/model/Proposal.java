@@ -5,7 +5,7 @@ import org.apache.commons.lang.StringUtils;
 /**
  * Proposal of a stationary agent to deal with a fire.
  * 
- * @author tom
+ * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 public final class Proposal {
     

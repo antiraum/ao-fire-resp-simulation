@@ -5,7 +5,7 @@ import it.unitn.disi.aose.firerespsim.agents.VehicleAgent;
 /**
  * Represents the simulation area.
  * 
- * @author tom
+ * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 public final class SimulationArea {
     

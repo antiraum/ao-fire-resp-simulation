@@ -5,7 +5,7 @@ import it.unitn.disi.aose.firerespsim.util.SyncedInteger;
 /**
  * Representation of a position on the simulation area. Thread-safe.
  * 
- * @author tom
+ * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 public final class Position {
     

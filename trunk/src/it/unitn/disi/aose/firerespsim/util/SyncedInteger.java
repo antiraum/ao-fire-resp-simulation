@@ -3,7 +3,7 @@ package it.unitn.disi.aose.firerespsim.util;
 /**
  * Integer object with thread synchronization.
  * 
- * @author tom
+ * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 public final class SyncedInteger {
     
