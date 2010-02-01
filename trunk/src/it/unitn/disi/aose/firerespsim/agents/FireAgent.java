@@ -54,15 +54,14 @@ public final class FireAgent extends Agent {
      */
     Fire fire;
     /**
-     * Intensity increase per {@link Increase#onTick()}. From 1 to 10. Package scoped for faster access by inner
-     * classes.
+     * Intensity increase per {@link Increase#onTick()}. From 1 to 5. Package scoped for faster access by inner classes.
      */
-    int intensityIncrease = 0;
+    final int intensityIncrease = RandomUtils.nextInt(4) + 1;
     /**
      * Casualties increase per {@link Increase#onTick()}. From 1 to 3. Package scoped for faster access by inner
      * classes.
      */
-    int casualtiesIncrease = 0;
+    final int casualtiesIncrease = RandomUtils.nextInt(2) + 1;
     
     /**
      * Package scoped for faster access by inner classes.
@@ -101,10 +100,6 @@ public final class FireAgent extends Agent {
         fire = new Fire(new Position((Integer) params[0], (Integer) params[1]), 0, 0);
         final int increaseIval = (Integer) params[2];
         
-        // randomized initialization value
-        intensityIncrease = RandomUtils.nextInt(9) + 1;
-        casualtiesIncrease = RandomUtils.nextInt(2) + 1;
-        
         // add behaviors
         increaseBehaviour = new Increase(this, increaseIval);
         threadedBehaviours.addAll(Arrays.asList(new Behaviour[] {
@@ -134,9 +129,8 @@ public final class FireAgent extends Agent {
     
     /**
      * Service for fire engines to reduce the fire intensity. If the intensity reaches 0 the fire is put out the agent
-     * deletes itself. Content of the request message must be {@link Position#toString()} of the fire engine position.
-     * The fire engine must be at the fires position to be able to decrease its intensity. If it is a message with the
-     * new fire status ({@link Fire#toString()}) is send to the engine agent.
+     * deletes itself. The fire engine must be at the fires position to be able to decrease its intensity. If it is a
+     * message with the new fire status ({@link Fire#toString()}) is send to the engine agent.
      */
     class PutOutService extends CyclicBehaviour {
         
@@ -180,6 +174,7 @@ public final class FireAgent extends Agent {
                             takeDown = true;
                         }
                     }
+                    logger.info("current intensity: " + fire.getIntensity());
                 } else {
                     logger.debug("fire is already put out");
                 }
@@ -195,10 +190,9 @@ public final class FireAgent extends Agent {
     }
     
     /**
-     * Service for ambulances to pick up a casualty. Content of the request message must be {@link Position#toString()}
-     * of the ambulance position. The ambulance must be at the fires position to be able to pick up a casualty. The
-     * reply message confirms or disconfirms if a casualty is picked up. If the ambulance is at the fires position, a
-     * message with the new fire status ({@link Fire#toString()}) is send to the ambulance agent.
+     * Service for ambulances to pick up a casualty. The ambulance must be at the fires position to be able to pick up a
+     * casualty. The reply message confirms or disconfirms if a casualty is picked up. If the ambulance is at the fires
+     * position, a message with the new fire status ({@link Fire#toString()}) is send to the ambulance agent.
      */
     class PickUpCasualtyService extends CyclicBehaviour {
         
@@ -237,6 +231,7 @@ public final class FireAgent extends Agent {
                         fire.setCasualties(0);
                         takeDown = true;
                     }
+                    logger.info("current casualty count: " + fire.getCasualties());
                 } else {
                     logger.debug("no casualty to pick up");
                     replyMsg.setPerformative(ACLMessage.DISCONFIRM);
@@ -289,7 +284,9 @@ public final class FireAgent extends Agent {
         protected void onTick() {
 
             fire.increaseIntensity(intensityIncrease);
+            logger.info("current intensity: " + fire.getIntensity());
             fire.increaseCasualties(casualtiesIncrease);
+            logger.info("current casualty count: " + fire.getCasualties());
         }
     }
 }

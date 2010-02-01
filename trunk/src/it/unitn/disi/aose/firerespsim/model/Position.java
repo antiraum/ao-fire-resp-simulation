@@ -1,5 +1,6 @@
 package it.unitn.disi.aose.firerespsim.model;
 
+import it.unitn.disi.aose.firerespsim.ontology.Coordinate;
 import it.unitn.disi.aose.firerespsim.util.SyncedInteger;
 
 /**
@@ -26,6 +27,11 @@ public final class Position {
 
         this.row = new SyncedInteger(row);
         this.col = new SyncedInteger(col);
+    }
+    
+    public Position(final Coordinate coordinate) {
+
+        this(coordinate.getRow(), coordinate.getCol());
     }
     
     /**
@@ -108,6 +114,14 @@ public final class Position {
     public final void decreaseCol(final int amount) {
 
         col.decrease(amount);
+    }
+    
+    /**
+     * @return {@link Coordinate} with the current position.
+     */
+    public Coordinate getCoordinate() {
+
+        return new Coordinate(getRow(), getCol());
     }
     
     /**

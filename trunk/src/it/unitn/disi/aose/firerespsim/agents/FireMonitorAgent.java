@@ -1,7 +1,18 @@
 package it.unitn.disi.aose.firerespsim.agents;
 
+import it.unitn.disi.aose.firerespsim.FireResponseOntology;
 import it.unitn.disi.aose.firerespsim.model.Position;
-import it.unitn.disi.aose.firerespsim.model.SimulationArea;
+import it.unitn.disi.aose.firerespsim.ontology.AreaDimensions;
+import it.unitn.disi.aose.firerespsim.ontology.AreaDimensionsInfo;
+import it.unitn.disi.aose.firerespsim.ontology.AreaDimensionsRequest;
+import it.unitn.disi.aose.firerespsim.ontology.Coordinate;
+import it.unitn.disi.aose.firerespsim.ontology.FireAlert;
+import it.unitn.disi.aose.firerespsim.ontology.OnFireStatus;
+import it.unitn.disi.aose.firerespsim.ontology.OnFireStatusRequest;
+import jade.content.ContentElement;
+import jade.content.lang.Codec;
+import jade.content.lang.sl.SLCodec;
+import jade.content.onto.Ontology;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
@@ -35,10 +46,6 @@ public final class FireMonitorAgent extends Agent {
      * DF type of this agent.
      */
     final static String DF_TYPE = "FireMonitor";
-    /**
-     * Ontology type for fire alert messages. Package scoped for faster access by inner classes.
-     */
-    final static String FIRE_ALERT_ONT_TYPE = "FireAlert";
     
     /**
      * Package scoped for faster access by inner classes.
@@ -49,6 +56,15 @@ public final class FireMonitorAgent extends Agent {
      * Defaults for start-up arguments.
      */
     private static final int DEFAULT_SCAN_AREA_IVAL = 10000;
+    
+    /**
+     * Codec for message content encoding. Package scoped for faster access by inner classes.
+     */
+    final Codec codec = new SLCodec();
+    /**
+     * Simulation ontology. Package scoped for faster access by inner classes.
+     */
+    final Ontology onto = FireResponseOntology.getInstance();
     
     private final ThreadedBehaviourFactory tbf = new ThreadedBehaviourFactory();
     private final Set<Behaviour> threadedBehaviours = new HashSet<Behaviour>();
@@ -67,6 +83,9 @@ public final class FireMonitorAgent extends Agent {
         logger.debug("starting up");
         
         super.setup();
+        
+        getContentManager().registerLanguage(codec);
+        getContentManager().registerOntology(onto);
         
         // read start-up arguments
         Object[] params = getArguments();
@@ -120,13 +139,9 @@ public final class FireMonitorAgent extends Agent {
     }
     
     /**
-     * With of the simulation area. Package scoped for faster access by inner classes.
+     * Dimensions of the simulation area. Package scoped for faster access by inner classes.
      */
-    int areaWidth = 0;
-    /**
-     * Height of the simulation area. Package scoped for faster access by inner classes.
-     */
-    int areaHeight = 0;
+    AreaDimensions areaDimensions = null;
     
     /**
      * Gets the simulation area dimensions from the environment agent.
@@ -138,7 +153,7 @@ public final class FireMonitorAgent extends Agent {
         private AID environmentAID = null;
         private final MessageTemplate replyTpl = MessageTemplate.and(
                                                                      MessageTemplate.MatchPerformative(ACLMessage.INFORM),
-                                                                     MessageTemplate.MatchOntology(EnvironmentAgent.AREA_DIMENSIONS_ONT_TYPE));
+                                                                     MessageTemplate.MatchOntology(onto.getName()));
         
         /**
          * Constructor
@@ -184,20 +199,33 @@ public final class FireMonitorAgent extends Agent {
             
             final ACLMessage requestMsg = new ACLMessage(ACLMessage.REQUEST);
             requestMsg.addReceiver(environmentAID);
-            requestMsg.setOntology(EnvironmentAgent.AREA_DIMENSIONS_ONT_TYPE);
-            send(requestMsg);
-//            logger.debug("sent area dimensions request");
+            requestMsg.setOntology(onto.getName());
+            requestMsg.setLanguage(codec.getName());
+            try {
+                getContentManager().fillContent(requestMsg, new AreaDimensionsRequest());
+                send(requestMsg);
+//              logger.debug("sent area dimensions request");
+            } catch (final Exception e) {
+                logger.error("error filling message content");
+            }
             
             final ACLMessage replyMsg = blockingReceive(replyTpl);
             
-            if (replyMsg.getContent() == null) {
-                logger.error("reply message has no content");
+            ContentElement ce;
+            try {
+                ce = getContentManager().extractContent(replyMsg);
+            } catch (final Exception e) {
+                logger.error("error extracting message content");
+                e.printStackTrace();
                 return;
             }
-            final String[] areaDimensions = replyMsg.getContent().split(SimulationArea.FIELD_SEPARATOR);
-            areaWidth = Integer.parseInt(areaDimensions[0]);
-            areaHeight = Integer.parseInt(areaDimensions[1]);
-            logger.info("received area dimensions (" + areaWidth + " " + areaHeight + ")");
+            if (!(ce instanceof AreaDimensionsInfo)) {
+                logger.error("reply message has wrong content");
+                return;
+            }
+            final AreaDimensionsInfo areaDimensionsInfo = (AreaDimensionsInfo) ce;
+            areaDimensions = areaDimensionsInfo.getAreaDimensions();
+            logger.info("received area dimensions (" + areaDimensions + ")");
             
             done = true;
         }
@@ -222,11 +250,11 @@ public final class FireMonitorAgent extends Agent {
         private AID environmentAID = null;
         private final MessageTemplate replyTpl = MessageTemplate.and(
                                                                      MessageTemplate.MatchPerformative(ACLMessage.INFORM),
-                                                                     MessageTemplate.MatchOntology(EnvironmentAgent.ON_FIRE_STATUS_ONT_TYPE));
+                                                                     MessageTemplate.MatchOntology(onto.getName()));
         
         private final Position areaPosition = new Position(1, 1);
         
-        private final Set<String> detectedFires = new HashSet<String>();
+        private final Set<Coordinate> detectedFires = new HashSet<Coordinate>();
         
         /**
          * @param a
@@ -247,7 +275,7 @@ public final class FireMonitorAgent extends Agent {
         @Override
         protected void onTick() {
 
-            if (areaWidth == 0 || areaHeight == 0) {
+            if (areaDimensions == null) {
                 // area dimensions not yet set
                 logger.error("area dimensions not yet set");
                 return;
@@ -280,56 +308,75 @@ public final class FireMonitorAgent extends Agent {
             // get fire status for current position
             logger.debug("scanning position (" + areaPosition + ")");
             final ACLMessage requestMsg = new ACLMessage(ACLMessage.REQUEST);
+            requestMsg.setOntology(onto.getName());
+            requestMsg.setLanguage(codec.getName());
             requestMsg.addReceiver(environmentAID);
-            requestMsg.setOntology(EnvironmentAgent.ON_FIRE_STATUS_ONT_TYPE);
-            requestMsg.setContent(areaPosition.toString());
-            send(requestMsg);
-//            logger.debug("sent fire status request");
+            try {
+                getContentManager().fillContent(requestMsg, new OnFireStatusRequest(areaPosition.getCoordinate()));
+                send(requestMsg);
+//                logger.debug("sent fire status request");
+            } catch (final Exception e) {
+                logger.error("error filling message content");
+            }
             
             final ACLMessage replyMsg = blockingReceive(replyTpl);
             
-//            logger.debug("received fire status reply");
-            if (replyMsg.getContent() == null) {
-                logger.error("reply message has no content");
+            ContentElement ce;
+            try {
+                ce = getContentManager().extractContent(replyMsg);
+            } catch (final Exception e) {
+                logger.error("error extracting message content");
                 return;
             }
-            if (Boolean.parseBoolean(replyMsg.getContent())) {
+            if (!(ce instanceof OnFireStatus)) {
+                logger.error("reply message has wrong content");
+                return;
+            }
+//            logger.debug("received fire status reply");
+            final OnFireStatus onFireStatus = (OnFireStatus) ce;
+            if (onFireStatus.getStatus()) {
                 // position is on fire
-                if (detectedFires.contains(areaPosition.toString())) {
+                if (detectedFires.contains(onFireStatus.getCoordinate())) {
                     // known fire
-                    logger.debug("detected known fire at (" + areaPosition + ")");
+                    logger.debug("detected known fire at (" + onFireStatus.getCoordinate() + ")");
                 } else {
                     // new fire
-                    logger.info("detected new fire at (" + areaPosition + ") - sending fire alert to coordinators");
-                    detectedFires.add(areaPosition.toString());
+                    logger.info("detected new fire at (" + onFireStatus.getCoordinate() +
+                                ") - sending fire alert to coordinators");
+                    detectedFires.add(onFireStatus.getCoordinate());
                     if (fireAlertSubscribers.size() > 0) {
                         // tell registered agents
                         final ACLMessage alertMsg = new ACLMessage(ACLMessage.INFORM);
-                        alertMsg.setOntology(FIRE_ALERT_ONT_TYPE);
-                        alertMsg.setContent(areaPosition.toString());
+                        alertMsg.setOntology(onto.getName());
+                        alertMsg.setLanguage(codec.getName());
                         for (final AID agentAID : fireAlertSubscribers) {
                             alertMsg.addReceiver(agentAID);
                         }
-                        send(alertMsg);
+                        try {
+                            getContentManager().fillContent(alertMsg, new FireAlert(onFireStatus.getCoordinate()));
+                            send(alertMsg);
+                        } catch (final Exception e) {
+                            logger.error("error filling message content");
+                        }
                     } else {
                         logger.error("no coordinator is registered to send fire alert to");
                     }
                 }
             } else {
                 // position is not on fire
-                logger.debug("no fire at (" + areaPosition + ")");
-                if (detectedFires.contains(areaPosition.toString())) {
+                logger.debug("no fire at (" + onFireStatus.getCoordinate() + ")");
+                if (detectedFires.contains(onFireStatus.getCoordinate())) {
                     // remove known fire
-                    logger.info("fire at (" + areaPosition + ") no longer burning");
-                    detectedFires.remove(areaPosition.toString());
+                    logger.info("fire at (" + onFireStatus.getCoordinate() + ") no longer burning");
+                    detectedFires.remove(onFireStatus.getCoordinate());
                 }
             }
             
             // move to next position
-            if (areaPosition.getCol() == areaWidth) {
+            if (areaPosition.getCol() == areaDimensions.getWidth()) {
                 // to new row
                 areaPosition.setCol(1);
-                if (areaPosition.getRow() == areaHeight) {
+                if (areaPosition.getRow() == areaDimensions.getHeight()) {
                     // to first row
                     areaPosition.setRow(1);
                 } else {
@@ -357,7 +404,7 @@ public final class FireMonitorAgent extends Agent {
         
         private final MessageTemplate requestTpl = MessageTemplate.and(
                                                                        MessageTemplate.MatchPerformative(ACLMessage.SUBSCRIBE),
-                                                                       MessageTemplate.MatchOntology(FIRE_ALERT_ONT_TYPE));
+                                                                       MessageTemplate.MatchOntology(onto.getName()));
         
         /**
          * @see jade.core.behaviours.Behaviour#action()
