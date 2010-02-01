@@ -1,8 +1,15 @@
 package it.unitn.disi.aose.firerespsim.agents;
 
+import it.unitn.disi.aose.firerespsim.FireResponseOntology;
 import it.unitn.disi.aose.firerespsim.model.Fire;
 import it.unitn.disi.aose.firerespsim.model.Position;
 import it.unitn.disi.aose.firerespsim.model.Vehicle;
+import it.unitn.disi.aose.firerespsim.ontology.Coordinate;
+import it.unitn.disi.aose.firerespsim.ontology.SetTargetRequest;
+import jade.content.ContentElement;
+import jade.content.lang.Codec;
+import jade.content.lang.sl.SLCodec;
+import jade.content.onto.Ontology;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
@@ -30,10 +37,6 @@ public abstract class VehicleAgent extends Agent {
      * Ontology type of vehicle status messages. Package scoped for faster access by inner classes.
      */
     final static String VEHICLE_STATUS_ONT_TYPE = "VehicleStatus";
-    /**
-     * Ontology type of vehicle target messages. Package scoped for faster access by inner classes.
-     */
-    final static String VEHICLE_TARGET_ONT_TYPE = "VehicleTarget";
     
     /**
      * Defaults for start-up arguments.
@@ -59,6 +62,15 @@ public abstract class VehicleAgent extends Agent {
      */
     Vehicle vehicle;
     
+    /**
+     * Codec for message content encoding. Package scoped for faster access by inner classes.
+     */
+    final Codec codec = new SLCodec();
+    /**
+     * Simulation ontology. Package scoped for faster access by inner classes.
+     */
+    final Ontology onto = FireResponseOntology.getInstance();
+    
     private final ThreadedBehaviourFactory tbf = new ThreadedBehaviourFactory();
     private final Set<Behaviour> threadedBehaviours = new HashSet<Behaviour>();
     
@@ -71,6 +83,9 @@ public abstract class VehicleAgent extends Agent {
         logger.debug("starting up");
         
         super.setup();
+        
+        getContentManager().registerLanguage(codec);
+        getContentManager().registerOntology(onto);
         
         // read start-up arguments
         final Object[] params = getArguments();
@@ -116,14 +131,15 @@ public abstract class VehicleAgent extends Agent {
     }
     
     /**
-     * Service to send the vehicle to a target. Content of the request message must be {@link Position#toString()} of
-     * the target position.
+     * Service to send the vehicle to a target.
      */
     class SetTargetService extends CyclicBehaviour {
         
         private final MessageTemplate requestTpl = MessageTemplate.and(
-                                                                       MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
-                                                                       MessageTemplate.MatchOntology(VEHICLE_TARGET_ONT_TYPE));
+                                                                       MessageTemplate.MatchSender(owner),
+                                                                       MessageTemplate.and(
+                                                                                           MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
+                                                                                           MessageTemplate.MatchOntology(onto.getName())));
         
         /**
          * @see jade.core.behaviours.Behaviour#action()
@@ -139,17 +155,24 @@ public abstract class VehicleAgent extends Agent {
                 return;
             }
             
-            // get target position
-            if (requestMsg.getContent() == null) {
-                logger.error("request message has no content");
+            ContentElement ce;
+            try {
+                ce = getContentManager().extractContent(requestMsg);
+            } catch (final Exception e) {
+                logger.error("error extracting message content");
                 return;
             }
-            final Position target = Position.fromString(requestMsg.getContent());
+            if (!(ce instanceof SetTargetRequest)) {
+                logger.error("request message has wrong content");
+                return;
+            }
+            final SetTargetRequest setTargetRequest = (SetTargetRequest) ce;
+            final Coordinate target = setTargetRequest.getCoordinate();
             
             logger.debug("received set-target request with new target (" + target + ")");
             
-            vehicle.fire = target;
-            setTarget(target);
+            vehicle.fire = new Position(target);
+            setTarget(new Position(target));
         }
     }
     

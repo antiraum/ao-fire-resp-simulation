@@ -1,7 +1,14 @@
 package it.unitn.disi.aose.firerespsim.agents;
 
-import it.unitn.disi.aose.firerespsim.model.Position;
-import it.unitn.disi.aose.firerespsim.model.Proposal;
+import it.unitn.disi.aose.firerespsim.FireResponseOntology;
+import it.unitn.disi.aose.firerespsim.ontology.CFP;
+import it.unitn.disi.aose.firerespsim.ontology.Coordinate;
+import it.unitn.disi.aose.firerespsim.ontology.FireAlert;
+import it.unitn.disi.aose.firerespsim.ontology.Proposal;
+import jade.content.ContentElement;
+import jade.content.lang.Codec;
+import jade.content.lang.sl.SLCodec;
+import jade.content.onto.Ontology;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
@@ -34,11 +41,6 @@ import org.apache.log4j.Logger;
 public abstract class CoordinatorAgent extends Agent {
     
     /**
-     * Ontology type of coordination messages.
-     */
-    protected static final String COORDINATION_ONT_TYPE = "Coordination";
-    
-    /**
      * Package scoped for faster access by inner classes.
      */
     static final Logger logger = Logger.getLogger("it.unitn.disi.aose.firerespsim");
@@ -59,6 +61,28 @@ public abstract class CoordinatorAgent extends Agent {
      */
     final Set<AID> stationaryAgents = new HashSet<AID>();
     
+    /**
+     * Codec for message content encoding. Package scoped for faster access by inner classes.
+     */
+    final Codec codec = new SLCodec();
+    /**
+     * Simulation ontology. Package scoped for faster access by inner classes.
+     */
+    final Ontology onto = FireResponseOntology.getInstance();
+    
+    /**
+     * Current fire CFPs (key is conversation id). Package scoped for faster access by inner classes.
+     */
+    final Map<String, Coordinate> fireCFPs = new HashMap<String, Coordinate>();
+    /**
+     * Start times of current CFPs (key is conversation id). Package scoped for faster access by inner classes.
+     */
+    final Map<String, Long> fireCFPTimes = new HashMap<String, Long>();
+    /**
+     * Proposals for fires currently coordinated. Package scoped for faster access by inner classes.
+     */
+    final Map<Coordinate, Map<AID, Proposal>> fireProposals = new HashMap<Coordinate, Map<AID, Proposal>>();
+    
     private final ThreadedBehaviourFactory tbf = new ThreadedBehaviourFactory();
     private final Set<Behaviour> threadedBehaviours = new HashSet<Behaviour>();
     
@@ -71,6 +95,9 @@ public abstract class CoordinatorAgent extends Agent {
         logger.debug("starting up");
         
         super.setup();
+        
+        getContentManager().registerLanguage(codec);
+        getContentManager().registerOntology(onto);
         
         // add behaviors
         final SequentialBehaviour sb = new SequentialBehaviour();
@@ -124,7 +151,7 @@ public abstract class CoordinatorAgent extends Agent {
         
         private final MessageTemplate requestTpl = MessageTemplate.and(
                                                                        MessageTemplate.MatchPerformative(ACLMessage.SUBSCRIBE),
-                                                                       MessageTemplate.MatchOntology(COORDINATION_ONT_TYPE));
+                                                                       MessageTemplate.MatchOntology(onto.getName()));
         
         /**
          * @see jade.core.behaviours.Behaviour#action()
@@ -152,6 +179,11 @@ public abstract class CoordinatorAgent extends Agent {
     }
     
     /**
+     * Template for messages from the fire monitor. Package scoped for faster access by inner classes.
+     */
+    MessageTemplate fireMonitorTpl = null;
+    
+    /**
      * Subscribes to new fire alerts from the fire monitor agent.
      */
     class SubscribeToFireAlerts extends SimpleBehaviour {
@@ -163,7 +195,7 @@ public abstract class CoordinatorAgent extends Agent {
                                                                      MessageTemplate.or(
                                                                                         MessageTemplate.MatchPerformative(ACLMessage.AGREE),
                                                                                         MessageTemplate.MatchPerformative(ACLMessage.REFUSE)),
-                                                                     MessageTemplate.MatchOntology(FireMonitorAgent.FIRE_ALERT_ONT_TYPE));
+                                                                     MessageTemplate.MatchOntology(onto.getName()));
         
         /**
          * Constructor
@@ -194,6 +226,7 @@ public abstract class CoordinatorAgent extends Agent {
                 }
                 if (result != null && result.length > 0) {
                     fireMonitorAID = result[0].getName();
+                    fireMonitorTpl = MessageTemplate.MatchSender(fireMonitorAID);
                 } else {
                     logger.debug("no agent with " + FireMonitorAgent.DF_TYPE + " service at DF");
                 }
@@ -210,7 +243,7 @@ public abstract class CoordinatorAgent extends Agent {
             
             final ACLMessage subscribeMsg = new ACLMessage(ACLMessage.SUBSCRIBE);
             subscribeMsg.addReceiver(fireMonitorAID);
-            subscribeMsg.setOntology(FireMonitorAgent.FIRE_ALERT_ONT_TYPE);
+            subscribeMsg.setOntology(onto.getName());
             send(subscribeMsg);
 //            logger.debug("sent fire alert subscription request");
             
@@ -235,26 +268,16 @@ public abstract class CoordinatorAgent extends Agent {
     }
     
     /**
-     * Proposals for fires currently coordinated. Package scoped for faster access by inner classes.
-     */
-    final Map<String, Set<Proposal>> fireProposals = new HashMap<String, Set<Proposal>>();
-    /**
-     * Start times of CFPs for fires currently coordinated. Package scoped for faster access by inner classes.
-     */
-    final Map<String, Long> fireCfpStartTimes = new HashMap<String, Long>();
-    
-    /**
      * Receives fire alerts from the fire monitor agent. If a fire is new, proposals from the stationary agents are
-     * requested. The content of the call for proposals message consists is {@link Position#toString()} of the fire
-     * position.
+     * requested.
      */
     class ReceiveFireAlerts extends CyclicBehaviour {
         
-        private final Set<String> knownFires = new HashSet<String>();
+        private final Set<Coordinate> knownFires = new HashSet<Coordinate>();
         
         private final MessageTemplate alertTpl = MessageTemplate.and(
                                                                      MessageTemplate.MatchPerformative(ACLMessage.INFORM),
-                                                                     MessageTemplate.MatchOntology(FireMonitorAgent.FIRE_ALERT_ONT_TYPE));
+                                                                     MessageTemplate.MatchOntology(onto.getName()));
         
         /**
          * @see jade.core.behaviours.Behaviour#action()
@@ -263,30 +286,45 @@ public abstract class CoordinatorAgent extends Agent {
         public void action() {
 
             final ACLMessage alertMsg = blockingReceive(alertTpl);
+            if (!fireMonitorTpl.match(alertMsg)) return;
             if (alertMsg == null) return;
             
-            if (alertMsg.getContent() == null) {
-                logger.error("alert message has no content");
+            ContentElement ce;
+            try {
+                ce = getContentManager().extractContent(alertMsg);
+            } catch (final Exception e) {
+                logger.error("error extracting message content");
                 return;
             }
-            final Position firePosition = Position.fromString(alertMsg.getContent());
-            logger.info("received fire alert for position (" + firePosition + ")");
+            if (!(ce instanceof FireAlert)) {
+                logger.error("cfp message has wrong content");
+                return;
+            }
+            final FireAlert alert = (FireAlert) ce;
+            final Coordinate fireCoord = alert.getCoordinate();
+            logger.debug("received alert for fire at (" + fireCoord + ")");
             
-            if (knownFires.contains(firePosition.toString())) return; // not new
-            knownFires.add(firePosition.toString());
+            if (knownFires.contains(fireCoord)) return; // not new
+            knownFires.add(fireCoord);
             
             if (stationaryAgents.size() > 0) {
                 // request proposals from stationary agents
-                fireProposals.put(firePosition.toString(), new HashSet<Proposal>());
-                fireCfpStartTimes.put(firePosition.toString(), System.currentTimeMillis());
                 final ACLMessage cfpMsg = new ACLMessage(ACLMessage.CFP);
-                cfpMsg.setOntology(COORDINATION_ONT_TYPE);
-                cfpMsg.setContent(firePosition.toString());
+                cfpMsg.setOntology(onto.getName());
+                cfpMsg.setLanguage(codec.getName());
                 for (final AID aid : stationaryAgents) {
                     cfpMsg.addReceiver(aid);
                 }
-                send(cfpMsg);
-                logger.info("sent CFP to stationary agents");
+                try {
+                    getContentManager().fillContent(cfpMsg, new CFP(fireCoord));
+                    send(cfpMsg);
+                    logger.info("sent CFP to stationary agents");
+                    fireCFPs.put(cfpMsg.getConversationId(), fireCoord);
+                    fireProposals.put(fireCoord, new HashMap<AID, Proposal>());
+                    fireCFPTimes.put(cfpMsg.getConversationId(), System.currentTimeMillis());
+                } catch (final Exception e) {
+                    logger.error("error filling message content");
+                }
             } else {
                 logger.debug("no stationary agent registered to send CFP to");
             }
@@ -294,15 +332,14 @@ public abstract class CoordinatorAgent extends Agent {
     }
     
     /**
-     * Receives the proposals from the stationary agents. Content of the proposal Messages must be
-     * {@link Proposal#toString()}. After all proposals are collected or if the proposal timeout is reached, the
-     * responsibility is given to the agent with the best proposal.
+     * Receives the proposals from the stationary agents. After all proposals are collected or if the proposal timeout
+     * is reached, the responsibility is given to the agent with the best proposal.
      */
     class ReceiveProposals extends CyclicBehaviour {
         
         private final MessageTemplate proposalTpl = MessageTemplate.and(
                                                                         MessageTemplate.MatchPerformative(ACLMessage.PROPOSE),
-                                                                        MessageTemplate.MatchOntology(COORDINATION_ONT_TYPE));
+                                                                        MessageTemplate.MatchOntology(onto.getName()));
         
         /**
          * @see jade.core.behaviours.Behaviour#action()
@@ -313,25 +350,32 @@ public abstract class CoordinatorAgent extends Agent {
             final ACLMessage proposalMsg = blockingReceive(proposalTpl);
             if (proposalMsg == null) return;
             
+            if (!fireCFPs.containsKey(proposalMsg.getConversationId())) {
+                logger.debug("received proposal for fire that is currently not coordinated");
+                return;
+            }
+            final Coordinate fireCoord = fireCFPs.get(proposalMsg.getConversationId());
+            
             // save proposal
-            if (proposalMsg.getContent() == null) {
-                logger.error("proposal message has no content");
+            ContentElement ce;
+            try {
+                ce = getContentManager().extractContent(proposalMsg);
+            } catch (final Exception e) {
+                logger.error("error extracting message content");
                 return;
             }
-            final Proposal prop = Proposal.fromString(proposalMsg.getContent());
-            logger.debug("received proposal (" + prop.toPrettyString() + ")");
-            
-            if (!fireProposals.containsKey(prop.firePosition.toString())) {
-                // fire is not currently coordinated
-                logger.debug("proposal is for fire that's currently not coordinated");
+            if (!(ce instanceof Proposal)) {
+                logger.error("proposal message has wrong content");
                 return;
             }
-            fireProposals.get(prop.firePosition.toString()).add(prop);
+            final Proposal prop = (Proposal) ce;
+            logger.debug("received proposal (" + prop + ")");
+            fireProposals.get(fireCoord).put(proposalMsg.getSender(), prop);
             
-            if (fireProposals.get(prop.firePosition.toString()).size() == stationaryAgents.size()) {
+            if (fireProposals.get(fireCoord).size() == stationaryAgents.size()) {
                 // all proposals received
-                logger.debug("received all proposals for fire (" + prop.firePosition + ")");
-                assignFire(prop.firePosition.toString());
+                logger.debug("received all proposals for fire at (" + fireCoord + ")");
+                assignFire(fireCoord, proposalMsg.getConversationId());
             }
         }
     }
@@ -357,9 +401,9 @@ public abstract class CoordinatorAgent extends Agent {
         @Override
         protected void onTick() {
 
-            for (final Map.Entry<String, Long> fire : fireCfpStartTimes.entrySet()) {
-                if (System.currentTimeMillis() - fire.getValue() > WAIT_FOR_PROPOSALS_MS) {
-                    assignFire(fire.getKey());
+            for (final Map.Entry<String, Long> cfpTime : fireCFPTimes.entrySet()) {
+                if (System.currentTimeMillis() - cfpTime.getValue() > WAIT_FOR_PROPOSALS_MS) {
+                    assignFire(fireCFPs.get(cfpTime.getKey()), cfpTime.getKey());
                 }
             }
         }
@@ -367,51 +411,54 @@ public abstract class CoordinatorAgent extends Agent {
     
     /**
      * Finish coordination of a fire. Sends a proposal accept message to the agent with the best proposal and proposal
-     * reject messages to all other agents. Content of the messages is {@link Position#toString()} of the fire location.
-     * Package scoped for faster access by inner classes.
+     * reject messages to all other agents. Package scoped for faster access by inner classes.
      * 
-     * @param fireKey
+     * @param fireCoord
+     * @param cfpId
      */
-    void assignFire(final String fireKey) {
+    void assignFire(final Coordinate fireCoord, final String cfpId) {
 
         // find best proposal
+        AID bestSA = null;
         Proposal bestProp = null;
-        for (final Proposal prop : fireProposals.get(fireKey)) {
-            if (bestProp == null || prop.numVehicles > bestProp.numVehicles ||
-                (prop.numVehicles == bestProp.numVehicles && prop.distance < bestProp.distance)) {
+        for (final Map.Entry<AID, Proposal> saProp : fireProposals.get(fireCoord).entrySet()) {
+            final Proposal prop = saProp.getValue();
+            if (bestSA == null || bestProp == null || prop.getNumVehicles() > bestProp.getNumVehicles() ||
+                (prop.getNumVehicles() == bestProp.getNumVehicles() && prop.getDistance() < bestProp.getDistance())) {
+                bestSA = saProp.getKey();
                 bestProp = prop;
             }
         }
         
-        if (bestProp == null) {
+        if (bestSA == null || bestProp == null) {
             
-            logger.error("no proposal for fire at " + fireKey + ", will not be handled!");
+            logger.error("no proposal for fire at " + fireCoord + ", will not be handled!");
             
         } else {
             
             // send accept message
             final ACLMessage acceptMsg = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
-            acceptMsg.setOntology(COORDINATION_ONT_TYPE);
-            acceptMsg.setContent(fireKey);
-            acceptMsg.addReceiver(new AID(bestProp.agentName, true));
+            acceptMsg.setConversationId(cfpId);
+            acceptMsg.setOntology(onto.getName());
+            acceptMsg.addReceiver(bestSA);
             send(acceptMsg);
             
             // send reject message
             final ACLMessage recjectMsg = new ACLMessage(ACLMessage.REJECT_PROPOSAL);
-            recjectMsg.setOntology(COORDINATION_ONT_TYPE);
-            recjectMsg.setContent(fireKey);
-            for (final Proposal prop : fireProposals.get(fireKey)) {
-                if (prop != bestProp) {
-                    recjectMsg.addReceiver(new AID(prop.agentName, true));
+            acceptMsg.setOntology(onto.getName());
+            for (final Map.Entry<AID, Proposal> saProp : fireProposals.get(fireCoord).entrySet()) {
+                if (saProp.getKey() != bestSA) {
+                    recjectMsg.addReceiver(saProp.getKey());
                 }
             }
             send(recjectMsg);
             
-            logger.info("accepted proposal (" + bestProp.toPrettyString() + ")");
+            logger.info("accepted proposal (" + bestProp + ")");
         }
         
         // remove from temporary maps
-        fireProposals.remove(fireKey);
-        fireCfpStartTimes.remove(fireKey);
+        fireCFPs.remove(cfpId);
+        fireCFPTimes.remove(cfpId);
+        fireProposals.remove(fireCoord);
     }
 }

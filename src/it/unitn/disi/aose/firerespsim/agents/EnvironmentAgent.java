@@ -1,7 +1,18 @@
 package it.unitn.disi.aose.firerespsim.agents;
 
+import it.unitn.disi.aose.firerespsim.FireResponseOntology;
 import it.unitn.disi.aose.firerespsim.model.Position;
 import it.unitn.disi.aose.firerespsim.model.SimulationArea;
+import it.unitn.disi.aose.firerespsim.ontology.AreaDimensions;
+import it.unitn.disi.aose.firerespsim.ontology.AreaDimensionsInfo;
+import it.unitn.disi.aose.firerespsim.ontology.AreaDimensionsRequest;
+import it.unitn.disi.aose.firerespsim.ontology.Coordinate;
+import it.unitn.disi.aose.firerespsim.ontology.OnFireStatus;
+import it.unitn.disi.aose.firerespsim.ontology.OnFireStatusRequest;
+import jade.content.ContentElement;
+import jade.content.lang.Codec;
+import jade.content.lang.sl.SLCodec;
+import jade.content.onto.Ontology;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
@@ -40,14 +51,6 @@ public final class EnvironmentAgent extends Agent {
      * DF type of on fire status service. Package scoped for faster access by inner classes.
      */
     final static String ON_FIRE_STATUS_DF_TYPE = "OnFireStatus";
-    /**
-     * Ontology type of area dimension messages. Package scoped for faster access by inner classes.
-     */
-    final static String AREA_DIMENSIONS_ONT_TYPE = "AreaDimensions";
-    /**
-     * Ontology type of on fire status messages. Package scoped for faster access by inner classes.
-     */
-    final static String ON_FIRE_STATUS_ONT_TYPE = "OnFireStatus";
     
     /**
      * Package scoped for faster access by inner classes.
@@ -71,6 +74,15 @@ public final class EnvironmentAgent extends Agent {
      */
     int fireIncreaseIval;
     
+    /**
+     * Codec for message content encoding. Package scoped for faster access by inner classes.
+     */
+    final Codec codec = new SLCodec();
+    /**
+     * Simulation ontology. Package scoped for faster access by inner classes.
+     */
+    final Ontology onto = FireResponseOntology.getInstance();
+    
     private final ThreadedBehaviourFactory tbf = new ThreadedBehaviourFactory();
     private final Set<Behaviour> threadedBehaviours = new HashSet<Behaviour>();
     
@@ -84,19 +96,22 @@ public final class EnvironmentAgent extends Agent {
         
         super.setup();
         
+        getContentManager().registerLanguage(codec);
+        getContentManager().registerOntology(onto);
+        
         // read start-up arguments
         Object[] params = getArguments();
         if (params == null) {
             params = new Object[] {};
         }
-        area = new SimulationArea((params.length > 0) ? (Integer) params[0] : DEFAULT_AREA_WIDTH,
-                                  (params.length > 1) ? (Integer) params[1] : DEFAULT_AREA_HEIGHT);
+        area = new SimulationArea(new AreaDimensions((params.length > 0) ? (Integer) params[0] : DEFAULT_AREA_WIDTH,
+                                                     (params.length > 1) ? (Integer) params[1] : DEFAULT_AREA_HEIGHT));
         final int spawnFireIval = (params.length > 2) ? (Integer) params[2] : DEFAULT_SPAWN_FIRE_IVAL;
         fireIncreaseIval = (params.length > 3) ? (Integer) params[3] : DEFAULT_FIRE_INCREASE_IVAL;
         
         // add behaviors
         threadedBehaviours.addAll(Arrays.asList(new Behaviour[] {
-            new AreaDimensionsService(), new OnFireStatusService(), new SpawnFire(this, spawnFireIval)}));
+            new RequestDispatchService(), new SpawnFire(this, spawnFireIval)}));
         final ParallelBehaviour pb = new ParallelBehaviour(ParallelBehaviour.WHEN_ALL);
         for (final Behaviour b : threadedBehaviours) {
             pb.addSubBehaviour(tbf.wrap(b));
@@ -140,14 +155,13 @@ public final class EnvironmentAgent extends Agent {
     }
     
     /**
-     * Service that provides the area dimensions. Used by the monitor agent. Content of the reply message is
-     * {@link SimulationArea#toString()}.
+     * Service that accepts all request messages and dispatches them to the corresponding methods.
      */
-    class AreaDimensionsService extends CyclicBehaviour {
+    class RequestDispatchService extends CyclicBehaviour {
         
         private final MessageTemplate requestTpl = MessageTemplate.and(
                                                                        MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
-                                                                       MessageTemplate.MatchOntology(EnvironmentAgent.AREA_DIMENSIONS_ONT_TYPE));
+                                                                       MessageTemplate.MatchOntology(onto.getName()));
         
         /**
          * @see jade.core.behaviours.Behaviour#action()
@@ -158,64 +172,81 @@ public final class EnvironmentAgent extends Agent {
             final ACLMessage requestMsg = blockingReceive(requestTpl);
             if (requestMsg == null) return;
             
-//            logger.debug("received request for area dimensions");
-            
-            // send area dimensions
-            final ACLMessage replyMsg = requestMsg.createReply();
-            replyMsg.setPerformative(ACLMessage.INFORM);
-            replyMsg.setContent(area.toString());
-            send(replyMsg);
-//            logger.debug("sent area dimensions reply");
+            ContentElement ce;
+            try {
+                ce = getContentManager().extractContent(requestMsg);
+            } catch (final Exception e) {
+                logger.error("error extracting message content");
+                e.printStackTrace();
+                return;
+            }
+            if (ce instanceof AreaDimensionsRequest) {
+                sendAreaDimensions(requestMsg, (AreaDimensionsRequest) ce);
+            } else if (ce instanceof OnFireStatusRequest) {
+                sendOnFireStatus(requestMsg, (OnFireStatusRequest) ce);
+            } else {
+                logger.error("request message has unrecognized content");
+            }
         }
     }
     
     /**
-     * Service that provides the on fire status for an area position. Content of the request message must consist of
-     * {@link Position#toString()} of the requested position.
+     * Sends the area dimensions. Are requested by the monitor agent. Package scoped for faster access by inner classes.
+     * 
+     * @param requestMsg
+     * @param request
      */
-    class OnFireStatusService extends CyclicBehaviour {
-        
-        private final MessageTemplate requestTpl = MessageTemplate.and(
-                                                                       MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
-                                                                       MessageTemplate.MatchOntology(EnvironmentAgent.ON_FIRE_STATUS_ONT_TYPE));
-        
-        /**
-         * @see jade.core.behaviours.Behaviour#action()
-         */
-        @Override
-        public void action() {
+    void sendAreaDimensions(final ACLMessage requestMsg, final AreaDimensionsRequest request) {
 
-            final ACLMessage requestMsg = blockingReceive(requestTpl);
-            if (requestMsg == null) return;
-            
-            // get requested position
-            if (requestMsg.getContent() == null) {
-                logger.error("request message has no content");
-                return;
-            }
-            final Position requestPosition = Position.fromString(requestMsg.getContent());
-//            logger.debug("received on fire status request for position (" + requestPosition + ")");
-            
-            if (area.getOnFireState(requestPosition)) {
-                // check if fire agent still alive (fire still burning)
-                AgentController fireAgent = null;
-                try {
-                    fireAgent = getContainerController().getAgent("fire " + requestPosition);
-                } catch (final ControllerException e) {
-                    // pass
-                }
-                if (fireAgent == null) {
-                    logger.debug("fire at (" + requestPosition + ") no longer burning");
-                    area.setOnFireState(requestPosition, false);
-                }
-            }
-            
-            // send fire status
-            final ACLMessage replyMsg = requestMsg.createReply();
-            replyMsg.setPerformative(ACLMessage.INFORM);
-            replyMsg.setContent(Boolean.toString(area.getOnFireState(requestPosition)));
+//      logger.debug("received request for area dimensions");
+        
+        final ACLMessage replyMsg = requestMsg.createReply();
+        replyMsg.setPerformative(ACLMessage.INFORM);
+        
+        try {
+            getContentManager().fillContent(replyMsg, new AreaDimensionsInfo(area.dimensions));
             send(replyMsg);
-//            logger.debug("sent on fire status reply");
+//                logger.debug("sent area dimensions reply");
+        } catch (final Exception e) {
+            logger.error("error filling message content");
+        }
+    }
+    
+    /**
+     * Sends the on fire status for an area position. Package scoped for faster access by inner classes.
+     * 
+     * @param requestMsg
+     * @param request
+     */
+    void sendOnFireStatus(final ACLMessage requestMsg, final OnFireStatusRequest request) {
+
+        final Coordinate requestCoord = request.getCoordinate();
+        
+//      logger.debug("received on fire status request for coordinate (" + requestCoord + ")");
+        
+        if (area.getOnFireState(requestCoord)) {
+            // check if fire agent still alive (fire still burning)
+            AgentController fireAgent = null;
+            try {
+                fireAgent = getContainerController().getAgent("fire " + requestCoord);
+            } catch (final ControllerException e) {
+                // pass
+            }
+            if (fireAgent == null) {
+                logger.debug("fire at (" + requestCoord + ") no longer burning");
+                area.setOnFireState(requestCoord, false);
+            }
+        }
+        
+        // send fire status
+        final ACLMessage replyMsg = requestMsg.createReply();
+        replyMsg.setPerformative(ACLMessage.INFORM);
+        try {
+            getContentManager().fillContent(replyMsg, new OnFireStatus(requestCoord, area.getOnFireState(requestCoord)));
+            send(replyMsg);
+//                logger.debug("sent on fire status reply");
+        } catch (final Exception e) {
+            logger.error("error filling message content");
         }
     }
     
@@ -241,9 +272,9 @@ public final class EnvironmentAgent extends Agent {
 
             final Position firePosition = new Position(0, 0);
             do {
-                firePosition.setRow(RandomUtils.nextInt(area.height - 1) + 1);
-                firePosition.setCol(RandomUtils.nextInt(area.width - 1) + 1);
-            } while (area.getOnFireState(firePosition));
+                firePosition.setRow(RandomUtils.nextInt(area.dimensions.getHeight() - 1) + 1);
+                firePosition.setCol(RandomUtils.nextInt(area.dimensions.getWidth() - 1) + 1);
+            } while (area.getOnFireState(firePosition.getCoordinate()));
             
             // spawn fire agent
             try {
@@ -262,7 +293,7 @@ public final class EnvironmentAgent extends Agent {
             }
             
             // set fire state
-            area.setOnFireState(firePosition, true);
+            area.setOnFireState(firePosition.getCoordinate(), true);
             
             logger.info("started fire at (" + firePosition + ")");
         }
