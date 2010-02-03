@@ -1,21 +1,21 @@
 package it.unitn.disi.aose.firerespsim.agents;
 
 import it.unitn.disi.aose.firerespsim.model.Fire;
-import it.unitn.disi.aose.firerespsim.model.Position;
+import it.unitn.disi.aose.firerespsim.ontology.Coordinate;
+import it.unitn.disi.aose.firerespsim.ontology.FireStatusInfo;
+import it.unitn.disi.aose.firerespsim.ontology.VehiclePositionInfo;
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.Behaviour;
-import jade.core.behaviours.CyclicBehaviour;
-import jade.core.behaviours.ParallelBehaviour;
-import jade.core.behaviours.ThreadedBehaviourFactory;
 import jade.core.behaviours.TickerBehaviour;
+import jade.domain.FIPAAgentManagement.FailureException;
+import jade.domain.FIPAAgentManagement.NotUnderstoodException;
+import jade.domain.FIPAAgentManagement.RefuseException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import jade.proto.AchieveREResponder;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.LinkedHashMap;
 import org.apache.commons.lang.math.RandomUtils;
-import org.apache.log4j.Logger;
 
 /**
  * This agent represents a fire. It's intensity increases in intervals. Mobile agents (fire engines and hospitals) next
@@ -25,56 +25,29 @@ import org.apache.log4j.Logger;
  * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
-public final class FireAgent extends Agent {
+public final class FireAgent extends ExtendedAgent {
     
     /**
      * Prefix for the local name of fire agents.
      */
     static final String FIRE_AGENT_NAME_PREFIX = "fire ";
     /**
-     * Ontology type for fire status messages. Package scoped for faster access by inner classes.
+     * Protocol for fire status messages.
      */
-    final static String FIRE_STATUS_ONT_TYPE = "FireStatus";
+    final static String FIRE_STATUS_PROTOCOL = "FireStatus";
     /**
-     * Ontology type for put out messages. Package scoped for faster access by inner classes.
+     * Protocol for put out messages.
      */
-    final static String PUT_OUT_ONT_TYPE = "PutOut";
+    final static String PUT_OUT_PROTOCOL = "PutOut";
     /**
-     * Ontology type for pick up casualty messages. Package scoped for faster access by inner classes.
+     * Protocol for pick up casualty messages.
      */
-    final static String PICK_UP_ONT_TYPE = "PickUpCasualty";
+    final static String PICK_UP_CASUALTY_PROTOCOL = "PickUpCasualty";
     
     /**
-     * Package scoped for faster access by inner classes.
-     */
-    static final Logger logger = Logger.getLogger("it.unitn.disi.aose.firerespsim");
-    
-    /**
-     * Status of the fire. Package scoped for faster access by inner classes.
+     * Model of the fire. Package scoped for faster access by inner classes.
      */
     Fire fire;
-    /**
-     * Intensity increase per {@link Increase#onTick()}. From 1 to 5. Package scoped for faster access by inner classes.
-     */
-    final int intensityIncrease = RandomUtils.nextInt(4) + 1;
-    /**
-     * Casualties increase per {@link Increase#onTick()}. From 1 to 3. Package scoped for faster access by inner
-     * classes.
-     */
-    final int casualtiesIncrease = RandomUtils.nextInt(2) + 1;
-    
-    /**
-     * Package scoped for faster access by inner classes.
-     */
-    final ThreadedBehaviourFactory tbf = new ThreadedBehaviourFactory();
-    /**
-     * Set of the threaded parallel behaviors. Package scoped for faster access by inner classes.
-     */
-    final Set<Behaviour> threadedBehaviours = new HashSet<Behaviour>();
-    /**
-     * Behavior containing all the {@link #threadedBehaviours}. Package scoped for faster access by inner classes.
-     */
-    final ParallelBehaviour pb = new ParallelBehaviour(ParallelBehaviour.WHEN_ALL);
     /**
      * Instance of the {@link Increase} behavior. Package scoped for faster access by inner classes.
      */
@@ -86,106 +59,106 @@ public final class FireAgent extends Agent {
     @Override
     protected void setup() {
 
-        logger.debug("starting up");
+        params = new LinkedHashMap<String, Object>() {
+            
+            {
+                put("ROW", null);
+                put("COLUMN", null);
+                put("INCREASE_IVAL", null);
+            }
+        };
         
         super.setup();
         
-        // read start-up arguments
-        final Object[] params = getArguments();
-        if (params == null || params.length < 3) {
-            logger.error("start-up arguments row, column, and increase ival needed");
-            doDelete();
-            return;
-        }
-        fire = new Fire(new Position((Integer) params[0], (Integer) params[1]), 0, 0);
-        final int increaseIval = (Integer) params[2];
+        fire = new Fire(new Coordinate((Integer) params.get("ROW"), (Integer) params.get("COLUMN")), 0, 0);
+        final int intensityInc = RandomUtils.nextInt(4) + 1; // intensity increase per {@link Increase#onTick()} (from 1 to 5)
+        final int casualtiesInc = RandomUtils.nextInt(1) + 1; // casualties increase per {@link Increase#onTick()} (from 1 to 2)
+        
+        // create behaviors
+        final MessageTemplate putOutTpl = createMessageTemplate(null, PUT_OUT_PROTOCOL, ACLMessage.REQUEST);
+        final PutOutService putOutService = new PutOutService(this, putOutTpl);
+        final MessageTemplate pickUpTpl = createMessageTemplate(null, PICK_UP_CASUALTY_PROTOCOL, ACLMessage.REQUEST);
+        final PickUpCasualtyService pickUpService = new PickUpCasualtyService(this, pickUpTpl);
+        increaseBehaviour = new Increase(this, (Integer) params.get("INCREASE_IVAL"), intensityInc, casualtiesInc);
         
         // add behaviors
-        increaseBehaviour = new Increase(this, increaseIval);
-        threadedBehaviours.addAll(Arrays.asList(new Behaviour[] {
-            new PutOutService(), new PickUpCasualtyService(), increaseBehaviour}));
-        for (final Behaviour b : threadedBehaviours) {
-            pb.addSubBehaviour(tbf.wrap(b));
-        }
-        addBehaviour(pb);
+        parallelBehaviours.addAll(Arrays.asList(putOutService, pickUpService, increaseBehaviour));
+        addBehaviours();
     }
     
     /**
-     * @see jade.core.Agent#takeDown()
+     * Service for fire engines to reduce the fire intensity. If the intensity reaches 0 the fire is put out and stops
+     * increasing. If also all casualties have been picked up the agent deletes itself. The fire engine must be at the
+     * fires position to be able to decrease its intensity. If it is a message with the new fire status (
+     * {@link Fire#toString()}) is send to the engine agent.
      */
-    @Override
-    protected void takeDown() {
-
-        logger.info("shutting down");
-        
-        for (final Behaviour b : threadedBehaviours) {
-            if (b != null) {
-                tbf.getThread(b).interrupt();
-            }
-        }
-        
-        super.takeDown();
-    }
-    
-    /**
-     * Service for fire engines to reduce the fire intensity. If the intensity reaches 0 the fire is put out the agent
-     * deletes itself. The fire engine must be at the fires position to be able to decrease its intensity. If it is a
-     * message with the new fire status ({@link Fire#toString()}) is send to the engine agent.
-     */
-    class PutOutService extends CyclicBehaviour {
-        
-        private final MessageTemplate requestTpl = MessageTemplate.and(
-                                                                       MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
-                                                                       MessageTemplate.MatchOntology(PUT_OUT_ONT_TYPE));
+    private class PutOutService extends AchieveREResponder {
         
         /**
-         * @see jade.core.behaviours.Behaviour#action()
+         * @param a
+         * @param mt
+         */
+        public PutOutService(final Agent a, final MessageTemplate mt) {
+
+            super(a, mt);
+        }
+        
+        /**
+         * @see jade.proto.AchieveREResponder#handleRequest(jade.lang.acl.ACLMessage)
          */
         @Override
-        public void action() {
+        protected ACLMessage handleRequest(final ACLMessage request) throws NotUnderstoodException, RefuseException {
 
-            final ACLMessage requestMsg = blockingReceive(requestTpl);
-            if (requestMsg == null) return;
+            logger.debug("received put out request");
             
-//            logger.debug("received put-out request");
-            
-            // get content
-            if (requestMsg.getContent() == null) {
-                logger.error("request message has no content");
-                return;
+            Coordinate engineCoord;
+            try {
+                engineCoord = extractMessageContent(VehiclePositionInfo.class, request, false).getVehicleCoordinate();
+            } catch (final Exception e) {
+                throw new NotUnderstoodException("could not read message content");
             }
-            final Position enginePosition = Position.fromString(requestMsg.getContent());
-            logger.debug("engine position (" + enginePosition + ")");
+            String refuse = null;
+            if (!engineCoord.equals(fire.coordinate)) {
+                refuse = "fire engine is too far away";
+            }
+            if (fire.getIntensity() < 1) {
+                refuse = "fire is already put out";
+            }
+            if (refuse != null) {
+                logger.debug(refuse);
+                throw new RefuseException(refuse);
+            }
             
             boolean takeDown = false;
-            if (fire.position.equals(enginePosition)) {
-                // fire engine is at the fire and can put out
-                if (fire.getIntensity() > 0) {
-                    fire.decreaseIntensity(1);
-                    if (fire.getIntensity() < 1) {
-                        // fire is put out
-                        increaseBehaviour.stop();
-                        fire.setIntensity(0);
-                        tbf.getThread(increaseBehaviour).interrupt();
-                        pb.removeSubBehaviour(increaseBehaviour);
-                        threadedBehaviours.remove(increaseBehaviour);
-                        if (fire.getCasualties() < 1) {
-                            fire.setCasualties(0);
-                            takeDown = true;
-                        }
-                    }
-                    logger.info("current intensity: " + fire.getIntensity());
-                } else {
-                    logger.debug("fire is already put out");
+            fire.decreaseIntensity(1);
+            if (fire.getIntensity() < 1) {
+                // fire is put out
+                stopParallelBehaviour(increaseBehaviour);
+                fire.setIntensity(0);
+                if (fire.getCasualties() < 1) {
+                    fire.setCasualties(0);
+                    takeDown = true;
                 }
-                sendStatus(requestMsg.getSender());
-            } else {
-                logger.debug("fire engine is too far away");
             }
-//            logger.debug("sent put-out reply");
+            logger.info("new intensity: " + fire.getIntensity());
+            sendStatus(request.getSender());
+            
             if (takeDown) {
                 doDelete();
             }
+            
+            return null;
+        }
+        
+        /**
+         * @see jade.proto.AchieveREResponder#prepareResultNotification(jade.lang.acl.ACLMessage,
+         *      jade.lang.acl.ACLMessage)
+         */
+        @Override
+        protected ACLMessage prepareResultNotification(final ACLMessage request, final ACLMessage response)
+                throws FailureException {
+
+            return null;
         }
     }
     
@@ -194,73 +167,81 @@ public final class FireAgent extends Agent {
      * casualty. The reply message confirms or disconfirms if a casualty is picked up. If the ambulance is at the fires
      * position, a message with the new fire status ({@link Fire#toString()}) is send to the ambulance agent.
      */
-    class PickUpCasualtyService extends CyclicBehaviour {
-        
-        private final MessageTemplate requestTpl = MessageTemplate.and(
-                                                                       MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
-                                                                       MessageTemplate.MatchOntology(PICK_UP_ONT_TYPE));
+    private class PickUpCasualtyService extends AchieveREResponder {
         
         /**
-         * @see jade.core.behaviours.Behaviour#action()
+         * @param a
+         * @param mt
+         */
+        public PickUpCasualtyService(final Agent a, final MessageTemplate mt) {
+
+            super(a, mt);
+        }
+        
+        /**
+         * @see jade.proto.AchieveREResponder#handleRequest(jade.lang.acl.ACLMessage)
          */
         @Override
-        public void action() {
+        protected ACLMessage handleRequest(final ACLMessage request) throws NotUnderstoodException, RefuseException {
 
-            final ACLMessage requestMsg = blockingReceive(requestTpl);
-            if (requestMsg == null) return;
+            logger.debug("received pick up casualty request");
             
-//            logger.debug("received casualty-pick-up request");
-            
-            // get content
-            if (requestMsg.getContent() == null) {
-                logger.error("request message has no content");
-                return;
+            Coordinate ambulanceCoord;
+            try {
+                ambulanceCoord = extractMessageContent(VehiclePositionInfo.class, request, false).getVehicleCoordinate();
+            } catch (final Exception e) {
+                throw new NotUnderstoodException("could not read message content");
             }
-            final Position ambulancePosition = Position.fromString(requestMsg.getContent());
-            logger.debug("ambulance position (" + ambulancePosition + ")");
+            String refuse = null;
+            if (!ambulanceCoord.equals(fire.coordinate)) {
+                refuse = "ambulance is too far away";
+            }
+            if (fire.getCasualties() < 1) {
+                refuse = "no casualty to pick up";
+            }
+            if (refuse != null) {
+                logger.debug(refuse);
+                throw new RefuseException(refuse);
+            }
             
-            final ACLMessage replyMsg = requestMsg.createReply();
             boolean takeDown = false;
-            if (fire.position.equals(ambulancePosition)) {
-                // ambulance is at the fire and can pick up a casualty
-                if (fire.getCasualties() > 0) {
-                    fire.decreaseCasualties(1);
-                    replyMsg.setPerformative(ACLMessage.CONFIRM);
-                    if (fire.getCasualties() < 1 && fire.getIntensity() < 1) {
-                        fire.setIntensity(0);
-                        fire.setCasualties(0);
-                        takeDown = true;
-                    }
-                    logger.info("current casualty count: " + fire.getCasualties());
-                } else {
-                    logger.debug("no casualty to pick up");
-                    replyMsg.setPerformative(ACLMessage.DISCONFIRM);
-                }
-                sendStatus(requestMsg.getSender());
-            } else {
-                logger.debug("ambulance is too far away");
-                replyMsg.setPerformative(ACLMessage.DISCONFIRM);
+            fire.decreaseCasualties(1);
+            if (fire.getCasualties() < 1 && fire.getIntensity() < 1) {
+                fire.setIntensity(0);
+                fire.setCasualties(0);
+                takeDown = true;
             }
-            send(replyMsg);
-//            logger.debug("sent casualty-pick-up reply");
+            logger.info("new casualty count: " + fire.getCasualties());
+            sendStatus(request.getSender());
+            
             if (takeDown) {
                 doDelete();
             }
+            
+            return createReply(request, ACLMessage.AGREE, null);
+        }
+        
+        /**
+         * @see jade.proto.AchieveREResponder#prepareResultNotification(jade.lang.acl.ACLMessage,
+         *      jade.lang.acl.ACLMessage)
+         */
+        @Override
+        protected ACLMessage prepareResultNotification(final ACLMessage request, final ACLMessage response)
+                throws FailureException {
+
+            return null;
         }
     }
     
     /**
-     * Sends the current fire status. Package scoped for faster access by inner classes.
+     * Sends the current status to a vehicle agent. Call this whenever the status changes as a result of a vehicle agent
+     * interaction.
      * 
-     * @param receiver
+     * @param aid
      */
-    void sendStatus(final AID receiver) {
+    void sendStatus(final AID aid) {
 
-        final ACLMessage statusMsg = new ACLMessage(ACLMessage.INFORM);
-        statusMsg.setOntology(FIRE_STATUS_ONT_TYPE);
-        statusMsg.setContent(fire.toString());
-        statusMsg.addReceiver(receiver);
-        send(statusMsg);
+        sendMessage(ACLMessage.INFORM, FIRE_STATUS_PROTOCOL, aid, new FireStatusInfo(fire.getFireStatus()));
     }
     
     /**
@@ -268,13 +249,20 @@ public final class FireAgent extends Agent {
      */
     private class Increase extends TickerBehaviour {
         
+        private final int intensityIncrease;
+        private final int casualtiesIncrease;
+        
         /**
          * @param a
          * @param period
+         * @param intensityIncrease
+         * @param casualtiesIncrease
          */
-        public Increase(final Agent a, final long period) {
+        public Increase(final Agent a, final long period, final int intensityIncrease, final int casualtiesIncrease) {
 
             super(a, period);
+            this.intensityIncrease = intensityIncrease;
+            this.casualtiesIncrease = casualtiesIncrease;
         }
         
         /**
@@ -284,9 +272,8 @@ public final class FireAgent extends Agent {
         protected void onTick() {
 
             fire.increaseIntensity(intensityIncrease);
-            logger.info("current intensity: " + fire.getIntensity());
             fire.increaseCasualties(casualtiesIncrease);
-            logger.info("current casualty count: " + fire.getCasualties());
+            logger.info("new intensity: " + fire.getIntensity() + ", casualties: " + fire.getCasualties());
         }
     }
 }

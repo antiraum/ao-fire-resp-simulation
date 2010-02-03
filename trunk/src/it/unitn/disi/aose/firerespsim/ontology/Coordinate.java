@@ -4,7 +4,7 @@ import jade.content.Concept;
 import jade.content.onto.annotations.Slot;
 
 /**
- * @author tom
+ * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
 public final class Coordinate implements Concept {
@@ -49,6 +49,22 @@ public final class Coordinate implements Concept {
     }
     
     /**
+     * @param amount
+     */
+    public final void increaseRow(final int amount) {
+
+        row += amount;
+    }
+    
+    /**
+     * @param amount
+     */
+    public final void decreaseRow(final int amount) {
+
+        row -= amount;
+    }
+    
+    /**
      * @return Column on the simulation area.
      */
     @Slot(mandatory = true)
@@ -66,6 +82,22 @@ public final class Coordinate implements Concept {
     }
     
     /**
+     * @param amount
+     */
+    public final void increaseCol(final int amount) {
+
+        col += amount;
+    }
+    
+    /**
+     * @param amount
+     */
+    public final void decreaseCol(final int amount) {
+
+        col -= amount;
+    }
+    
+    /**
      * @see java.lang.Object#toString()
      */
     @Override
@@ -74,4 +106,12 @@ public final class Coordinate implements Concept {
         return row + " " + col;
     }
     
+    /**
+     * @see java.lang.Object#clone()
+     */
+    @Override
+    public Coordinate clone() {
+
+        return new Coordinate(row, col);
+    }
 }

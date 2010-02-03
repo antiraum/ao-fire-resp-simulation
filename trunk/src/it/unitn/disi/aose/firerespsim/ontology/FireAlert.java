@@ -4,12 +4,12 @@ import jade.content.Predicate;
 import jade.content.onto.annotations.Slot;
 
 /**
- * @author tom
+ * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
 public final class FireAlert implements Predicate {
     
-    private Coordinate coordinate;
+    private Coordinate fireCoordinate;
     
     /**
      * Constructor for bean instantiation.
@@ -20,27 +20,27 @@ public final class FireAlert implements Predicate {
     }
     
     /**
-     * @param coordinate
+     * @param fireCoordinate
      */
-    public FireAlert(final Coordinate coordinate) {
+    public FireAlert(final Coordinate fireCoordinate) {
 
-        this.coordinate = coordinate;
+        this.fireCoordinate = fireCoordinate;
     }
     
     /**
      * @return Coordinate of the fire.
      */
     @Slot(mandatory = true)
-    public Coordinate getCoordinate() {
+    public Coordinate getFireCoordinate() {
 
-        return coordinate;
+        return fireCoordinate;
     }
     
     /**
-     * @param coordinate
+     * @param fireCoordinate
      */
-    public void setCoordinate(final Coordinate coordinate) {
+    public void setFireCoordinate(final Coordinate fireCoordinate) {
 
-        this.coordinate = coordinate;
+        this.fireCoordinate = fireCoordinate;
     }
 }

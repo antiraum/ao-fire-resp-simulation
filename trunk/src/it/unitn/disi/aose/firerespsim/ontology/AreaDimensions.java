@@ -4,7 +4,7 @@ import jade.content.Concept;
 import jade.content.onto.annotations.Slot;
 
 /**
- * @author tom
+ * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
 public final class AreaDimensions implements Concept {

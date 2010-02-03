@@ -4,12 +4,12 @@ import jade.content.Predicate;
 import jade.content.onto.annotations.Slot;
 
 /**
- * @author tom
+ * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
 public final class SetTargetRequest implements Predicate {
     
-    private Coordinate coordinate;
+    private Coordinate target;
     
     /**
      * Constructor for bean instantiation.
@@ -20,28 +20,28 @@ public final class SetTargetRequest implements Predicate {
     }
     
     /**
-     * @param coordinate
+     * @param target
      */
-    public SetTargetRequest(final Coordinate coordinate) {
+    public SetTargetRequest(final Coordinate target) {
 
-        this.coordinate = coordinate;
+        this.target = target;
     }
     
     /**
      * @return Target coordinate.
      */
     @Slot(mandatory = true)
-    public Coordinate getCoordinate() {
+    public Coordinate getTarget() {
 
-        return coordinate;
+        return target;
     }
     
     /**
-     * @param coordinate
+     * @param target
      */
-    public void setCoordinate(final Coordinate coordinate) {
+    public void setTarget(final Coordinate target) {
 
-        this.coordinate = coordinate;
+        this.target = target;
     }
     
 }

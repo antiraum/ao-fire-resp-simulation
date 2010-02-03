@@ -4,17 +4,17 @@ import jade.content.Predicate;
 import jade.content.onto.annotations.Slot;
 
 /**
- * @author tom
+ * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
-public final class CFP implements Predicate {
+public final class HandleFireCFP implements Predicate {
     
     private Coordinate coordinate;
     
     /**
      * Constructor for bean instantiation.
      */
-    public CFP() {
+    public HandleFireCFP() {
 
     // empty
     }
@@ -22,7 +22,7 @@ public final class CFP implements Predicate {
     /**
      * @param coordinate
      */
-    public CFP(final Coordinate coordinate) {
+    public HandleFireCFP(final Coordinate coordinate) {
 
         this.coordinate = coordinate;
     }

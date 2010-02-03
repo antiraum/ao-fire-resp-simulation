@@ -4,7 +4,7 @@ import it.unitn.disi.aose.firerespsim.ontology.Coordinate;
 import it.unitn.disi.aose.firerespsim.util.SyncedInteger;
 
 /**
- * Representation of a position on the simulation area. Thread-safe.
+ * Model of a position on the simulation area. Thread-safe.
  * 
  * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
@@ -29,18 +29,12 @@ public final class Position {
         this.col = new SyncedInteger(col);
     }
     
+    /**
+     * @param coordinate
+     */
     public Position(final Coordinate coordinate) {
 
         this(coordinate.getRow(), coordinate.getCol());
-    }
-    
-    /**
-     * @see java.lang.Object#clone()
-     */
-    @Override
-    public Position clone() {
-
-        return new Position(getRow(), getCol());
     }
     
     /**
@@ -134,33 +128,11 @@ public final class Position {
     }
     
     /**
-     * @param str
-     * @return {@link Position}
-     */
-    public static Position fromString(final String str) {
-
-        final String[] fields = str.split(" ");
-        if (fields.length != 2) return null;
-        return new Position(Integer.parseInt(fields[0]), Integer.parseInt(fields[1]));
-    }
-    
-    /**
-     * @see java.lang.Object#equals(java.lang.Object)
+     * @see java.lang.Object#clone()
      */
     @Override
-    public boolean equals(final Object obj) {
+    public Position clone() {
 
-        final Position other = (Position) obj;
-        final boolean equal = (other.row.equals(row) && other.col.equals(col)) ? true : false;
-        return equal;
-    }
-    
-    /**
-     * @see java.lang.Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
-
-        return super.hashCode();
+        return new Position(getRow(), getCol());
     }
 }
