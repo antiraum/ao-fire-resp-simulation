@@ -4,10 +4,10 @@ import jade.content.Predicate;
 import jade.content.onto.annotations.Slot;
 
 /**
- * @author tom
+ * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
-public final class Proposal implements Predicate {
+public final class HandleFireProposal implements Predicate {
     
     private int distance;
     private int numVehicles;
@@ -15,7 +15,7 @@ public final class Proposal implements Predicate {
     /**
      * Constructor for bean instantiation.
      */
-    public Proposal() {
+    public HandleFireProposal() {
 
     // empty
     }
@@ -24,7 +24,7 @@ public final class Proposal implements Predicate {
      * @param distance
      * @param numVehicles
      */
-    public Proposal(final int distance, final int numVehicles) {
+    public HandleFireProposal(final int distance, final int numVehicles) {
 
         this.distance = distance;
         this.numVehicles = numVehicles;

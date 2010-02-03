@@ -1,8 +1,9 @@
-package it.unitn.disi.aose.firerespsim;
+package it.unitn.disi.aose.firerespsim.ontology;
 
 import jade.content.onto.BeanOntology;
 import jade.content.onto.BeanOntologyException;
 import jade.content.onto.Ontology;
+import org.apache.log4j.Logger;
 
 /**
  * Ontology for the simulation.
@@ -11,6 +12,8 @@ import jade.content.onto.Ontology;
  */
 @SuppressWarnings("serial")
 public final class FireResponseOntology extends BeanOntology {
+    
+    private static final Logger logger = Logger.getLogger("it.unitn.disi.aose.firerespsim");
     
     private static final Ontology thisOntology = new FireResponseOntology();
     
@@ -28,7 +31,7 @@ public final class FireResponseOntology extends BeanOntology {
         try {
             add("it.unitn.disi.aose.firerespsim.ontology");
         } catch (final BeanOntologyException e) {
-            e.printStackTrace();
+            logger.error("error adding ontology beans");
         }
     }
     

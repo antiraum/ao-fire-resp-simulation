@@ -1,9 +1,11 @@
 package it.unitn.disi.aose.firerespsim.agents;
 
-import it.unitn.disi.aose.firerespsim.model.Fire;
 import it.unitn.disi.aose.firerespsim.model.Vehicle;
-import jade.core.AID;
+import it.unitn.disi.aose.firerespsim.ontology.FireStatus;
+import it.unitn.disi.aose.firerespsim.ontology.PutOutRequest;
+import jade.core.Agent;
 import jade.lang.acl.ACLMessage;
+import jade.proto.AchieveREInitiator;
 
 /**
  * This agent simulates an fire engine.
@@ -28,42 +30,58 @@ public final class FireEngineAgent extends VehicleAgent {
     @Override
     void arrivedAtFire() {
 
-        sendPutOutRequest();
+        putOutFire();
     }
     
     /**
-     * @see it.unitn.disi.aose.firerespsim.agents.VehicleAgent#continuousAction()
+     * @see it.unitn.disi.aose.firerespsim.agents.VehicleAgent#doMove()
      */
     @Override
-    void continuousAction() {
+    void doMove() {
 
         if (vehicle.getState() != Vehicle.STATE_AT_TARGET || vehicle.fire == null) return;
-        sendPutOutRequest();
+        putOutFire();
     }
     
     /**
-     * @see it.unitn.disi.aose.firerespsim.agents.VehicleAgent#receivedFireStatus(it.unitn.disi.aose.firerespsim.model.Fire)
+     * @see it.unitn.disi.aose.firerespsim.agents.VehicleAgent#receivedFireStatus(it.unitn.disi.aose.firerespsim.ontology.FireStatus)
      */
     @Override
-    void receivedFireStatus(final Fire fire) {
+    void receivedFireStatus(final FireStatus status) {
 
-        if (fire.getIntensity() >= 1) return;
+        if (status.getIntensity() >= 1) return;
         logger.info("fire is put out, returning to fire brigade");
         vehicle.fire = null;
         setTarget(vehicle.home);
     }
     
     /**
-     * Sends a put out request to a fire at the current position. Only call this if at the fire. Package scoped for
+     * Starts a {@link PutOutFire} for a fire at the current position. Only call this if at the fire. Package scoped for
      * faster access by inner classes.
      */
-    void sendPutOutRequest() {
+    void putOutFire() {
 
-        final ACLMessage putOutMsg = new ACLMessage(ACLMessage.REQUEST);
-        putOutMsg.setOntology(FireAgent.PUT_OUT_ONT_TYPE);
-        putOutMsg.setContent(vehicle.position.toString());
-        putOutMsg.addReceiver(new AID(FireAgent.FIRE_AGENT_NAME_PREFIX + vehicle.position, false));
-        send(putOutMsg);
-//        logger.debug("sent put out request to fire at (" + vehicle.position + ")");
+        final ACLMessage putOutMsg = createMessage(ACLMessage.REQUEST, FireAgent.PUT_OUT_PROTOCOL, getFireAID(),
+                                                   new PutOutRequest(vehicle.position.getCoordinate()));
+        if (putOutFire == null) {
+            putOutFire = new PutOutFire(this, putOutMsg);
+        } else {
+            putOutFire.reset(putOutMsg);
+        }
+        addParallelBehaviour(putOutFire);
+    }
+    
+    private PutOutFire putOutFire = null;
+    
+    private class PutOutFire extends AchieveREInitiator {
+        
+        /**
+         * @param a
+         * @param msg
+         */
+        public PutOutFire(final Agent a, final ACLMessage msg) {
+
+            super(a, msg);
+        }
     }
 }

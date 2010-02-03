@@ -5,7 +5,7 @@ import it.unitn.disi.aose.firerespsim.ontology.AreaDimensions;
 import it.unitn.disi.aose.firerespsim.ontology.Coordinate;
 
 /**
- * Represents the simulation area.
+ * Model of the simulation area.
  * 
  * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
@@ -56,16 +56,16 @@ public final class SimulationArea {
     }
     
     /**
-     * Calculates the distance of two positions on the simulation area in number of moves necessary for a
+     * Calculates the distance of two coordinates on the simulation area in number of moves necessary for a
      * {@link VehicleAgent} to cross.
      * 
-     * @param position1
-     * @param position2
+     * @param coordinate1
+     * @param coordinate2
      * @return Number of moves to cross.
      */
-    public static final int getDistance(final Position position1, final Position position2) {
+    public static final int getDistance(final Coordinate coordinate1, final Coordinate coordinate2) {
 
-        return getDistance(position1.getRow(), position1.getCol(), position2.getRow(), position2.getCol());
+        return getDistance(coordinate1.getRow(), coordinate1.getCol(), coordinate2.getRow(), coordinate2.getCol());
     }
     
     /**
@@ -83,18 +83,14 @@ public final class SimulationArea {
         return Math.max(Math.abs(Math.abs(row1) - Math.abs(row2)), Math.abs(Math.abs(col1) - Math.abs(col2)));
     }
     
-    public static final int getDistance(final Coordinate position1, final Coordinate position2) {
+    /**
+     * @param coordinate1
+     * @param coordinate2
+     * @return <code>true</code> if equal, <code>false</code> if note
+     */
+    public static final boolean coordinatesEqual(final Coordinate coordinate1, final Coordinate coordinate2) {
 
-        return getDistance(position1.getRow(), position1.getCol(), position2.getRow(), position2.getCol());
-    }
-    
-    public static final int getDistance(final Position position1, final Coordinate position2) {
-
-        return getDistance(position1.getRow(), position1.getCol(), position2.getRow(), position2.getCol());
-    }
-    
-    public static final int getDistance(final Coordinate position1, final Position position2) {
-
-        return getDistance(position1.getRow(), position1.getCol(), position2.getRow(), position2.getCol());
+        return (coordinate1.getRow() == coordinate2.getRow() && coordinate1.getCol() == coordinate2.getCol()) ? true
+                                                                                                             : false;
     }
 }
