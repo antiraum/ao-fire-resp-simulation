@@ -121,7 +121,7 @@ public abstract class VehicleAgent extends ExtendedAgent {
                 return;
             }
             
-            logger.debug("received set target request to (" + target + ")");
+//            logger.debug("received set target request to (" + target + ")");
             
             vehicle.fire = new Position(target);
             setTarget(new Position(target));
@@ -143,7 +143,7 @@ public abstract class VehicleAgent extends ExtendedAgent {
             vehicle.target.set(target);
         }
         vehicle.setState(Vehicle.STATE_TO_TARGET);
-        logger.debug("target set to (" + vehicle.target + ")");
+//        logger.debug("target set to (" + vehicle.target + ")");
         if (vehicle.position.equals(vehicle.target)) {
             arrivedAtTarget();
         }
@@ -216,7 +216,7 @@ public abstract class VehicleAgent extends ExtendedAgent {
             } else if (vehicle.fire != null && newPosition.equals(vehicle.fire)) {
                 newPositionStr = "fire";
             }
-            logger.debug("moved from " + oldPositionStr + " to (" + newPositionStr + ")");
+            logger.debug("moved from " + oldPositionStr + " to " + newPositionStr + "");
             if (vehicle.position.equals(vehicle.target)) {
                 arrivedAtTarget();
             }

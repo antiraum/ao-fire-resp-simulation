@@ -241,7 +241,7 @@ public abstract class ExtendedAgent extends Agent {
      * @param recipients
      * @param content
      */
-    protected void sendMessage(final int performative, final String protocol, final List<AID> recipients,
+    protected void sendMessage(final int performative, final String protocol, final Set<AID> recipients,
                                final Predicate content) {
 
         send(createMessage(performative, protocol, recipients, content));
@@ -283,7 +283,7 @@ public abstract class ExtendedAgent extends Agent {
      */
     protected ACLMessage createMessage(final int performative, final String protocol) {
 
-        return createMessage(performative, protocol, Arrays.asList(new AID[] {}), null);
+        return createMessage(performative, protocol, new HashSet<AID>(), null);
     }
     
     /**
@@ -296,7 +296,11 @@ public abstract class ExtendedAgent extends Agent {
     protected ACLMessage createMessage(final int performative, final String protocol, final AID recipient,
                                        final Predicate content) {
 
-        return createMessage(performative, protocol, recipient == null ? null : Arrays.asList(recipient), content);
+        final Set<AID> recipients = new HashSet<AID>();
+        if (recipient != null) {
+            recipients.add(recipient);
+        }
+        return createMessage(performative, protocol, recipient == null ? null : recipients, content);
     }
     
     /**
@@ -306,7 +310,7 @@ public abstract class ExtendedAgent extends Agent {
      * @param content
      * @return {@link ACLMessage} ready to send.
      */
-    protected ACLMessage createMessage(final int performative, final String protocol, final List<AID> recipients,
+    protected ACLMessage createMessage(final int performative, final String protocol, final Set<AID> recipients,
                                        final Predicate content) {
 
         final ACLMessage msg = new ACLMessage(performative);
@@ -368,7 +372,7 @@ public abstract class ExtendedAgent extends Agent {
      */
     protected ACLMessage copyMessage(final ACLMessage msg) {
 
-        final List<AID> recipients = new ArrayList<AID>();
+        final Set<AID> recipients = new HashSet<AID>();
         final Iterator iter = msg.getAllReceiver();
         while (iter.hasNext()) {
             recipients.add((AID) iter.next());

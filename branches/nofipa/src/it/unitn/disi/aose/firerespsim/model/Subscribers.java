@@ -2,9 +2,7 @@ package it.unitn.disi.aose.firerespsim.model;
 
 import jade.core.AID;
 import jade.lang.acl.ACLMessage;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -55,9 +53,9 @@ public final class Subscribers {
         return subscriptions.isEmpty();
     }
     
-    public List<AID> getAIDs() {
+    public Set<AID> getAIDs() {
 
-        final List<AID> aids = new ArrayList<AID>();
+        final Set<AID> aids = new HashSet<AID>();
         for (final ACLMessage s : subscriptions) {
             aids.add(s.getSender());
         }
