@@ -1,7 +1,5 @@
 package it.unitn.disi.aose.firerespsim.agents;
 
-import it.unitn.disi.aose.firerespsim.ontology.Coordinate;
-
 /**
  * This agent simulates a fire brigade.
  * 
@@ -23,11 +21,11 @@ public final class FireBrigadeAgent extends StationaryAgent {
     }
     
     /**
-     * @see it.unitn.disi.aose.firerespsim.agents.StationaryAgent#getFireWeight(it.unitn.disi.aose.firerespsim.ontology.Coordinate)
+     * @see it.unitn.disi.aose.firerespsim.agents.StationaryAgent#getFireWeight(java.lang.String)
      */
     @Override
-    protected int getFireWeight(final Coordinate fireCoord) {
+    protected int getFireWeight(final String fireKey) {
 
-        return fires.get(fireCoord).getIntensity();
+        return fires.get(fireKey).getIntensity();
     }
 }

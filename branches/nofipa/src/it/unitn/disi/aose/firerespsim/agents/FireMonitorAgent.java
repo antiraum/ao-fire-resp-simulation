@@ -47,7 +47,7 @@ public final class FireMonitorAgent extends ExtendedAgent {
     /**
      * List of detected, currently burning fires. Package scoped for faster access by inner classes.
      */
-    final Set<Coordinate> detectedFires = new HashSet<Coordinate>();
+    final Set<String> detectedFires = new HashSet<String>();
     
     /**
      * @see jade.core.Agent#setup()
@@ -285,71 +285,30 @@ public final class FireMonitorAgent extends ExtendedAgent {
             final Coordinate coord = onFireStatus.getCoordinate();
             if (onFireStatus.getStatus()) {
                 // position is on fire
-                if (detectedFires.contains(coord)) {
+                if (detectedFires.contains(coord.toString())) {
                     // known fire
-                    logger.debug("detected known fire at (" + coord + ")");
+//                    logger.debug("detected known fire at (" + coord + ")");
                 } else {
                     // new fire
                     logger.info("detected new fire at (" + coord + ")");
-                    detectedFires.add(coord);
-                    if (sendFireAlert == null) {
-                        sendFireAlert = new SendFireAlert(coord);
-                    } else {
-                        sendFireAlert.reset(coord);
+                    detectedFires.add(coord.toString());
+                    if (fireAlertSubscribers.isEmpty()) {
+                        logger.error("no agents registered to send fire alert to - fire will not be handled!");
+                        return;
                     }
-                    addParallelBehaviour(sendFireAlert);
+                    sendMessage(ACLMessage.INFORM, FIRE_ALERT_PROTOCOL, fireAlertSubscribers.getAIDs(),
+                                new FireAlert(coord));
+                    logger.debug("sent alert for fire at (" + coord + ")");
                 }
             } else {
                 // position is not on fire
 //                logger.debug("no fire at (" + coord + ")");
-                if (detectedFires.contains(coord)) {
+                if (detectedFires.contains(coord.toString())) {
                     // remove known fire
                     logger.info("fire at (" + coord + ") no longer burning");
-                    detectedFires.remove(coord);
+                    detectedFires.remove(coord.toString());
                 }
             }
-        }
-    }
-    
-    /**
-     * Instance of {@link SendFireAlert} that gets re-used for every fire.
-     */
-    SendFireAlert sendFireAlert = null;
-    
-    /**
-     * Sends a fire alert to all subscribers.
-     */
-    private class SendFireAlert extends OneShotBehaviour {
-        
-        private Coordinate fireCoord;
-        
-        /**
-         * @param fireCoord
-         */
-        public SendFireAlert(final Coordinate fireCoord) {
-
-            this.fireCoord = fireCoord;
-        }
-        
-        /**
-         * @see jade.core.behaviours.Behaviour#action()
-         */
-        @Override
-        public void action() {
-
-            if (fireAlertSubscribers.isEmpty()) {
-                logger.error("no agents registered to send fire alert to - fire will not be handled!");
-                return;
-            }
-            sendMessage(ACLMessage.INFORM, FIRE_ALERT_PROTOCOL, fireAlertSubscribers.getAIDs(),
-                        new FireAlert(fireCoord));
-            logger.debug("sent alert for fire at (" + fireCoord + ")");
-        }
-        
-        public void reset(final Coordinate fireCoord) {
-
-            super.reset();
-            this.fireCoord = fireCoord;
         }
     }
 }

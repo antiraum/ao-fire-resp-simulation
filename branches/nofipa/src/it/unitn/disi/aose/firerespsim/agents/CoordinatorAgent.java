@@ -8,10 +8,10 @@ import it.unitn.disi.aose.firerespsim.ontology.Coordinate;
 import it.unitn.disi.aose.firerespsim.ontology.FireAlert;
 import it.unitn.disi.aose.firerespsim.ontology.HandleFireCFP;
 import it.unitn.disi.aose.firerespsim.ontology.HandleFireProposal;
+import it.unitn.disi.aose.firerespsim.ontology.HandleFireProposalResponse;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.DataStore;
-import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import java.util.Arrays;
@@ -85,7 +85,7 @@ public abstract class CoordinatorAgent extends ExtendedAgent {
     }
     
     /**
-     * Handles incoming fire alert. If a fire is new, starts a {@link SendCFP} for it.
+     * Handles incoming fire alert. If a fire is new, sends a CFP to the registered stationary agents.
      */
     private class HandleFireAlert extends CyclicBehaviour {
         
@@ -124,55 +124,13 @@ public abstract class CoordinatorAgent extends ExtendedAgent {
             knownFires.add(fireCoord.toString());
             // TODO remove fires when put out
             
-            // start cfp
-            if (sendCFP == null) {
-                sendCFP = new SendCFP(fireCoord);
-            } else {
-                sendCFP.reset(fireCoord);
-            }
-            addParallelBehaviour(sendCFP);
-            // TODO start cfp timeout
-        }
-    }
-    
-    /**
-     * Instance of {@link SendCFP} that gets re-used for every fire.
-     */
-    SendCFP sendCFP = null;
-    
-    /**
-     * Sends a fire alert to all subscribers.
-     */
-    private class SendCFP extends OneShotBehaviour {
-        
-        private Coordinate fireCoord;
-        
-        /**
-         * @param fireCoord
-         */
-        public SendCFP(final Coordinate fireCoord) {
-
-            this.fireCoord = fireCoord;
-        }
-        
-        /**
-         * @see jade.core.behaviours.Behaviour#action()
-         */
-        @Override
-        public void action() {
-
+            // send cfp
             if (coordSubscribers.isEmpty()) {
                 logger.error("no stationary agent registered to send CFP to - fire will not be handled!");
                 return;
             }
             sendMessage(ACLMessage.CFP, COORDINATION_PROTOCOL, coordSubscribers.getAIDs(), new HandleFireCFP(fireCoord));
             logger.debug("sent CFP for fire at (" + fireCoord + ")");
-        }
-        
-        public void reset(final Coordinate fireCoord) {
-
-            super.reset();
-            this.fireCoord = fireCoord;
         }
     }
     
@@ -190,7 +148,7 @@ public abstract class CoordinatorAgent extends ExtendedAgent {
             this.mt = mt;
         }
         
-        private final Map<Coordinate, Set<ProposalInfo>> proposals = new HashMap<Coordinate, Set<ProposalInfo>>();
+        private final Map<String, Set<ProposalInfo>> proposals = new HashMap<String, Set<ProposalInfo>>();
         
         private class ProposalInfo {
             
@@ -221,16 +179,17 @@ public abstract class CoordinatorAgent extends ExtendedAgent {
                 return;
             }
             final Coordinate fireCoord = proposal.getCoordinate();
-            if (!proposals.containsKey(fireCoord)) {
-                proposals.put(fireCoord, new HashSet<ProposalInfo>());
+            logger.debug("received proposal for fire at (" + fireCoord + ")");
+            if (!proposals.containsKey(fireCoord.toString())) {
+                proposals.put(fireCoord.toString(), new HashSet<ProposalInfo>());
             }
-            proposals.get(fireCoord).add(new ProposalInfo(proposalMsg, proposal));
+            proposals.get(fireCoord.toString()).add(new ProposalInfo(proposalMsg, proposal));
             
-            if (proposals.get(fireCoord).size() != coordSubscribers.size()) return;
+            if (proposals.get(fireCoord.toString()).size() != coordSubscribers.size()) return;
             
             // find best proposal
             ProposalInfo bestPropInfo = null;
-            for (final ProposalInfo propInfo : proposals.get(fireCoord)) {
+            for (final ProposalInfo propInfo : proposals.get(fireCoord.toString())) {
                 
                 if (bestPropInfo == null) {
                     bestPropInfo = propInfo;
@@ -254,9 +213,10 @@ public abstract class CoordinatorAgent extends ExtendedAgent {
             logger.info("accepted proposal (" + bestPropInfo.proposal + ")");
             
             // send replies
-            for (final ProposalInfo propInfo : proposals.get(fireCoord)) {
+            for (final ProposalInfo propInfo : proposals.get(fireCoord.toString())) {
                 sendReply(propInfo.msg, (propInfo == bestPropInfo) ? ACLMessage.ACCEPT_PROPOSAL
-                                                                  : ACLMessage.REJECT_PROPOSAL);
+                                                                  : ACLMessage.REJECT_PROPOSAL,
+                          new HandleFireProposalResponse(fireCoord));
             }
         }
     }

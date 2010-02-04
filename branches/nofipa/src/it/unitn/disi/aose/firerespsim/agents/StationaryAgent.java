@@ -63,11 +63,11 @@ public abstract class StationaryAgent extends ExtendedAgent {
     /**
      * Fires responsible for. Package scoped for faster access by inner classes.
      */
-    final Map<Coordinate, FireStatus> fires = new HashMap<Coordinate, FireStatus>();
+    final Map<String, FireStatus> fires = new HashMap<String, FireStatus>();
     /**
      * Fire vehicle distribution. Package scoped for faster access by inner classes.
      */
-    final Map<Coordinate, Integer> fireVehicles = new HashMap<Coordinate, Integer>();
+    final Map<String, Integer> fireVehicles = new HashMap<String, Integer>();
     
     /**
      * @see jade.core.Agent#setup()
@@ -217,7 +217,7 @@ public abstract class StationaryAgent extends ExtendedAgent {
             logger.info("proposal for fire at (" + fireCoord + ") got accepted");
             
             // save fire
-            fires.put(fireCoord, null);
+            fires.put(fireCoord.toString(), null);
             
             // (re-)distribute vehicles
             if (distributeVehicles == null) {
@@ -286,9 +286,9 @@ public abstract class StationaryAgent extends ExtendedAgent {
             if (fires.isEmpty()) return;
             
             // calculate vehicles distribution
-            final Map<Coordinate, Integer> fireWeights = new HashMap<Coordinate, Integer>();
+            final Map<String, Integer> fireWeights = new HashMap<String, Integer>();
             int sumWeights = 0;
-            for (final Entry<Coordinate, FireStatus> fire : fires.entrySet()) {
+            for (final Entry<String, FireStatus> fire : fires.entrySet()) {
                 if (!fireVehicles.containsKey(fire.getKey())) {
                     fireVehicles.put(fire.getKey(), 1);
                 }
@@ -299,7 +299,7 @@ public abstract class StationaryAgent extends ExtendedAgent {
             // TODO check that exact number of vehicles assigned
             final float addVehiclesPerWeight = (vehicles.size() - fires.size()) / sumWeights;
             boolean fireVehiclesChanged = false;
-            for (final Entry<Coordinate, Integer> fireWeight : fireWeights.entrySet()) {
+            for (final Entry<String, Integer> fireWeight : fireWeights.entrySet()) {
                 final int numVehicles = 1 + Math.round(fireWeight.getValue() * addVehiclesPerWeight);
                 if (fireVehicles.put(fireWeight.getKey(), numVehicles) == numVehicles) {
                     continue;
@@ -310,9 +310,9 @@ public abstract class StationaryAgent extends ExtendedAgent {
             
             // check how many vehicles already correctly assigned
             // TODO consider current vehicle state (at target -> leave assignment)
-            final Map<Coordinate, Integer> fireVehiclesToAssign = new HashMap<Coordinate, Integer>();
+            final Map<String, Integer> fireVehiclesToAssign = new HashMap<String, Integer>();
             final Set<AID> okVehicles = new HashSet<AID>();
-            for (final Entry<Coordinate, Integer> fv : fireVehicles.entrySet()) {
+            for (final Entry<String, Integer> fv : fireVehicles.entrySet()) {
                 fireVehiclesToAssign.put(fv.getKey(), fv.getValue());
                 for (final Entry<AID, VehicleStatus> vehicle : vehicles.entrySet()) {
                     if (vehicle.getValue().getFire() == null || !vehicle.getValue().getFire().equals(fv.getKey())) {
@@ -329,7 +329,7 @@ public abstract class StationaryAgent extends ExtendedAgent {
             
             // (re-)distribute other vehicles
             // TODO consider current vehicle position (prefer already close)
-            for (final Entry<Coordinate, Integer> fv : fireVehiclesToAssign.entrySet()) {
+            for (final Entry<String, Integer> fv : fireVehiclesToAssign.entrySet()) {
                 if (fv.getValue() == 0) {
                     // no more vehicles to assign
                     continue;
@@ -340,7 +340,7 @@ public abstract class StationaryAgent extends ExtendedAgent {
                     }
                     final ACLMessage thisRequest = copyMessage(msg);
                     thisRequest.setSender(vehicleAID);
-                    fillMessage(thisRequest, new SetTargetRequest(fv.getKey()));
+                    fillMessage(thisRequest, new SetTargetRequest(Coordinate.fromString(fv.getKey())));
                     send(thisRequest);
                     if (fv.setValue(fv.getValue() - 1) == 1) {
                         // all vehicles for this fire
@@ -354,10 +354,10 @@ public abstract class StationaryAgent extends ExtendedAgent {
     /**
      * Returns the relative weight of a fire for the vehicle distribute. Set in concrete subclasses.
      * 
-     * @param fireCoord
+     * @param fireKey
      * @return the relative weight
      */
-    protected abstract int getFireWeight(final Coordinate fireCoord);
+    protected abstract int getFireWeight(final String fireKey);
     
     /**
      * Receives the status messages from the vehicle agents of this stationary agent.
@@ -430,9 +430,9 @@ public abstract class StationaryAgent extends ExtendedAgent {
             } catch (final Exception e) {
                 return;
             }
-            fires.put(status.getCoordinate(), status);
-            
             logger.debug("received status for fire at (" + status.getCoordinate() + ")");
+            
+            if (status == fires.put(status.getCoordinate().toString(), status)) return;
             
             // (re-)distribute vehicles
             if (distributeVehicles == null) {
