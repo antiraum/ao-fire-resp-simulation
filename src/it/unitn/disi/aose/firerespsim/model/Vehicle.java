@@ -102,6 +102,7 @@ public final class Vehicle {
      */
     public VehicleStatus getVehicleStatus() {
 
-        return new VehicleStatus(position.getCoordinate(), state.get(), (fire == null) ? null : fire.getCoordinate());
+        return new VehicleStatus(position.getCoordinate(), state.get(), (fire == null) ? null : fire.getCoordinate(),
+                                 acceptingTarget.get());
     }
 }

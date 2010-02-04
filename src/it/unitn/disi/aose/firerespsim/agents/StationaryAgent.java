@@ -89,7 +89,7 @@ public abstract class StationaryAgent extends ExtendedAgent {
         final Coordinate position = new Coordinate((Integer) params.get("ROW"), (Integer) params.get("COLUMN"));
         
         // create vehicle agents
-        final int numVehicles = RandomUtils.nextInt(4) + 1; // between 1 and 5
+        final int numVehicles = RandomUtils.nextInt(2) + 3; // between 3 and 5
         final Object[] args = {getName(), position.getRow(), position.getCol(), params.get("VEHICLE_MOVE_IVAL")};
         for (int i = 0; i < numVehicles; i++) {
             final String nickname = vehicleName + " " + params.get("ID") + "-" + i;
@@ -277,6 +277,7 @@ public abstract class StationaryAgent extends ExtendedAgent {
             fireWeights.put(fire.getKey(), weight);
             sumWeights += weight;
         }
+        if (sumWeights == 0) return;
         final float vehiclesPerWeight = vehicles.size() / sumWeights;
         for (final Entry<String, Integer> fireWeight : fireWeights.entrySet()) {
             final int numVehicles = Math.round(fireWeight.getValue() * vehiclesPerWeight);
@@ -299,7 +300,7 @@ public abstract class StationaryAgent extends ExtendedAgent {
                 continue;
             }
             for (final Entry<AID, VehicleStatus> vehicle : vehicles.entrySet()) {
-                if (vehicle.getValue().getFire() == null ||
+                if (vehicle.getValue() == null || vehicle.getValue().getFire() == null ||
                     !vehicle.getValue().getFire().toString().equals(fv.getKey())) {
                     // vehicle not assigned to this fire
                     continue;
@@ -321,13 +322,18 @@ public abstract class StationaryAgent extends ExtendedAgent {
                 // no more vehicles to assign
                 continue;
             }
-            for (final AID vehicleAID : vehicles.keySet()) {
-                if (okVehicles.contains(vehicleAID)) {
+            for (final Entry<AID, VehicleStatus> vehicle : vehicles.entrySet()) {
+                logger.debug(vehicle.getKey());
+                if (okVehicles.contains(vehicle.getKey())) {
+                    logger.debug("is ok");
                     continue;
+//                } else if (!vehicle.getValue().isAcceptingTarget()) { // FIXME
+//                    logger.debug("is not accepting");
+//                    continue;
                 }
-                sendMessage(ACLMessage.REQUEST, VehicleAgent.SET_TARGET_PROTOCOL, vehicleAID,
+                sendMessage(ACLMessage.REQUEST, VehicleAgent.SET_TARGET_PROTOCOL, vehicle.getKey(),
                             new SetTargetRequest(Coordinate.fromString(fv.getKey())));
-//                logger.debug("sent to target request to vehicle " + vehicleAID);
+                logger.debug("sent to target request to vehicle " + vehicle.getKey());
                 if (fv.setValue(fv.getValue() - 1) == 1) {
                     // all vehicles for this fire
                     break;

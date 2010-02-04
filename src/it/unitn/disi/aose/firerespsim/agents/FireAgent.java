@@ -138,11 +138,12 @@ public final class FireAgent extends ExtendedAgent {
             }
             sendReply(request, ACLMessage.AGREE);
             
+            boolean stopIncrease = false;
             boolean takeDown = false;
             fire.decreaseIntensity(1);
             if (fire.getIntensity() < 1) {
                 // fire is put out
-                stopParallelBehaviour(increaseBehaviour);
+                stopIncrease = true;
                 fire.setIntensity(0);
                 if (fire.getCasualties() < 1) {
                     fire.setCasualties(0);
@@ -154,6 +155,8 @@ public final class FireAgent extends ExtendedAgent {
             
             if (takeDown) {
                 doDelete();
+            } else if (stopIncrease) {
+                stopParallelBehaviour(increaseBehaviour);
             }
         }
     }
