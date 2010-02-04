@@ -2,66 +2,64 @@ package it.unitn.disi.aose.firerespsim.behaviours;
 
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.DataStore;
+import jade.core.behaviours.SimpleBehaviour;
 import jade.lang.acl.ACLMessage;
-import jade.proto.SubscriptionInitiator;
-import java.util.Vector;
+import jade.lang.acl.MessageTemplate;
 import org.apache.log4j.Logger;
 
 /**
  * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
-public final class Subscriber extends SubscriptionInitiator {
+public final class Subscriber extends SimpleBehaviour {
     
     private static final Logger logger = Logger.getLogger("it.unitn.disi.aose.firerespsim");
+    private boolean done = false;
+    private final ACLMessage msg;
+    private final MessageTemplate mt;
     private final String dsKey;
     
     /**
      * @param a
      * @param msg
-     * @param store
+     * @param mt
      * @param dsKey Data store key of the subscription service AID.
      */
-    public Subscriber(final Agent a, final ACLMessage msg, final DataStore store, final String dsKey) {
+    public Subscriber(final Agent a, final ACLMessage msg, final MessageTemplate mt, final String dsKey) {
 
-        super(a, msg, store);
-        
+        super(a);
+        this.msg = msg;
+        this.mt = mt;
         this.dsKey = dsKey;
     }
     
     /**
-     * @see jade.proto.SubscriptionInitiator#prepareSubscriptions(jade.lang.acl.ACLMessage)
+     * @see jade.core.behaviours.Behaviour#action()
      */
-    @SuppressWarnings("unchecked")
     @Override
-    protected Vector prepareSubscriptions(final ACLMessage subscription) {
+    public void action() {
 
         logger.debug("sending subscription request");
         
-        subscription.addReceiver((AID) getDataStore().get(dsKey));
-        return super.prepareSubscriptions(subscription);
+        msg.addReceiver((AID) getDataStore().get(dsKey));
+        myAgent.send(msg);
+        
+        final ACLMessage response = myAgent.blockingReceive(mt);
+        
+        if (response.getPerformative() == ACLMessage.AGREE) {
+            logger.info("subscription request was accepted");
+        } else {
+            logger.error("subscription request was refused");
+        }
+        done = true;
     }
     
     /**
-     * @see jade.proto.SubscriptionInitiator#handleAgree(jade.lang.acl.ACLMessage)
+     * @see jade.core.behaviours.Behaviour#done()
      */
     @Override
-    protected void handleAgree(final ACLMessage agree) {
+    public boolean done() {
 
-        logger.info("subscription request was accepted");
-        
-        super.handleAgree(agree);
-    }
-    
-    /**
-     * @see jade.proto.SubscriptionInitiator#handleRefuse(jade.lang.acl.ACLMessage)
-     */
-    @Override
-    protected void handleRefuse(final ACLMessage refuse) {
-
-        logger.error("subscription request was refused");
-        
-        super.handleRefuse(refuse);
+        return done;
     }
 }

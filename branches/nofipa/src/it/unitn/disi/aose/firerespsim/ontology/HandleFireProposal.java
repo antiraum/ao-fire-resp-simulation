@@ -9,6 +9,7 @@ import jade.content.onto.annotations.Slot;
 @SuppressWarnings("serial")
 public final class HandleFireProposal implements Predicate {
     
+    private Coordinate coordinate;
     private int distance;
     private int numVehicles;
     
@@ -21,11 +22,13 @@ public final class HandleFireProposal implements Predicate {
     }
     
     /**
+     * @param coordinate
      * @param distance
      * @param numVehicles
      */
-    public HandleFireProposal(final int distance, final int numVehicles) {
+    public HandleFireProposal(final Coordinate coordinate, final int distance, final int numVehicles) {
 
+        this.coordinate = coordinate;
         this.distance = distance;
         this.numVehicles = numVehicles;
     }
@@ -37,6 +40,22 @@ public final class HandleFireProposal implements Predicate {
     public int getDistance() {
 
         return distance;
+    }
+    
+    /**
+     * @return Coordinate of the fire.
+     */
+    public Coordinate getCoordinate() {
+
+        return coordinate;
+    }
+    
+    /**
+     * @param coordinate
+     */
+    public void setCoordinate(final Coordinate coordinate) {
+
+        this.coordinate = coordinate;
     }
     
     /**

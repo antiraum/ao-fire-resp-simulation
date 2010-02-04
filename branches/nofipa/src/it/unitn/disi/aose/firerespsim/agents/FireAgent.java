@@ -6,13 +6,10 @@ import it.unitn.disi.aose.firerespsim.ontology.FireStatusInfo;
 import it.unitn.disi.aose.firerespsim.ontology.VehiclePositionInfo;
 import jade.core.AID;
 import jade.core.Agent;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.TickerBehaviour;
-import jade.domain.FIPAAgentManagement.FailureException;
-import jade.domain.FIPAAgentManagement.NotUnderstoodException;
-import jade.domain.FIPAAgentManagement.RefuseException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import jade.proto.AchieveREResponder;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import org.apache.commons.lang.math.RandomUtils;
@@ -92,7 +89,9 @@ public final class FireAgent extends ExtendedAgent {
      * fires position to be able to decrease its intensity. If it is a message with the new fire status (
      * {@link Fire#toString()}) is send to the engine agent.
      */
-    private class PutOutService extends AchieveREResponder {
+    private class PutOutService extends CyclicBehaviour {
+        
+        private final MessageTemplate mt;
         
         /**
          * @param a
@@ -100,22 +99,27 @@ public final class FireAgent extends ExtendedAgent {
          */
         public PutOutService(final Agent a, final MessageTemplate mt) {
 
-            super(a, mt);
+            super(a);
+            this.mt = mt;
         }
         
         /**
-         * @see jade.proto.AchieveREResponder#handleRequest(jade.lang.acl.ACLMessage)
+         * @see jade.core.behaviours.Behaviour#action()
          */
         @Override
-        protected ACLMessage handleRequest(final ACLMessage request) throws NotUnderstoodException, RefuseException {
+        public void action() {
 
+            final ACLMessage request = blockingReceive(mt);
+            if (request == null) return;
+            
             logger.debug("received put out request");
             
             Coordinate engineCoord;
             try {
                 engineCoord = extractMessageContent(VehiclePositionInfo.class, request, false).getVehicleCoordinate();
             } catch (final Exception e) {
-                throw new NotUnderstoodException("could not read message content");
+                sendReply(request, ACLMessage.NOT_UNDERSTOOD, "could not read message content");
+                return;
             }
             String refuse = null;
             if (!engineCoord.equals(fire.coordinate)) {
@@ -126,7 +130,8 @@ public final class FireAgent extends ExtendedAgent {
             }
             if (refuse != null) {
                 logger.debug(refuse);
-                throw new RefuseException(refuse);
+                sendReply(request, ACLMessage.REFUSE, refuse);
+                return;
             }
             
             boolean takeDown = false;
@@ -146,19 +151,6 @@ public final class FireAgent extends ExtendedAgent {
             if (takeDown) {
                 doDelete();
             }
-            
-            return null;
-        }
-        
-        /**
-         * @see jade.proto.AchieveREResponder#prepareResultNotification(jade.lang.acl.ACLMessage,
-         *      jade.lang.acl.ACLMessage)
-         */
-        @Override
-        protected ACLMessage prepareResultNotification(final ACLMessage request, final ACLMessage response)
-                throws FailureException {
-
-            return null;
         }
     }
     
@@ -167,7 +159,9 @@ public final class FireAgent extends ExtendedAgent {
      * casualty. The reply message confirms or disconfirms if a casualty is picked up. If the ambulance is at the fires
      * position, a message with the new fire status ({@link Fire#toString()}) is send to the ambulance agent.
      */
-    private class PickUpCasualtyService extends AchieveREResponder {
+    private class PickUpCasualtyService extends CyclicBehaviour {
+        
+        private final MessageTemplate mt;
         
         /**
          * @param a
@@ -175,22 +169,27 @@ public final class FireAgent extends ExtendedAgent {
          */
         public PickUpCasualtyService(final Agent a, final MessageTemplate mt) {
 
-            super(a, mt);
+            super(a);
+            this.mt = mt;
         }
         
         /**
-         * @see jade.proto.AchieveREResponder#handleRequest(jade.lang.acl.ACLMessage)
+         * @see jade.core.behaviours.Behaviour#action()
          */
         @Override
-        protected ACLMessage handleRequest(final ACLMessage request) throws NotUnderstoodException, RefuseException {
+        public void action() {
 
+            final ACLMessage request = blockingReceive(mt);
+            if (request == null) return;
+            
             logger.debug("received pick up casualty request");
             
             Coordinate ambulanceCoord;
             try {
                 ambulanceCoord = extractMessageContent(VehiclePositionInfo.class, request, false).getVehicleCoordinate();
             } catch (final Exception e) {
-                throw new NotUnderstoodException("could not read message content");
+                sendReply(request, ACLMessage.NOT_UNDERSTOOD, "could not read message content");
+                return;
             }
             String refuse = null;
             if (!ambulanceCoord.equals(fire.coordinate)) {
@@ -201,7 +200,8 @@ public final class FireAgent extends ExtendedAgent {
             }
             if (refuse != null) {
                 logger.debug(refuse);
-                throw new RefuseException(refuse);
+                sendReply(request, ACLMessage.REFUSE);
+                return;
             }
             
             boolean takeDown = false;
@@ -218,18 +218,7 @@ public final class FireAgent extends ExtendedAgent {
                 doDelete();
             }
             
-            return createReply(request, ACLMessage.AGREE, null);
-        }
-        
-        /**
-         * @see jade.proto.AchieveREResponder#prepareResultNotification(jade.lang.acl.ACLMessage,
-         *      jade.lang.acl.ACLMessage)
-         */
-        @Override
-        protected ACLMessage prepareResultNotification(final ACLMessage request, final ACLMessage response)
-                throws FailureException {
-
-            return null;
+            sendReply(request, ACLMessage.AGREE);
         }
     }
     

@@ -7,31 +7,28 @@ import jade.content.onto.annotations.Slot;
  * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
-public final class OnFireStatusInfo implements Predicate {
+public final class HandleFireProposalResponse implements Predicate {
     
     private Coordinate coordinate;
-    private boolean status;
     
     /**
      * Constructor for bean instantiation.
      */
-    public OnFireStatusInfo() {
+    public HandleFireProposalResponse() {
 
     // empty
     }
     
     /**
      * @param coordinate
-     * @param status
      */
-    public OnFireStatusInfo(final Coordinate coordinate, final boolean status) {
+    public HandleFireProposalResponse(final Coordinate coordinate) {
 
         this.coordinate = coordinate;
-        this.status = status;
     }
     
     /**
-     * @return Coordinate to check on fire status for.
+     * @return Coordinate of the fire.
      */
     @Slot(mandatory = true)
     public Coordinate getCoordinate() {
@@ -45,22 +42,5 @@ public final class OnFireStatusInfo implements Predicate {
     public void setCoordinate(final Coordinate coordinate) {
 
         this.coordinate = coordinate;
-    }
-    
-    /**
-     * @return On fire status.
-     */
-    @Slot(mandatory = true)
-    public boolean getStatus() {
-
-        return status;
-    }
-    
-    /**
-     * @param status
-     */
-    public void setStatus(final boolean status) {
-
-        this.status = status;
     }
 }

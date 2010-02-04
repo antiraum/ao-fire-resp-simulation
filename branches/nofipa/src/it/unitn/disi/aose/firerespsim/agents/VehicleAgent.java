@@ -10,12 +10,8 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.TickerBehaviour;
-import jade.domain.FIPAAgentManagement.FailureException;
-import jade.domain.FIPAAgentManagement.NotUnderstoodException;
-import jade.domain.FIPAAgentManagement.RefuseException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import jade.proto.AchieveREResponder;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 
@@ -77,17 +73,19 @@ public abstract class VehicleAgent extends ExtendedAgent {
         final Move move = new Move(this, (Integer) params.get("MOVE_IVAL"));
         final MessageTemplate fireStatusTpl = createMessageTemplate(null, FireAgent.FIRE_STATUS_PROTOCOL,
                                                                     ACLMessage.INFORM);
-        final ReceiveFireStatus receiveFireStatus = new ReceiveFireStatus(this, fireStatusTpl);
+        final HandleFireStatus handleFireStatus = new HandleFireStatus(this, fireStatusTpl);
         
         // add behaviors
-        parallelBehaviours.addAll(Arrays.asList(setTargetService, move, receiveFireStatus));
+        parallelBehaviours.addAll(Arrays.asList(setTargetService, move, handleFireStatus));
         addBehaviours();
     }
     
     /**
      * Service to send the vehicle to a target.
      */
-    private class SetTargetService extends AchieveREResponder {
+    private class SetTargetService extends CyclicBehaviour {
+        
+        private final MessageTemplate mt;
         
         /**
          * @param a
@@ -95,23 +93,32 @@ public abstract class VehicleAgent extends ExtendedAgent {
          */
         public SetTargetService(final Agent a, final MessageTemplate mt) {
 
-            super(a, mt);
+            super(a);
+            this.mt = mt;
         }
         
+        /**
+         * @see jade.core.behaviours.Behaviour#action()
+         */
         @Override
-        protected ACLMessage handleRequest(final ACLMessage request) throws NotUnderstoodException, RefuseException {
+        public void action() {
 
+            final ACLMessage request = blockingReceive(mt);
+            if (request == null) return;
+            
             if (!vehicle.isAcceptingTarget()) {
                 final String refuse = "currently not accepting set target requests";
                 logger.debug(refuse);
-                throw new RefuseException(refuse);
+                sendReply(request, ACLMessage.REFUSE, refuse);
+                return;
             }
             
             Coordinate target;
             try {
                 target = extractMessageContent(SetTargetRequest.class, request, false).getTarget();
             } catch (final Exception e) {
-                throw new NotUnderstoodException("could not read message content");
+                sendReply(request, ACLMessage.NOT_UNDERSTOOD, "could not read message content");
+                return;
             }
             
             logger.debug("received set target request to (" + target + ")");
@@ -119,18 +126,7 @@ public abstract class VehicleAgent extends ExtendedAgent {
             vehicle.fire = new Position(target);
             setTarget(new Position(target));
             
-            return null; // TODO return AGREE
-        }
-        
-        /**
-         * @see jade.proto.AchieveREResponder#prepareResultNotification(jade.lang.acl.ACLMessage,
-         *      jade.lang.acl.ACLMessage)
-         */
-        @Override
-        protected ACLMessage prepareResultNotification(final ACLMessage request, final ACLMessage response)
-                throws FailureException {
-
-            return null;
+            // TODO send AGREE
         }
     }
     
@@ -262,7 +258,7 @@ public abstract class VehicleAgent extends ExtendedAgent {
     /**
      * Receives the status messages from fire agents.
      */
-    private class ReceiveFireStatus extends CyclicBehaviour {
+    private class HandleFireStatus extends CyclicBehaviour {
         
         private final MessageTemplate mt;
         
@@ -270,7 +266,7 @@ public abstract class VehicleAgent extends ExtendedAgent {
          * @param a
          * @param mt
          */
-        public ReceiveFireStatus(final Agent a, final MessageTemplate mt) {
+        public HandleFireStatus(final Agent a, final MessageTemplate mt) {
 
             super(a);
             this.mt = mt;
@@ -299,7 +295,7 @@ public abstract class VehicleAgent extends ExtendedAgent {
             send(statusMsg);
             logger.debug("propagated fire status to owner");
             
-            receivedFireStatus(status);
+            handleFireStatus(status);
         }
     }
     
@@ -308,7 +304,7 @@ public abstract class VehicleAgent extends ExtendedAgent {
      * 
      * @param fire
      */
-    abstract void receivedFireStatus(final FireStatus fire);
+    abstract void handleFireStatus(final FireStatus fire);
     
     /**
      * @return AID of the fire currently assigned to.
