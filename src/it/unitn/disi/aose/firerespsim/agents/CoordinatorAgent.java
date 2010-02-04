@@ -1,29 +1,28 @@
 package it.unitn.disi.aose.firerespsim.agents;
 
-import it.unitn.disi.aose.firerespsim.behaviours.FindAgent;
-import it.unitn.disi.aose.firerespsim.behaviours.Subscriber;
-import it.unitn.disi.aose.firerespsim.behaviours.SubscriptionService;
-import it.unitn.disi.aose.firerespsim.model.Subscribers;
-import it.unitn.disi.aose.firerespsim.ontology.Coordinate;
-import it.unitn.disi.aose.firerespsim.ontology.FireAlert;
-import it.unitn.disi.aose.firerespsim.ontology.HandleFireCFP;
-import it.unitn.disi.aose.firerespsim.ontology.HandleFireProposal;
+import it.unitn.disi.aose.firerespsim.model.Position;
+import it.unitn.disi.aose.firerespsim.model.Proposal;
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.DataStore;
-import jade.core.behaviours.OneShotBehaviour;
+import jade.core.behaviours.Behaviour;
+import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.ParallelBehaviour;
+import jade.core.behaviours.SequentialBehaviour;
+import jade.core.behaviours.SimpleBehaviour;
+import jade.core.behaviours.ThreadedBehaviourFactory;
+import jade.core.behaviours.TickerBehaviour;
+import jade.domain.DFService;
+import jade.domain.FIPAException;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import jade.proto.ContractNetInitiator;
-import jade.proto.SubscriptionResponder.Subscription;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.Map;
 import java.util.Set;
-import java.util.Vector;
+import org.apache.log4j.Logger;
 
 /**
  * Coordinator for {@link StationaryAgent}s. Subscribes at the {@link FireMonitorAgent} for fire alerts. Distribute the
@@ -32,25 +31,36 @@ import java.util.Vector;
  * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
-public abstract class CoordinatorAgent extends ExtendedAgent {
+public abstract class CoordinatorAgent extends Agent {
     
     /**
-     * Protocol for coordination messages.
+     * Ontology type of coordination messages.
      */
-    public static final String COORDINATION_PROTOCOL = "Coordination";
-    /**
-     * Coordination DF service type. Must be set it in the concrete subclasses.
-     */
-    protected String dfType;
+    protected static final String COORDINATION_ONT_TYPE = "Coordination";
     
     /**
      * Package scoped for faster access by inner classes.
      */
-    final Subscribers coordSubscribers = new Subscribers();
+    static final Logger logger = Logger.getLogger("it.unitn.disi.aose.firerespsim");
+    
     /**
-     * Currently known fires. Package scoped for faster access by inner classes.
+     * Package scoped for faster access by inner classes.
      */
-    final Set<Coordinate> knownFires = new HashSet<Coordinate>();
+    Agent thisAgent = this;
+    
+    /**
+     * DF Type of this coordinator. Must be set it in the concrete subclasses.
+     */
+    protected String dfType;
+    
+    /**
+     * Set of the names (GUID) of all stationary agents that are registered to be coordinated by this agent. Package
+     * scoped for faster access by inner classes.
+     */
+    final Set<AID> stationaryAgents = new HashSet<AID>();
+    
+    private final ThreadedBehaviourFactory tbf = new ThreadedBehaviourFactory();
+    private final Set<Behaviour> threadedBehaviours = new HashSet<Behaviour>();
     
     /**
      * @see jade.core.Agent#setup()
@@ -58,161 +68,350 @@ public abstract class CoordinatorAgent extends ExtendedAgent {
     @Override
     protected void setup() {
 
-        dfTypes = new String[] {dfType};
+        logger.debug("starting up");
         
         super.setup();
         
-        // create data store
-        final String fireMonitorAIDKey = "FIRE_MONITOR_AID";
-        final DataStore ds = new DataStore();
-        
-        // create behaviors
-        final FindAgent findFireMonitor = new FindAgent(this, FireMonitorAgent.FIRE_ALERT_DF_TYPE, fireMonitorAIDKey);
-        findFireMonitor.setDataStore(ds);
-        final ACLMessage fireAlertSubsMsg = createMessage(ACLMessage.SUBSCRIBE, FireMonitorAgent.FIRE_ALERT_PROTOCOL);
-        final Subscriber fireAlertSubscriber = new Subscriber(this, fireAlertSubsMsg, ds, fireMonitorAIDKey);
-        fireAlertSubscriber.registerHandleInform(new HandleFireAlert(this));
-        final MessageTemplate coordSubsTpl = createMessageTemplate(null, COORDINATION_PROTOCOL, ACLMessage.SUBSCRIBE);
-        final SubscriptionService coordSubsService = new SubscriptionService(this, coordSubsTpl, coordSubscribers);
-        
         // add behaviors
-        sequentialBehaviours.add(findFireMonitor);
-        parallelBehaviours.addAll(Arrays.asList(fireAlertSubscriber, coordSubsService));
-        addBehaviours();
+        final SequentialBehaviour sb = new SequentialBehaviour();
+        sb.addSubBehaviour(new SubscribeToFireAlerts());
+        threadedBehaviours.addAll(Arrays.asList(new Behaviour[] {
+            new ReceiveFireAlerts(), new ReceiveProposals(), new CoordinationService(), new ReceiveProposals(),
+            new CheckCoordinationTimeouts(this)}));
+        final ParallelBehaviour pb = new ParallelBehaviour(ParallelBehaviour.WHEN_ALL);
+        for (final Behaviour b : threadedBehaviours) {
+            pb.addSubBehaviour(tbf.wrap(b));
+        }
+        sb.addSubBehaviour(pb);
+        addBehaviour(sb);
+        
+        // register at the DF
+        final DFAgentDescription descr = new DFAgentDescription();
+        final ServiceDescription sd = new ServiceDescription();
+        sd.setName(getName());
+        sd.setType(dfType);
+        descr.addServices(sd);
+        try {
+            DFService.register(this, descr);
+        } catch (final FIPAException e) {
+            logger.error("cannot register at the DF");
+            e.printStackTrace();
+            doDelete();
+        }
     }
     
     /**
-     * Handles a fire alert. If a fire is new, starts a {@link CoordinateFire} for it.
+     * @see jade.core.Agent#takeDown()
      */
-    private class HandleFireAlert extends OneShotBehaviour {
+    @Override
+    protected void takeDown() {
+
+        logger.info("shutting down");
+        
+        for (final Behaviour b : threadedBehaviours) {
+            if (b != null) {
+                tbf.getThread(b).interrupt();
+            }
+        }
+        
+        super.takeDown();
+    }
+    
+    /**
+     * Service for registering to use this agent for fire responsibility coordination.
+     */
+    class CoordinationService extends CyclicBehaviour {
+        
+        private final MessageTemplate requestTpl = MessageTemplate.and(
+                                                                       MessageTemplate.MatchPerformative(ACLMessage.SUBSCRIBE),
+                                                                       MessageTemplate.MatchOntology(COORDINATION_ONT_TYPE));
         
         /**
-         * @param a
+         * @see jade.core.behaviours.Behaviour#action()
          */
-        public HandleFireAlert(final Agent a) {
+        @Override
+        public void action() {
 
-            super(a);
+            final ACLMessage requestMsg = blockingReceive(requestTpl);
+            if (requestMsg == null) return;
+            
+//            logger.debug("received coordination registration request");
+            
+            final ACLMessage replyMsg = requestMsg.createReply();
+            if (stationaryAgents.contains(requestMsg.getSender())) {
+                // already registered
+                replyMsg.setPerformative(ACLMessage.REFUSE);
+            } else {
+                // new agent
+                stationaryAgents.add(requestMsg.getSender());
+                replyMsg.setPerformative(ACLMessage.AGREE);
+            }
+            send(replyMsg);
+//            logger.debug("sent coordination registration reply");
+        }
+    }
+    
+    /**
+     * Subscribes to new fire alerts from the fire monitor agent.
+     */
+    class SubscribeToFireAlerts extends SimpleBehaviour {
+        
+        private boolean done = false;
+        private final DFAgentDescription fireAlertAD = new DFAgentDescription();
+        private AID fireMonitorAID = null;
+        private final MessageTemplate replyTpl = MessageTemplate.and(
+                                                                     MessageTemplate.or(
+                                                                                        MessageTemplate.MatchPerformative(ACLMessage.AGREE),
+                                                                                        MessageTemplate.MatchPerformative(ACLMessage.REFUSE)),
+                                                                     MessageTemplate.MatchOntology(FireMonitorAgent.FIRE_ALERT_ONT_TYPE));
+        
+        /**
+         * Constructor
+         */
+        public SubscribeToFireAlerts() {
+
+            super();
+            
+            final ServiceDescription fireAlertSD = new ServiceDescription();
+            fireAlertSD.setType(FireMonitorAgent.DF_TYPE);
+            fireAlertAD.addServices(fireAlertSD);
         }
         
         /**
          * @see jade.core.behaviours.Behaviour#action()
          */
-        @SuppressWarnings("unchecked")
         @Override
         public void action() {
 
-            // look for fire alert in data store
-            Coordinate fireCoord = null;
-            final Iterator iter = getDataStore().values().iterator();
-            while (iter.hasNext()) {
-                final Object val = iter.next();
-                if (!(val instanceof ACLMessage)) {
-                    continue;
-                }
+            if (fireMonitorAID == null) {
+                DFAgentDescription[] result = null;
                 try {
-                    fireCoord = extractMessageContent(FireAlert.class, (ACLMessage) val, true).getFireCoordinate();
-                } catch (final Exception e) {
-                    continue;
+                    result = DFService.search(thisAgent, fireAlertAD);
+                } catch (final FIPAException e) {
+                    logger.error("error searching for agent with " + FireMonitorAgent.DF_TYPE + " service at DF");
+                    e.printStackTrace();
+                    return;
+                }
+                if (result != null && result.length > 0) {
+                    fireMonitorAID = result[0].getName();
+                } else {
+                    logger.debug("no agent with " + FireMonitorAgent.DF_TYPE + " service at DF");
                 }
             }
-            if (fireCoord == null) {
-                logger.error("cannot find fire alert in data store");
+            if (fireMonitorAID == null) {
+                logger.error("no fire alert AID");
+                try {
+                    Thread.sleep(1000);
+                } catch (final InterruptedException e) {
+//                    done = true;
+                }
                 return;
             }
-            logger.debug("received alert for fire at (" + fireCoord + ")");
             
-            // add to known fires
-            if (knownFires.contains(fireCoord)) return; // not new
-            knownFires.add(fireCoord); // TODO remove fires when put out
+            final ACLMessage subscribeMsg = new ACLMessage(ACLMessage.SUBSCRIBE);
+            subscribeMsg.addReceiver(fireMonitorAID);
+            subscribeMsg.setOntology(FireMonitorAgent.FIRE_ALERT_ONT_TYPE);
+            send(subscribeMsg);
+//            logger.debug("sent fire alert subscription request");
             
-            // start cfp
-            final Set<Subscription> coordSubscriptions = coordSubscribers.getSubscriptions();
-            if (coordSubscriptions.isEmpty()) {
-                logger.error("no stationary agent registered to send CFP to - fire will not be handled!");
-                return;
-            }
-            final List<AID> recipients = new ArrayList<AID>();
-            for (final Subscription sub : coordSubscriptions) {
-                recipients.add(sub.getMessage().getSender());
-            }
-            final ACLMessage cfpMsg = createMessage(ACLMessage.CFP, COORDINATION_PROTOCOL, recipients,
-                                                    new HandleFireCFP(fireCoord));
-            if (coordinateFire == null) {
-                coordinateFire = new CoordinateFire(myAgent, cfpMsg);
+            final ACLMessage replyMsg = blockingReceive(replyTpl);
+            if (replyMsg.getPerformative() == ACLMessage.AGREE) {
+                logger.info("subscribed for new fire alerts at monitor");
             } else {
-                coordinateFire.reset(cfpMsg);
+                logger.error("fire alert subscription was disconfirmed - assume this is because already subscribed");
             }
-            addParallelBehaviour(coordinateFire);
+            
+            done = true;
+        }
+        
+        /**
+         * @see jade.core.behaviours.Behaviour#done()
+         */
+        @Override
+        public boolean done() {
+
+            return done;
         }
     }
     
     /**
-     * Instance of {@link CoordinateFire} that gets re-used for every coordination. Package scoped for faster access by
-     * inner classes.
+     * Proposals for fires currently coordinated. Package scoped for faster access by inner classes.
      */
-    CoordinateFire coordinateFire = null;
+    final Map<String, Set<Proposal>> fireProposals = new HashMap<String, Set<Proposal>>();
+    /**
+     * Start times of CFPs for fires currently coordinated. Package scoped for faster access by inner classes.
+     */
+    final Map<String, Long> fireCfpStartTimes = new HashMap<String, Long>();
     
     /**
-     * Coordinates the responsibility for a new fire. Sends a CFP and gives the responsibility to the stationary agent
-     * with the best proposal.
+     * Receives fire alerts from the fire monitor agent. If a fire is new, proposals from the stationary agents are
+     * requested. The content of the call for proposals message consists is {@link Position#toString()} of the fire
+     * position.
      */
-    private class CoordinateFire extends ContractNetInitiator {
+    class ReceiveFireAlerts extends CyclicBehaviour {
+        
+        private final Set<String> knownFires = new HashSet<String>();
+        
+        private final MessageTemplate alertTpl = MessageTemplate.and(
+                                                                     MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+                                                                     MessageTemplate.MatchOntology(FireMonitorAgent.FIRE_ALERT_ONT_TYPE));
+        
+        /**
+         * @see jade.core.behaviours.Behaviour#action()
+         */
+        @Override
+        public void action() {
+
+            final ACLMessage alertMsg = blockingReceive(alertTpl);
+            if (alertMsg == null) return;
+            
+            if (alertMsg.getContent() == null) {
+                logger.error("alert message has no content");
+                return;
+            }
+            final Position firePosition = Position.fromString(alertMsg.getContent());
+            logger.info("received fire alert for position (" + firePosition + ")");
+            
+            if (knownFires.contains(firePosition.toString())) return; // not new
+            knownFires.add(firePosition.toString());
+            
+            if (stationaryAgents.size() > 0) {
+                // request proposals from stationary agents
+                fireProposals.put(firePosition.toString(), new HashSet<Proposal>());
+                fireCfpStartTimes.put(firePosition.toString(), System.currentTimeMillis());
+                final ACLMessage cfpMsg = new ACLMessage(ACLMessage.CFP);
+                cfpMsg.setOntology(COORDINATION_ONT_TYPE);
+                cfpMsg.setContent(firePosition.toString());
+                for (final AID aid : stationaryAgents) {
+                    cfpMsg.addReceiver(aid);
+                }
+                send(cfpMsg);
+                logger.info("sent CFP to stationary agents");
+            } else {
+                logger.debug("no stationary agent registered to send CFP to");
+            }
+        }
+    }
+    
+    /**
+     * Receives the proposals from the stationary agents. Content of the proposal Messages must be
+     * {@link Proposal#toString()}. After all proposals are collected or if the proposal timeout is reached, the
+     * responsibility is given to the agent with the best proposal.
+     */
+    class ReceiveProposals extends CyclicBehaviour {
+        
+        private final MessageTemplate proposalTpl = MessageTemplate.and(
+                                                                        MessageTemplate.MatchPerformative(ACLMessage.PROPOSE),
+                                                                        MessageTemplate.MatchOntology(COORDINATION_ONT_TYPE));
+        
+        /**
+         * @see jade.core.behaviours.Behaviour#action()
+         */
+        @Override
+        public void action() {
+
+            final ACLMessage proposalMsg = blockingReceive(proposalTpl);
+            if (proposalMsg == null) return;
+            
+            // save proposal
+            if (proposalMsg.getContent() == null) {
+                logger.error("proposal message has no content");
+                return;
+            }
+            final Proposal prop = Proposal.fromString(proposalMsg.getContent());
+            logger.debug("received proposal (" + prop.toPrettyString() + ")");
+            
+            if (!fireProposals.containsKey(prop.firePosition.toString())) {
+                // fire is not currently coordinated
+                logger.debug("proposal is for fire that's currently not coordinated");
+                return;
+            }
+            fireProposals.get(prop.firePosition.toString()).add(prop);
+            
+            if (fireProposals.get(prop.firePosition.toString()).size() == stationaryAgents.size()) {
+                // all proposals received
+                logger.debug("received all proposals for fire (" + prop.firePosition + ")");
+                assignFire(prop.firePosition.toString());
+            }
+        }
+    }
+    
+    /**
+     * Finishes coordination for fires that are waiting too long for proposals.
+     */
+    class CheckCoordinationTimeouts extends TickerBehaviour {
+        
+        private static final int WAIT_FOR_PROPOSALS_MS = 50000;
         
         /**
          * @param a
-         * @param cfp
          */
-        public CoordinateFire(final Agent a, final ACLMessage cfp) {
+        public CheckCoordinationTimeouts(final Agent a) {
 
-            super(a, cfp);
+            super(a, 1000);
         }
         
         /**
-         * @see jade.proto.ContractNetInitiator#handleAllResponses(java.util.Vector, java.util.Vector)
+         * @see jade.core.behaviours.TickerBehaviour#onTick()
          */
-        @SuppressWarnings("unchecked")
         @Override
-        protected void handleAllResponses(final Vector responses, final Vector acceptances) {
+        protected void onTick() {
 
-            // find best proposal
-            ACLMessage bestMsg = null;
-            HandleFireProposal bestProp = null;
-            ListIterator<ACLMessage> iter = responses.listIterator();
-            while (iter.hasNext()) {
-                final ACLMessage msg = iter.next();
-                if (msg.getPerformative() != ACLMessage.PROPOSE) {
-                    continue;
+            for (final Map.Entry<String, Long> fire : fireCfpStartTimes.entrySet()) {
+                if (System.currentTimeMillis() - fire.getValue() > WAIT_FOR_PROPOSALS_MS) {
+                    assignFire(fire.getKey());
                 }
-                HandleFireProposal prop;
-                try {
-                    prop = extractMessageContent(HandleFireProposal.class, msg, false);
-                } catch (final Exception e) {
-                    continue;
-                }
-                // number of available vehicles is primary criteria, distance to fire is secondary criteria
-                if (bestProp == null || prop.getNumVehicles() > bestProp.getNumVehicles() ||
-                    (prop.getNumVehicles() == bestProp.getNumVehicles() && prop.getDistance() < bestProp.getDistance())) {
-                    bestMsg = msg;
-                    bestProp = prop;
-                }
-            }
-            
-            if (bestProp == null) {
-                logger.error("no proposal for fire, will not be handled!");
-                return;
-            }
-            logger.info("accepted proposal (" + bestProp + ")");
-            
-            // create replies
-            iter = responses.listIterator();
-            while (iter.hasNext()) {
-                final ACLMessage msg = iter.next();
-                if (msg.getPerformative() != ACLMessage.PROPOSE) {
-                    continue;
-                }
-                acceptances.add(createReply(msg, (msg == bestMsg) ? ACLMessage.ACCEPT_PROPOSAL
-                                                                 : ACLMessage.REJECT_PROPOSAL, null));
             }
         }
+    }
+    
+    /**
+     * Finish coordination of a fire. Sends a proposal accept message to the agent with the best proposal and proposal
+     * reject messages to all other agents. Content of the messages is {@link Position#toString()} of the fire location.
+     * Package scoped for faster access by inner classes.
+     * 
+     * @param fireKey
+     */
+    void assignFire(final String fireKey) {
+
+        // find best proposal
+        Proposal bestProp = null;
+        for (final Proposal prop : fireProposals.get(fireKey)) {
+            if (bestProp == null || prop.numVehicles > bestProp.numVehicles ||
+                (prop.numVehicles == bestProp.numVehicles && prop.distance < bestProp.distance)) {
+                bestProp = prop;
+            }
+        }
+        
+        if (bestProp == null) {
+            
+            logger.error("no proposal for fire at " + fireKey + ", will not be handled!");
+            
+        } else {
+            
+            // send accept message
+            final ACLMessage acceptMsg = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
+            acceptMsg.setOntology(COORDINATION_ONT_TYPE);
+            acceptMsg.setContent(fireKey);
+            acceptMsg.addReceiver(new AID(bestProp.agentName, true));
+            send(acceptMsg);
+            
+            // send reject message
+            final ACLMessage recjectMsg = new ACLMessage(ACLMessage.REJECT_PROPOSAL);
+            recjectMsg.setOntology(COORDINATION_ONT_TYPE);
+            recjectMsg.setContent(fireKey);
+            for (final Proposal prop : fireProposals.get(fireKey)) {
+                if (prop != bestProp) {
+                    recjectMsg.addReceiver(new AID(prop.agentName, true));
+                }
+            }
+            send(recjectMsg);
+            
+            logger.info("accepted proposal (" + bestProp.toPrettyString() + ")");
+        }
+        
+        // remove from temporary maps
+        fireProposals.remove(fireKey);
+        fireCfpStartTimes.remove(fireKey);
     }
 }

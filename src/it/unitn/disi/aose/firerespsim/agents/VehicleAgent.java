@@ -1,23 +1,21 @@
 package it.unitn.disi.aose.firerespsim.agents;
 
+import it.unitn.disi.aose.firerespsim.model.Fire;
 import it.unitn.disi.aose.firerespsim.model.Position;
 import it.unitn.disi.aose.firerespsim.model.Vehicle;
-import it.unitn.disi.aose.firerespsim.ontology.Coordinate;
-import it.unitn.disi.aose.firerespsim.ontology.FireStatus;
-import it.unitn.disi.aose.firerespsim.ontology.SetTargetRequest;
-import it.unitn.disi.aose.firerespsim.ontology.VehicleStatusInfo;
 import jade.core.AID;
 import jade.core.Agent;
+import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.ParallelBehaviour;
+import jade.core.behaviours.ThreadedBehaviourFactory;
 import jade.core.behaviours.TickerBehaviour;
-import jade.domain.FIPAAgentManagement.FailureException;
-import jade.domain.FIPAAgentManagement.NotUnderstoodException;
-import jade.domain.FIPAAgentManagement.RefuseException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import jade.proto.AchieveREResponder;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
+import java.util.HashSet;
+import java.util.Set;
+import org.apache.log4j.Logger;
 
 /**
  * This is the super class for the fire engine and ambulance agents. Start-up parameters are id, owner (GUID name of the
@@ -26,25 +24,43 @@ import java.util.LinkedHashMap;
  * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
-public abstract class VehicleAgent extends ExtendedAgent {
+public abstract class VehicleAgent extends Agent {
     
     /**
-     * Protocol for set target messages.
+     * Ontology type of vehicle status messages. Package scoped for faster access by inner classes.
      */
-    final static String SET_TARGET_PROTOCOL = "SetVehicleTarget";
+    final static String VEHICLE_STATUS_ONT_TYPE = "VehicleStatus";
     /**
-     * Protocol for vehicle status messages.
+     * Ontology type of vehicle target messages. Package scoped for faster access by inner classes.
      */
-    final static String VEHICLE_STATUS_PROTOCOL = "VehicleStatus";
+    final static String VEHICLE_TARGET_ONT_TYPE = "VehicleTarget";
+    
+    /**
+     * Defaults for start-up arguments.
+     */
+    private static final int DEFAULT_MOVE_IVAL = 10000;
+    
+    /**
+     * Package scoped for faster access by inner classes.
+     */
+    static final Logger logger = Logger.getLogger("it.unitn.disi.aose.firerespsim");
+    
+    /**
+     * Package scoped for faster access by inner classes.
+     */
+    Agent thisAgent = this;
     
     /**
      * AID of the stationary agent owning this vehicle. Package scoped for faster access by inner classes.
      */
     AID owner;
     /**
-     * Model of the vehicle. Package scoped for faster access by inner classes.
+     * Current status of the vehicle of the agent. Package scoped for faster access by inner classes.
      */
     Vehicle vehicle;
+    
+    private final ThreadedBehaviourFactory tbf = new ThreadedBehaviourFactory();
+    private final Set<Behaviour> threadedBehaviours = new HashSet<Behaviour>();
     
     /**
      * @see jade.core.Agent#setup()
@@ -52,85 +68,88 @@ public abstract class VehicleAgent extends ExtendedAgent {
     @Override
     protected void setup() {
 
-        params = new LinkedHashMap<String, Object>() {
-            
-            {
-                put("OWNER", null);
-                put("ROW", null);
-                put("COLUMN", null);
-                put("MOVE_IVAL", 10000);
-            }
-        };
+        logger.debug("starting up");
         
         super.setup();
         
-        final Position vehiclePosition = new Position((Integer) params.get("ROW"), (Integer) params.get("COLUMN"));
-        vehicle = new Vehicle(vehiclePosition, Vehicle.STATE_IDLE);
-        owner = new AID((String) params.get("OWNER"), true);
+        // read start-up arguments
+        final Object[] params = getArguments();
+        if (params == null || params.length < 4) {
+            logger.error("start-up arguments id, owner, row, and column needed");
+            doDelete();
+            return;
+        }
+        vehicle = new Vehicle((Integer) params[0], new Position((Integer) params[2], (Integer) params[3]),
+                              Vehicle.STATE_IDLE);
+        owner = new AID((String) params[1], true);
+        final int vehicleMoveIval = (params.length > 4) ? (Integer) params[4] : DEFAULT_MOVE_IVAL;
         
-        // send status to owner
+        // status to owner
         sendStatus();
         
-        // create behaviors
-        final MessageTemplate setTargetReqTpl = createMessageTemplate(owner, SET_TARGET_PROTOCOL, ACLMessage.REQUEST);
-        final SetTargetService setTargetService = new SetTargetService(this, setTargetReqTpl);
-        final Move move = new Move(this, (Integer) params.get("MOVE_IVAL"));
-        final MessageTemplate fireStatusTpl = createMessageTemplate(null, FireAgent.FIRE_STATUS_PROTOCOL,
-                                                                    ACLMessage.INFORM);
-        final ReceiveFireStatus receiveFireStatus = new ReceiveFireStatus(this, fireStatusTpl);
-        
         // add behaviors
-        parallelBehaviours.addAll(Arrays.asList(setTargetService, move, receiveFireStatus));
-        addBehaviours();
+        threadedBehaviours.addAll(Arrays.asList(new Behaviour[] {
+            new SetTargetService(), new Move(this, vehicleMoveIval), new ContinuousAction(this, vehicleMoveIval),
+            new ReceiveFireStatus()}));
+        final ParallelBehaviour pb = new ParallelBehaviour(ParallelBehaviour.WHEN_ALL);
+        for (final Behaviour b : threadedBehaviours) {
+            pb.addSubBehaviour(tbf.wrap(b));
+        }
+        addBehaviour(pb);
     }
     
     /**
-     * Service to send the vehicle to a target.
+     * @see jade.core.Agent#takeDown()
      */
-    private class SetTargetService extends AchieveREResponder {
-        
-        /**
-         * @param a
-         * @param mt
-         */
-        public SetTargetService(final Agent a, final MessageTemplate mt) {
+    @Override
+    protected void takeDown() {
 
-            super(a, mt);
+        logger.info("shutting down");
+        
+        for (final Behaviour b : threadedBehaviours) {
+            if (b != null) {
+                tbf.getThread(b).interrupt();
+            }
         }
         
+        super.takeDown();
+    }
+    
+    /**
+     * Service to send the vehicle to a target. Content of the request message must be {@link Position#toString()} of
+     * the target position.
+     */
+    class SetTargetService extends CyclicBehaviour {
+        
+        private final MessageTemplate requestTpl = MessageTemplate.and(
+                                                                       MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
+                                                                       MessageTemplate.MatchOntology(VEHICLE_TARGET_ONT_TYPE));
+        
+        /**
+         * @see jade.core.behaviours.Behaviour#action()
+         */
         @Override
-        protected ACLMessage handleRequest(final ACLMessage request) throws NotUnderstoodException, RefuseException {
+        public void action() {
 
+            final ACLMessage requestMsg = blockingReceive(requestTpl);
+            if (requestMsg == null) return;
+            
             if (!vehicle.isAcceptingTarget()) {
-                final String refuse = "currently not accepting set target requests";
-                logger.debug(refuse);
-                throw new RefuseException(refuse);
+                logger.debug("currently not accepting set-target requests");
+                return;
             }
             
-            Coordinate target;
-            try {
-                target = extractMessageContent(SetTargetRequest.class, request, false).getTarget();
-            } catch (final Exception e) {
-                throw new NotUnderstoodException("could not read message content");
+            // get target position
+            if (requestMsg.getContent() == null) {
+                logger.error("request message has no content");
+                return;
             }
+            final Position target = Position.fromString(requestMsg.getContent());
             
-            logger.debug("received set target request to (" + target + ")");
+            logger.debug("received set-target request with new target (" + target + ")");
             
-            vehicle.fire = new Position(target);
-            setTarget(new Position(target));
-            
-            return null; // TODO return AGREE
-        }
-        
-        /**
-         * @see jade.proto.AchieveREResponder#prepareResultNotification(jade.lang.acl.ACLMessage,
-         *      jade.lang.acl.ACLMessage)
-         */
-        @Override
-        protected ACLMessage prepareResultNotification(final ACLMessage request, final ACLMessage response)
-                throws FailureException {
-
-            return null;
+            vehicle.fire = target;
+            setTarget(target);
         }
     }
     
@@ -170,15 +189,18 @@ public abstract class VehicleAgent extends ExtendedAgent {
      */
     void sendStatus() {
 
-        sendMessage(ACLMessage.INFORM, VEHICLE_STATUS_PROTOCOL, owner,
-                    new VehicleStatusInfo(vehicle.getVehicleStatus()));
-//        logger.debug("sent vehicle status to owner");
+        final ACLMessage statusMsg = new ACLMessage(ACLMessage.INFORM);
+        statusMsg.addReceiver(owner);
+        statusMsg.setOntology(VEHICLE_STATUS_ONT_TYPE);
+        statusMsg.setContent(vehicle.toString());
+        send(statusMsg);
+        logger.debug("sent vehicle status to owner");
     }
     
     /**
      * Moves towards the set target position, if it is different from the current position.
      */
-    private class Move extends TickerBehaviour {
+    class Move extends TickerBehaviour {
         
         /**
          * @param a
@@ -225,7 +247,6 @@ public abstract class VehicleAgent extends ExtendedAgent {
                 arrivedAtTarget();
             }
             sendStatus();
-            doMove();
         }
     }
     
@@ -255,26 +276,42 @@ public abstract class VehicleAgent extends ExtendedAgent {
     abstract void arrivedAtFire();
     
     /**
+     * Behavior for continuous actions that can be defined in the concrete subclasses.
+     */
+    class ContinuousAction extends TickerBehaviour {
+        
+        /**
+         * @param a
+         * @param period
+         */
+        public ContinuousAction(final Agent a, final long period) {
+
+            super(a, period);
+        }
+        
+        /**
+         * @see jade.core.behaviours.TickerBehaviour#onTick()
+         */
+        @Override
+        protected void onTick() {
+
+            continuousAction();
+        }
+    }
+    
+    /**
      * Gets called every move interval. Package scoped for faster access by inner classes.
      */
-    abstract void doMove();
+    abstract void continuousAction();
     
     /**
      * Receives the status messages from fire agents.
      */
-    private class ReceiveFireStatus extends CyclicBehaviour {
+    class ReceiveFireStatus extends CyclicBehaviour {
         
-        private final MessageTemplate mt;
-        
-        /**
-         * @param a
-         * @param mt
-         */
-        public ReceiveFireStatus(final Agent a, final MessageTemplate mt) {
-
-            super(a);
-            this.mt = mt;
-        }
+        private final MessageTemplate statusTpl = MessageTemplate.and(
+                                                                      MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+                                                                      MessageTemplate.MatchOntology(FireAgent.FIRE_STATUS_ONT_TYPE));
         
         /**
          * @see jade.core.behaviours.Behaviour#action()
@@ -282,19 +319,18 @@ public abstract class VehicleAgent extends ExtendedAgent {
         @Override
         public void action() {
 
-            final ACLMessage statusMsg = blockingReceive(mt);
+            final ACLMessage statusMsg = blockingReceive(statusTpl);
             if (statusMsg == null) return;
             
-            FireStatus status;
-            try {
-                status = extractMessageContent(FireStatus.class, statusMsg, false);
-            } catch (final Exception e) {
+            if (statusMsg.getContent() == null) {
+                logger.error("status message has no content");
                 return;
             }
-            logger.info("received status from fire at (" + status.getCoordinate() + ")");
+            final Fire status = Fire.fromString(statusMsg.getContent());
+            logger.info("received status from fire at (" + status.position + ")");
             
             // propagate to stationary agent
-            statusMsg.removeReceiver(myAgent.getAID());
+            statusMsg.removeReceiver(thisAgent.getAID());
             statusMsg.addReceiver(owner);
             send(statusMsg);
             logger.debug("propagated fire status to owner");
@@ -308,13 +344,5 @@ public abstract class VehicleAgent extends ExtendedAgent {
      * 
      * @param fire
      */
-    abstract void receivedFireStatus(final FireStatus fire);
-    
-    /**
-     * @return AID of the fire currently assigned to.
-     */
-    protected AID getFireAID() {
-
-        return (vehicle.fire == null) ? null : new AID(FireAgent.FIRE_AGENT_NAME_PREFIX + vehicle.fire, false);
-    }
+    abstract void receivedFireStatus(final Fire fire);
 }

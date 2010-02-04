@@ -1,20 +1,19 @@
 package it.unitn.disi.aose.firerespsim.model;
 
-import it.unitn.disi.aose.firerespsim.ontology.Coordinate;
-import it.unitn.disi.aose.firerespsim.ontology.FireStatus;
 import it.unitn.disi.aose.firerespsim.util.SyncedInteger;
+import org.apache.commons.lang.StringUtils;
 
 /**
- * Model of a fire. Thread-safe.
+ * Status of a fire. Thread-safe.
  * 
  * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 public final class Fire {
     
     /**
-     * Fire position.
+     * Position of the fire on the simulation area.
      */
-    public final Coordinate coordinate;
+    public Position position;
     /**
      * Current fire intensity.
      */
@@ -25,13 +24,13 @@ public final class Fire {
     private final SyncedInteger casualties;
     
     /**
-     * @param coordinate
+     * @param position
      * @param intensity
      * @param casualties
      */
-    public Fire(final Coordinate coordinate, final int intensity, final int casualties) {
+    public Fire(final Position position, final int intensity, final int casualties) {
 
-        this.coordinate = coordinate.clone();
+        this.position = position.clone();
         this.intensity = new SyncedInteger(intensity);
         this.casualties = new SyncedInteger(casualties);
     }
@@ -100,11 +99,26 @@ public final class Fire {
         casualties.decrease(amount);
     }
     
+    private static final String FIELD_SEPARATOR = " / ";
+    
     /**
-     * @return {@link FireStatus}
+     * @see java.lang.Object#toString()
      */
-    public FireStatus getFireStatus() {
+    @Override
+    public String toString() {
 
-        return new FireStatus(coordinate, intensity.get(), casualties.get());
+        return StringUtils.join(new Object[] {position, intensity, casualties}, FIELD_SEPARATOR);
     }
+    
+    /**
+     * @param str
+     * @return {@link Fire}
+     */
+    public static Fire fromString(final String str) {
+
+        final String[] fields = str.split(FIELD_SEPARATOR);
+        if (fields.length != 3) return null;
+        return new Fire(Position.fromString(fields[0]), Integer.parseInt(fields[1]), Integer.parseInt(fields[2]));
+    }
+    
 }

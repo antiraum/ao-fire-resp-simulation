@@ -13,6 +13,5 @@
 			<attribute name="javadoc_location" value="jar:platform:/resource/AO Fire Response Simulation/lib/commons/commons-lang-2.4-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="lib/jade/jadeMisc.jar" sourcepath="lib/jade/jadeMiscSrc.zip"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

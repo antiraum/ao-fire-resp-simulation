@@ -2,25 +2,26 @@ package it.unitn.disi.aose.firerespsim.agents;
 
 import it.unitn.disi.aose.firerespsim.model.Position;
 import it.unitn.disi.aose.firerespsim.model.SimulationArea;
-import it.unitn.disi.aose.firerespsim.ontology.AreaDimensions;
-import it.unitn.disi.aose.firerespsim.ontology.AreaDimensionsInfo;
-import it.unitn.disi.aose.firerespsim.ontology.Coordinate;
-import it.unitn.disi.aose.firerespsim.ontology.OnFireStatusInfo;
-import it.unitn.disi.aose.firerespsim.ontology.OnFireStatusRequest;
-import it.unitn.disi.aose.firerespsim.util.AgentUtil;
 import jade.core.Agent;
+import jade.core.behaviours.Behaviour;
+import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.ParallelBehaviour;
+import jade.core.behaviours.ThreadedBehaviourFactory;
 import jade.core.behaviours.TickerBehaviour;
-import jade.domain.FIPAAgentManagement.FailureException;
-import jade.domain.FIPAAgentManagement.NotUnderstoodException;
-import jade.domain.FIPAAgentManagement.RefuseException;
+import jade.domain.DFService;
+import jade.domain.FIPAException;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import jade.proto.AchieveREResponder;
 import jade.wrapper.AgentController;
 import jade.wrapper.ControllerException;
+import jade.wrapper.StaleProxyException;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
+import java.util.HashSet;
+import java.util.Set;
 import org.apache.commons.lang.math.RandomUtils;
+import org.apache.log4j.Logger;
 
 /**
  * This agent maintains the area of the simulation and generates new fires. Start-up parameters area simulation area
@@ -29,33 +30,49 @@ import org.apache.commons.lang.math.RandomUtils;
  * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
-public final class EnvironmentAgent extends ExtendedAgent {
+public final class EnvironmentAgent extends Agent {
     
     /**
-     * DF type of area dimension service.
+     * DF type of area dimension service. Package scoped for faster access by inner classes.
      */
-    final static String AREA_DIMENSIONS_DF_TYPE = "AreaDimensions";
+    final static String AREA_DIM_DF_TYPE = "AreaDimensions";
     /**
-     * Protocol for area dimensions messages.
-     */
-    final static String AREA_DIMENSIONS_PROTOCOL = "AreaDimensions";
-    /**
-     * DF type of on fire status service.
+     * DF type of on fire status service. Package scoped for faster access by inner classes.
      */
     final static String ON_FIRE_STATUS_DF_TYPE = "OnFireStatus";
     /**
-     * Protocol for on fire status messages.
+     * Ontology type of area dimension messages. Package scoped for faster access by inner classes.
      */
-    final static String ON_FIRE_STATUS_PROTOCOL = "OnFireStatus";
+    final static String AREA_DIMENSIONS_ONT_TYPE = "AreaDimensions";
+    /**
+     * Ontology type of on fire status messages. Package scoped for faster access by inner classes.
+     */
+    final static String ON_FIRE_STATUS_ONT_TYPE = "OnFireStatus";
     
     /**
-     * Model of the simulation area. Package scoped for faster access by inner classes.
+     * Package scoped for faster access by inner classes.
+     */
+    static final Logger logger = Logger.getLogger("it.unitn.disi.aose.firerespsim");
+    
+    /**
+     * Defaults for start-up arguments.
+     */
+    private static final int DEFAULT_AREA_WIDTH = 5;
+    private static final int DEFAULT_AREA_HEIGHT = 5;
+    private static final int DEFAULT_SPAWN_FIRE_IVAL = 100000;
+    private static final int DEFAULT_FIRE_INCREASE_IVAL = 10000;
+    
+    /**
+     * Representation of the simulation area. Package scoped for faster access by inner classes.
      */
     SimulationArea area;
     /**
-     * Increase interval to be passed to started fire agents.
+     * Increase interval parameter for the fire agents. Package scoped for faster access by inner classes.
      */
     int fireIncreaseIval;
+    
+    private final ThreadedBehaviourFactory tbf = new ThreadedBehaviourFactory();
+    private final Set<Behaviour> threadedBehaviours = new HashSet<Behaviour>();
     
     /**
      * @see jade.core.Agent#setup()
@@ -63,138 +80,149 @@ public final class EnvironmentAgent extends ExtendedAgent {
     @Override
     protected void setup() {
 
-        params = new LinkedHashMap<String, Object>() {
-            
-            {
-                put("AREA_WIDTH", 10);
-                put("AREA_HEIGHT", 10);
-                put("SPAWN_FIRE_IVAL", 100000);
-                put("FIRE_INCREASE_IVAL", 10000);
-            }
-        };
-        
-        dfTypes = new String[] {AREA_DIMENSIONS_DF_TYPE, ON_FIRE_STATUS_DF_TYPE};
+        logger.debug("starting up");
         
         super.setup();
         
-        area = new SimulationArea(new AreaDimensions((Integer) params.get("AREA_WIDTH"),
-                                                     (Integer) params.get("AREA_HEIGHT")));
-        fireIncreaseIval = (Integer) params.get("FIRE_INCREASE_IVAL");
-        
-        // create behaviors
-        final MessageTemplate areaDimReqTpl = createMessageTemplate(null, AREA_DIMENSIONS_PROTOCOL, ACLMessage.REQUEST);
-        final AreaDimensionsService areaDimService = new AreaDimensionsService(this, areaDimReqTpl);
-        final MessageTemplate onFireStatusReqTpl = createMessageTemplate(null, ON_FIRE_STATUS_PROTOCOL,
-                                                                         ACLMessage.REQUEST);
-        final OnFireStatusService onFireStatusService = new OnFireStatusService(this, onFireStatusReqTpl);
-        final SpawnFire spawnFires = new SpawnFire(this, (Integer) params.get("SPAWN_FIRE_IVAL"));
+        // read start-up arguments
+        Object[] params = getArguments();
+        if (params == null) {
+            params = new Object[] {};
+        }
+        area = new SimulationArea((params.length > 0) ? (Integer) params[0] : DEFAULT_AREA_WIDTH,
+                                  (params.length > 1) ? (Integer) params[1] : DEFAULT_AREA_HEIGHT);
+        final int spawnFireIval = (params.length > 2) ? (Integer) params[2] : DEFAULT_SPAWN_FIRE_IVAL;
+        fireIncreaseIval = (params.length > 3) ? (Integer) params[3] : DEFAULT_FIRE_INCREASE_IVAL;
         
         // add behaviors
-        parallelBehaviours.addAll(Arrays.asList(areaDimService, onFireStatusService, spawnFires));
-        addBehaviours();
-    }
-    
-    /**
-     * Provides the dimensions of the simulation area. Is used by the fire monitor agent.
-     */
-    private class AreaDimensionsService extends AchieveREResponder {
-        
-        /**
-         * @param a
-         * @param mt
-         */
-        public AreaDimensionsService(final Agent a, final MessageTemplate mt) {
-
-            super(a, mt);
+        threadedBehaviours.addAll(Arrays.asList(new Behaviour[] {
+            new AreaDimensionsService(), new OnFireStatusService(), new SpawnFire(this, spawnFireIval)}));
+        final ParallelBehaviour pb = new ParallelBehaviour(ParallelBehaviour.WHEN_ALL);
+        for (final Behaviour b : threadedBehaviours) {
+            pb.addSubBehaviour(tbf.wrap(b));
         }
+        addBehaviour(pb);
         
-        /**
-         * @see jade.proto.AchieveREResponder#handleRequest(jade.lang.acl.ACLMessage)
-         */
-        @Override
-        protected ACLMessage handleRequest(final ACLMessage request) throws NotUnderstoodException, RefuseException {
-
-//            logger.debug("received request for area dimensions");
-            return createReply(request, ACLMessage.INFORM, new AreaDimensionsInfo(area.dimensions));
-        }
-        
-        /**
-         * @see jade.proto.AchieveREResponder#prepareResultNotification(jade.lang.acl.ACLMessage,
-         *      jade.lang.acl.ACLMessage)
-         */
-        @Override
-        protected ACLMessage prepareResultNotification(final ACLMessage request, final ACLMessage response)
-                throws FailureException {
-
-            return null;
+        // register at the DF
+        final DFAgentDescription descr = new DFAgentDescription();
+        final ServiceDescription areaDimensionsSD = new ServiceDescription();
+        areaDimensionsSD.setName(getName());
+        areaDimensionsSD.setType(AREA_DIM_DF_TYPE);
+        descr.addServices(areaDimensionsSD);
+        final ServiceDescription onFireStatusSD = new ServiceDescription();
+        onFireStatusSD.setName(getName());
+        onFireStatusSD.setType(ON_FIRE_STATUS_DF_TYPE);
+        descr.addServices(onFireStatusSD);
+        try {
+            DFService.register(this, descr);
+        } catch (final FIPAException e) {
+            logger.error("cannot register at the DF");
+            e.printStackTrace();
+            doDelete();
         }
     }
     
     /**
-     * Provides the on fire status of a coordinate on the simulation area. Is used by the fire monitor agent.
+     * @see jade.core.Agent#takeDown()
      */
-    private class OnFireStatusService extends AchieveREResponder {
-        
-        /**
-         * @param a
-         * @param mt
-         */
-        public OnFireStatusService(final Agent a, final MessageTemplate mt) {
+    @Override
+    protected void takeDown() {
 
-            super(a, mt);
-        }
+        logger.info("shutting down");
         
-        /**
-         * @see jade.proto.AchieveREResponder#handleRequest(jade.lang.acl.ACLMessage)
-         */
-        @Override
-        protected ACLMessage handleRequest(final ACLMessage request) throws NotUnderstoodException, RefuseException {
-
-            if (request == null) return null; // TODO check this
-                
-            Coordinate coord;
-            try {
-                coord = extractMessageContent(OnFireStatusRequest.class, request, false).getCoordinate();
-            } catch (final Exception e) {
-                throw new NotUnderstoodException("could not read request message content");
+        for (final Behaviour b : threadedBehaviours) {
+            if (b != null) {
+                tbf.getThread(b).interrupt();
             }
+        }
+        
+        super.takeDown();
+    }
+    
+    /**
+     * Service that provides the area dimensions. Used by the monitor agent. Content of the reply message is
+     * {@link SimulationArea#toString()}.
+     */
+    class AreaDimensionsService extends CyclicBehaviour {
+        
+        private final MessageTemplate requestTpl = MessageTemplate.and(
+                                                                       MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
+                                                                       MessageTemplate.MatchOntology(EnvironmentAgent.AREA_DIMENSIONS_ONT_TYPE));
+        
+        /**
+         * @see jade.core.behaviours.Behaviour#action()
+         */
+        @Override
+        public void action() {
+
+            final ACLMessage requestMsg = blockingReceive(requestTpl);
+            if (requestMsg == null) return;
             
-//            logger.debug("received on fire status request for (" + coord + ")");
+//            logger.debug("received request for area dimensions");
             
-            if (area.getOnFireState(coord)) {
-                
+            // send area dimensions
+            final ACLMessage replyMsg = requestMsg.createReply();
+            replyMsg.setPerformative(ACLMessage.INFORM);
+            replyMsg.setContent(area.toString());
+            send(replyMsg);
+//            logger.debug("sent area dimensions reply");
+        }
+    }
+    
+    /**
+     * Service that provides the on fire status for an area position. Content of the request message must consist of
+     * {@link Position#toString()} of the requested position.
+     */
+    class OnFireStatusService extends CyclicBehaviour {
+        
+        private final MessageTemplate requestTpl = MessageTemplate.and(
+                                                                       MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
+                                                                       MessageTemplate.MatchOntology(EnvironmentAgent.ON_FIRE_STATUS_ONT_TYPE));
+        
+        /**
+         * @see jade.core.behaviours.Behaviour#action()
+         */
+        @Override
+        public void action() {
+
+            final ACLMessage requestMsg = blockingReceive(requestTpl);
+            if (requestMsg == null) return;
+            
+            // get requested position
+            if (requestMsg.getContent() == null) {
+                logger.error("request message has no content");
+                return;
+            }
+            final Position requestPosition = Position.fromString(requestMsg.getContent());
+//            logger.debug("received on fire status request for position (" + requestPosition + ")");
+            
+            if (area.getOnFireState(requestPosition)) {
                 // check if fire agent still alive (fire still burning)
                 AgentController fireAgent = null;
                 try {
-                    fireAgent = getContainerController().getAgent(FireAgent.FIRE_AGENT_NAME_PREFIX + coord);
+                    fireAgent = getContainerController().getAgent("fire " + requestPosition);
                 } catch (final ControllerException e) {
                     // pass
                 }
                 if (fireAgent == null) {
-                    logger.debug("fire at (" + coord + ") no longer burning");
-                    area.setOnFireState(coord, false);
+                    logger.debug("fire at (" + requestPosition + ") no longer burning");
+                    area.setOnFireState(requestPosition, false);
                 }
             }
             
-            return createReply(request, ACLMessage.INFORM, new OnFireStatusInfo(area.getOnFireState(coord)));
-        }
-        
-        /**
-         * @see jade.proto.AchieveREResponder#prepareResultNotification(jade.lang.acl.ACLMessage,
-         *      jade.lang.acl.ACLMessage)
-         */
-        @Override
-        protected ACLMessage prepareResultNotification(final ACLMessage request, final ACLMessage response)
-                throws FailureException {
-
-            return null;
+            // send fire status
+            final ACLMessage replyMsg = requestMsg.createReply();
+            replyMsg.setPerformative(ACLMessage.INFORM);
+            replyMsg.setContent(Boolean.toString(area.getOnFireState(requestPosition)));
+            send(replyMsg);
+//            logger.debug("sent on fire status reply");
         }
     }
     
     /**
      * Starts a new fire at a random position (that is not yet on fire).
      */
-    private class SpawnFire extends TickerBehaviour {
+    class SpawnFire extends TickerBehaviour {
         
         /**
          * @param a
@@ -211,20 +239,30 @@ public final class EnvironmentAgent extends ExtendedAgent {
         @Override
         protected void onTick() {
 
-            // find fire position
             final Position firePosition = new Position(0, 0);
             do {
-                firePosition.setRow(RandomUtils.nextInt(area.dimensions.getHeight() - 1) + 1);
-                firePosition.setCol(RandomUtils.nextInt(area.dimensions.getWidth() - 1) + 1);
-            } while (area.getOnFireState(firePosition.getCoordinate()));
+                firePosition.setRow(RandomUtils.nextInt(area.height - 1) + 1);
+                firePosition.setCol(RandomUtils.nextInt(area.width - 1) + 1);
+            } while (area.getOnFireState(firePosition));
             
-            // start fire agent
-            AgentUtil.startAgent(getContainerController(), FireAgent.FIRE_AGENT_NAME_PREFIX + firePosition,
-                                 FireAgent.class.getName(), new Object[] {
-                                     firePosition.getRow(), firePosition.getCol(), fireIncreaseIval});
+            // spawn fire agent
+            try {
+                final AgentController fireAgent = getContainerController().createNewAgent(
+                                                                                          FireAgent.FIRE_AGENT_NAME_PREFIX +
+                                                                                                  firePosition,
+                                                                                          FireAgent.class.getName(),
+                                                                                          new Object[] {
+                                                                                              firePosition.getRow(),
+                                                                                              firePosition.getCol(),
+                                                                                              fireIncreaseIval});
+                fireAgent.start();
+            } catch (final StaleProxyException e) {
+                logger.error("couldn't start fire");
+                e.printStackTrace();
+            }
             
             // set fire state
-            area.setOnFireState(firePosition.getCoordinate(), true);
+            area.setOnFireState(firePosition, true);
             
             logger.info("started fire at (" + firePosition + ")");
         }

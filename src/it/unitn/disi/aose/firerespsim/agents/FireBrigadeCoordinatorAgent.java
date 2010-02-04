@@ -9,7 +9,7 @@ package it.unitn.disi.aose.firerespsim.agents;
 public final class FireBrigadeCoordinatorAgent extends CoordinatorAgent {
     
     /**
-     * DF service type.
+     * DF type of this agent.
      */
     static final String DF_TYPE = "FireBrigadeCoordinator";
     

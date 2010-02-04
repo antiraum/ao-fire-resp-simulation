@@ -1,39 +1,32 @@
 package it.unitn.disi.aose.firerespsim.agents;
 
-import it.unitn.disi.aose.firerespsim.behaviours.FindAgent;
-import it.unitn.disi.aose.firerespsim.behaviours.Subscriber;
-import it.unitn.disi.aose.firerespsim.model.SimulationArea;
-import it.unitn.disi.aose.firerespsim.ontology.Coordinate;
-import it.unitn.disi.aose.firerespsim.ontology.FireStatus;
-import it.unitn.disi.aose.firerespsim.ontology.FireStatusInfo;
-import it.unitn.disi.aose.firerespsim.ontology.HandleFireCFP;
-import it.unitn.disi.aose.firerespsim.ontology.HandleFireProposal;
-import it.unitn.disi.aose.firerespsim.ontology.SetTargetRequest;
-import it.unitn.disi.aose.firerespsim.ontology.VehicleStatus;
-import it.unitn.disi.aose.firerespsim.ontology.VehicleStatusInfo;
-import it.unitn.disi.aose.firerespsim.util.AgentUtil;
+import it.unitn.disi.aose.firerespsim.model.Fire;
+import it.unitn.disi.aose.firerespsim.model.Position;
+import it.unitn.disi.aose.firerespsim.model.Proposal;
+import it.unitn.disi.aose.firerespsim.model.Vehicle;
 import jade.core.AID;
 import jade.core.Agent;
+import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
-import jade.core.behaviours.DataStore;
-import jade.domain.FIPAAgentManagement.FailureException;
-import jade.domain.FIPAAgentManagement.NotUnderstoodException;
-import jade.domain.FIPAAgentManagement.RefuseException;
+import jade.core.behaviours.ParallelBehaviour;
+import jade.core.behaviours.SequentialBehaviour;
+import jade.core.behaviours.SimpleBehaviour;
+import jade.core.behaviours.ThreadedBehaviourFactory;
+import jade.core.behaviours.TickerBehaviour;
+import jade.domain.DFService;
+import jade.domain.FIPAException;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import jade.proto.AchieveREInitiator;
-import jade.proto.ContractNetResponder;
 import jade.wrapper.AgentController;
 import jade.wrapper.StaleProxyException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.Vector;
-import java.util.Map.Entry;
-import org.apache.commons.lang.math.RandomUtils;
+import org.apache.log4j.Logger;
 
 /**
  * This is the super class for the fire brigade and hospital agents. Handles the communication with the
@@ -44,7 +37,17 @@ import org.apache.commons.lang.math.RandomUtils;
  * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
-public abstract class StationaryAgent extends ExtendedAgent {
+public abstract class StationaryAgent extends Agent {
+    
+    /**
+     * Package scoped for faster access by inner classes.
+     */
+    static final Logger logger = Logger.getLogger("it.unitn.disi.aose.firerespsim");
+    
+    /**
+     * Package scoped for faster access by inner classes.
+     */
+    Agent thisAgent = this;
     
     /**
      * Class of the vehicle agents this agent owns. Must be set in concrete subclasses.
@@ -55,23 +58,31 @@ public abstract class StationaryAgent extends ExtendedAgent {
      */
     protected String vehicleName;
     /**
-     * DF service type of the coordinator to use. Must be set in the concrete subclasses.
+     * DF type of the coordinator to use. Must be set in the concrete subclasses.
      */
     protected String coordinatorDfType;
     
     /**
-     * Vehicles. Package scoped for faster access by inner classes.
+     * Defaults for start-up arguments.
      */
-    final Map<AID, VehicleStatus> vehicles = new HashMap<AID, VehicleStatus>();
+    private static final int DEFAULT_VEHICLE_MOVE_IVAL = 10000;
     
     /**
-     * Fires responsible for. Package scoped for faster access by inner classes.
+     * Position on the simulation area. Package scoped for faster access by inner classes.
      */
-    final Map<Coordinate, FireStatus> fires = new HashMap<Coordinate, FireStatus>();
+    Position position;
+    
     /**
-     * Fire vehicle distribution. Package scoped for faster access by inner classes.
+     * Vehicle agents. Package scoped for faster access by inner classes.
      */
-    final Map<Coordinate, Integer> fireVehicles = new HashMap<Coordinate, Integer>();
+    final Map<Integer, AgentController> vehicleAgents = new HashMap<Integer, AgentController>();
+    /**
+     * Vehicle statuses. Package scoped for faster access by inner classes.
+     */
+    final Map<Integer, Vehicle> vehicles = new HashMap<Integer, Vehicle>();
+    
+    private final ThreadedBehaviourFactory tbf = new ThreadedBehaviourFactory();
+    private final Set<Behaviour> threadedBehaviours = new HashSet<Behaviour>();
     
     /**
      * @see jade.core.Agent#setup()
@@ -79,263 +90,101 @@ public abstract class StationaryAgent extends ExtendedAgent {
     @Override
     protected void setup() {
 
-        params = new LinkedHashMap<String, Object>() {
-            
-            {
-                put("ID", null);
-                put("ROW", null);
-                put("COLUMN", null);
-                put("VEHICLE_MOVE_IVAL", 10000);
-            }
-        };
+        logger.debug("starting up");
         
         super.setup();
         
-        final Coordinate position = new Coordinate((Integer) params.get("ROW"), (Integer) params.get("COLUMN"));
+        // read start-up arguments
+        final Object[] params = getArguments();
+        if (params == null || params.length < 3) {
+            logger.error("start-up arguments id, row, and column needed");
+            doDelete();
+            return;
+        }
+        final String id = (String) params[0];
+        position = new Position((Integer) params[1], (Integer) params[2]);
+        final int vehicleMoveIval = (params.length > 3) ? (Integer) params[3] : DEFAULT_VEHICLE_MOVE_IVAL;
         
         // create vehicle agents
-        final int numVehicles = RandomUtils.nextInt(4) + 1; // between 1 and 5
-        final Object[] args = {getName(), position.getRow(), position.getCol(), params.get("VEHICLE_MOVE_IVAL")};
+        final int numVehicles = 1; //RandomUtils.nextInt(4) + 1; // between 1 and 5
         for (int i = 0; i < numVehicles; i++) {
-            final String nickname = vehicleName + " " + params.get("ID") + "-" + i;
-            final AgentController ac = AgentUtil.startAgent(getContainerController(), nickname, vehicleAgentClass, args);
+            
+            final String nickname = vehicleName + " " + id + "-" + i;
             try {
-                vehicles.put(new AID(ac.getName(), true), null);
-//                logger.debug("created '" + nickname + "'");
+                final AgentController vehicleAC = getContainerController().createNewAgent(
+                                                                                          nickname,
+                                                                                          vehicleAgentClass,
+                                                                                          new Object[] {
+                                                                                              i, getName(),
+                                                                                              position.getRow(),
+                                                                                              position.getCol(),
+                                                                                              vehicleMoveIval});
+                vehicleAC.start();
+                vehicleAgents.put(i, vehicleAC);
+                logger.debug("created '" + nickname + "'");
             } catch (final StaleProxyException e) {
-                logger.error("error getting vehicle agent name");
+                logger.error("couldn't create '" + nickname + "'");
+                e.printStackTrace();
             }
+            
+            vehicles.put(i, null);
         }
-        logger.info("created " + numVehicles + " vehicle agents");
-        
-        // create data store
-        final String coordinatorAIDKey = "COORDINATOR_AID";
-        final DataStore ds = new DataStore();
-        
-        // create behaviors
-        final FindAgent findCoordinator = new FindAgent(this, coordinatorDfType, coordinatorAIDKey);
-        findCoordinator.setDataStore(ds);
-        final ACLMessage coordSubsMsg = createMessage(ACLMessage.SUBSCRIBE, CoordinatorAgent.COORDINATION_PROTOCOL);
-        final Subscriber coordSubscriber = new Subscriber(this, coordSubsMsg, ds, coordinatorAIDKey);
-        final MessageTemplate cfpTpl = createMessageTemplate(null, CoordinatorAgent.COORDINATION_PROTOCOL,
-                                                             ACLMessage.CFP);
-        final ReceiveCFP receiveCFP = new ReceiveCFP(this, cfpTpl, position);
-        final MessageTemplate vehicleStatusTpl = createMessageTemplate(null, VehicleAgent.VEHICLE_STATUS_PROTOCOL,
-                                                                       ACLMessage.INFORM);
-        final ReceiveVehicleStatus receiveVehicleStatus = new ReceiveVehicleStatus(this, vehicleStatusTpl);
-        final MessageTemplate fireStatusTpl = createMessageTemplate(null, FireAgent.FIRE_STATUS_PROTOCOL,
-                                                                    ACLMessage.INFORM);
-        final ReceiveFireStatus receiveFireStatus = new ReceiveFireStatus(this, fireStatusTpl);
+        logger.info("created " + numVehicles + " vehicles");
         
         // add behaviors
-        sequentialBehaviours.add(findCoordinator);
-        parallelBehaviours.addAll(Arrays.asList(coordSubscriber, receiveCFP, receiveVehicleStatus, receiveFireStatus));
-        addBehaviours();
+        final SequentialBehaviour sb = new SequentialBehaviour();
+        sb.addSubBehaviour(new RegisterAtCoordinator());
+        threadedBehaviours.addAll(Arrays.asList(new Behaviour[] {
+            new ReceiveCFP(), new ReceiveProposalReply(), new HandleFires(this), new ReceiveVehicleStatus()}));
+        final ParallelBehaviour pb = new ParallelBehaviour(ParallelBehaviour.WHEN_ALL);
+        for (final Behaviour b : threadedBehaviours) {
+            pb.addSubBehaviour(tbf.wrap(b));
+        }
+        sb.addSubBehaviour(pb);
+        addBehaviour(sb);
     }
     
     /**
-     * Receive calls for proposal from the coordinator agent. Sends out the a proposal.
+     * @see jade.core.Agent#takeDown()
      */
-    private class ReceiveCFP extends ContractNetResponder {
-        
-        private final Coordinate position;
-        
-        /**
-         * @param a
-         * @param mt
-         * @param position
-         */
-        public ReceiveCFP(final Agent a, final MessageTemplate mt, final Coordinate position) {
+    @Override
+    protected void takeDown() {
 
-            super(a, mt);
-            this.position = position;
-        }
+        logger.info("shutting down");
         
-        /**
-         * @see jade.proto.ContractNetResponder#handleCfp(jade.lang.acl.ACLMessage)
-         */
-        @Override
-        protected ACLMessage handleCfp(final ACLMessage cfp) throws RefuseException, FailureException,
-                NotUnderstoodException {
-
-            final Coordinate fireCoord = getFireCoordinate(cfp);
-            logger.debug("received CFP for fire at (" + fireCoord + ")");
-            
-            // create proposal
-            final HandleFireProposal proposal = new HandleFireProposal(SimulationArea.getDistance(position, fireCoord),
-                                                                       vehicles.size() - fires.size()); // need at least one vehicle per fire
-            
-            return createReply(cfp, ACLMessage.PROPOSE, proposal);
-        }
-        
-        /**
-         * @see jade.proto.ContractNetResponder#handleAcceptProposal(jade.lang.acl.ACLMessage, jade.lang.acl.ACLMessage,
-         *      jade.lang.acl.ACLMessage)
-         */
-        @Override
-        protected ACLMessage handleAcceptProposal(final ACLMessage cfp, final ACLMessage propose,
-                                                  final ACLMessage accept) throws FailureException {
-
-            final Coordinate fireCoord = getFireCoordinate(cfp);
-            
-            logger.info("proposal for fire at (" + fireCoord + ") got accepted");
-            
-            // save fire
-            fires.put(fireCoord, null);
-            
-            // (re-)distribute vehicles
-            if (distributeVehicles == null) {
-                distributeVehicles = new DistributeVehicles(myAgent);
-            } else {
-                distributeVehicles.reset();
-            }
-            addParallelBehaviour(distributeVehicles);
-            
-            return null;
-        }
-        
-        /**
-         * @see jade.proto.SSContractNetResponder#handleRejectProposal(jade.lang.acl.ACLMessage,
-         *      jade.lang.acl.ACLMessage, jade.lang.acl.ACLMessage)
-         */
-        @Override
-        protected void handleRejectProposal(final ACLMessage cfp, final ACLMessage propose, final ACLMessage reject) {
-
-            logger.info("proposal got rejected");
-        }
-        
-        /**
-         * @param cfp
-         * @return Coordinate of the fire.
-         * @throws FailureException
-         */
-        private Coordinate getFireCoordinate(final ACLMessage cfp) throws FailureException {
-
-            try {
-                return extractMessageContent(HandleFireCFP.class, cfp, false).getCoordinate();
-            } catch (final Exception e) {
-                throw new FailureException("cannot extract cfp content");
+        for (final Behaviour b : threadedBehaviours) {
+            if (b != null) {
+                tbf.getThread(b).interrupt();
             }
         }
+        
+        super.takeDown();
     }
     
     /**
-     * Instance of {@link DistributeVehicles} that gets re-used.
+     * Register at {@link CoordinatorAgent}.
      */
-    DistributeVehicles distributeVehicles = null;
-    
-    /**
-     * Assigns the {@link #vehicles} to the {@link #fires}. For each fire one vehicle is assigned. Additional vehicles
-     * are distributed along the fires based on the fire intensities.
-     */
-    private class DistributeVehicles extends AchieveREInitiator {
+    class RegisterAtCoordinator extends SimpleBehaviour {
+        
+        private boolean done = false;
+        private final DFAgentDescription coordinatorAD = new DFAgentDescription();
+        private AID coordinatorAID = null;
+        private final MessageTemplate replyTpl = MessageTemplate.and(
+                                                                     MessageTemplate.or(
+                                                                                        MessageTemplate.MatchPerformative(ACLMessage.AGREE),
+                                                                                        MessageTemplate.MatchPerformative(ACLMessage.REFUSE)),
+                                                                     MessageTemplate.MatchOntology(CoordinatorAgent.COORDINATION_ONT_TYPE));
         
         /**
-         * @param a
+         * Constructor
          */
-        public DistributeVehicles(final Agent a) {
+        public RegisterAtCoordinator() {
 
-            super(a, createMessage(ACLMessage.REQUEST, VehicleAgent.SET_TARGET_PROTOCOL));
-        }
-        
-        /**
-         * @see jade.proto.AchieveREInitiator#prepareRequests(jade.lang.acl.ACLMessage)
-         */
-        @SuppressWarnings("unchecked")
-        @Override
-        protected Vector prepareRequests(final ACLMessage request) {
-
-            if (fires.isEmpty()) return null;
+            super();
             
-            // calculate vehicles distribution
-            final Map<Coordinate, Integer> fireWeights = new HashMap<Coordinate, Integer>();
-            int sumWeights = 0;
-            for (final Entry<Coordinate, FireStatus> fire : fires.entrySet()) {
-                if (!fireVehicles.containsKey(fire.getKey())) {
-                    fireVehicles.put(fire.getKey(), 1);
-                }
-                final int weight = (fire.getValue() == null) ? 1 : getFireWeight(fire.getKey());
-                fireWeights.put(fire.getKey(), weight);
-                sumWeights += weight;
-            }
-            // TODO check that exact number of vehicles assigned
-            final float addVehiclesPerWeight = (vehicles.size() - fires.size()) / sumWeights;
-            boolean fireVehiclesChanged = false;
-            for (final Entry<Coordinate, Integer> fireWeight : fireWeights.entrySet()) {
-                final int numVehicles = 1 + Math.round(fireWeight.getValue() * addVehiclesPerWeight);
-                if (fireVehicles.put(fireWeight.getKey(), numVehicles) == numVehicles) {
-                    continue;
-                }
-                fireVehiclesChanged = true;
-            }
-            if (!fireVehiclesChanged) return null;
-            
-            // check how many vehicles already correctly assigned
-            // TODO consider current vehicle state (at target -> leave assignment)
-            final Map<Coordinate, Integer> fireVehiclesToAssign = new HashMap<Coordinate, Integer>();
-            final Set<AID> okVehicles = new HashSet<AID>();
-            for (final Entry<Coordinate, Integer> fv : fireVehicles.entrySet()) {
-                fireVehiclesToAssign.put(fv.getKey(), fv.getValue());
-                for (final Entry<AID, VehicleStatus> vehicle : vehicles.entrySet()) {
-                    if (vehicle.getValue().getFire() == null || !vehicle.getValue().getFire().equals(fv.getKey())) {
-                        // vehicle not assigned to this fire
-                        continue;
-                    }
-                    okVehicles.add(vehicle.getKey());
-                    if (fireVehiclesToAssign.put(fv.getKey(), fv.getValue() - 1) == 1) {
-                        // all vehicles for this fire
-                        break;
-                    }
-                }
-            }
-            
-            final Vector<ACLMessage> requests = new Vector<ACLMessage>();
-            
-            // (re-)distribute other vehicles
-            // TODO consider current vehicle position (prefer already close)
-            for (final Entry<Coordinate, Integer> fv : fireVehiclesToAssign.entrySet()) {
-                if (fv.getValue() == 0) {
-                    // no more vehicles to assign
-                    continue;
-                }
-                for (final AID vehicleAID : vehicles.keySet()) {
-                    if (okVehicles.contains(vehicleAID)) {
-                        continue;
-                    }
-                    final ACLMessage thisRequest = copyMessage(request);
-                    thisRequest.setSender(vehicleAID);
-                    fillMessage(thisRequest, new SetTargetRequest(fv.getKey()));
-                    requests.add(thisRequest);
-                    if (fv.setValue(fv.getValue() - 1) == 1) {
-                        // all vehicles for this fire
-                        break;
-                    }
-                }
-            }
-            
-            return requests;
-        }
-    }
-    
-    /**
-     * Returns the relative weight of a fire for the vehicle distribute. Set in concrete subclasses.
-     * 
-     * @param fireCoord
-     * @return the relative weight
-     */
-    protected abstract int getFireWeight(final Coordinate fireCoord);
-    
-    /**
-     * Receives the status messages from the vehicle agents of this stationary agent.
-     */
-    private class ReceiveVehicleStatus extends CyclicBehaviour {
-        
-        final MessageTemplate mt;
-        
-        public ReceiveVehicleStatus(final Agent a, final MessageTemplate mt) {
-
-            super(a);
-            this.mt = mt;
+            final ServiceDescription coordinatorSD = new ServiceDescription();
+            coordinatorSD.setType(coordinatorDfType);
+            coordinatorAD.addServices(coordinatorSD);
         }
         
         /**
@@ -344,37 +193,245 @@ public abstract class StationaryAgent extends ExtendedAgent {
         @Override
         public void action() {
 
-            final ACLMessage statusMsg = blockingReceive(mt);
+            if (coordinatorAID == null) {
+                DFAgentDescription[] result = null;
+                try {
+                    result = DFService.search(thisAgent, coordinatorAD);
+                } catch (final FIPAException e) {
+                    logger.error("error searching for agent with " + coordinatorDfType + " service at DF");
+                    e.printStackTrace();
+                    return;
+                }
+                if (result != null && result.length > 0) {
+                    coordinatorAID = result[0].getName();
+                }
+            }
+            if (coordinatorAID == null) {
+                logger.error("no coordinator AID");
+                try {
+                    Thread.sleep(1000);
+                } catch (final InterruptedException e) {
+//                    done = true;
+                }
+                return;
+            }
+            
+            final ACLMessage subscribeMsg = new ACLMessage(ACLMessage.SUBSCRIBE);
+            subscribeMsg.addReceiver(coordinatorAID);
+            subscribeMsg.setOntology(CoordinatorAgent.COORDINATION_ONT_TYPE);
+            send(subscribeMsg);
+//            logger.debug("sent coordinator registration request");
+            
+            final ACLMessage replyMsg = blockingReceive(replyTpl);
+            if (replyMsg.getPerformative() == ACLMessage.AGREE) {
+                logger.info("registered at coordinator");
+            } else {
+                logger.error("coordinator registration disconfirmed - assume this is because already registered");
+            }
+            
+            done = true;
+        }
+        
+        /**
+         * @see jade.core.behaviours.Behaviour#done()
+         */
+        @Override
+        public boolean done() {
+
+            return done;
+        }
+        
+    }
+    
+    /**
+     * Receive calls for proposal from the coordinator agent. Sends out the a proposal.
+     */
+    class ReceiveCFP extends CyclicBehaviour {
+        
+        private final MessageTemplate cfpTpl = MessageTemplate.and(
+                                                                   MessageTemplate.MatchPerformative(ACLMessage.CFP),
+                                                                   MessageTemplate.MatchOntology(CoordinatorAgent.COORDINATION_ONT_TYPE));
+        
+        /**
+         * @see jade.core.behaviours.Behaviour#action()
+         */
+        @Override
+        public void action() {
+
+            final ACLMessage cfpMsg = blockingReceive(cfpTpl);
+            if (cfpMsg == null) return;
+            
+            if (cfpMsg.getContent() == null) {
+                logger.error("CFP message has no content");
+                return;
+            }
+            final Position firePosition = Position.fromString(cfpMsg.getContent());
+            logger.debug("received CFP for fire at position (" + firePosition + ")");
+            
+            // create proposal
+            int idleVehicles = 0;
+            for (final Vehicle v : vehicles.values()) {
+                if (v == null || v.getState() == Vehicle.STATE_IDLE) {
+                    idleVehicles++;
+                }
+            }
+            final Proposal prop = new Proposal(firePosition, getName(), position, idleVehicles);
+            
+            // send proposal
+            final ACLMessage proposalMsg = cfpMsg.createReply();
+            proposalMsg.setPerformative(ACLMessage.PROPOSE);
+            proposalMsg.setContent(prop.toString());
+            send(proposalMsg);
+            logger.info("sent proposal (" + prop.toPrettyString() + ")");
+        }
+    }
+    
+    /**
+     * Fires responsible for. Package scoped for faster access by inner classes.
+     */
+    final Map<String, Fire> fires = new HashMap<String, Fire>();
+    /**
+     * Vehicle assignments to the {@link #fires}. Package scoped for faster access by inner classes.
+     */
+    final Map<String, Set<Integer>> fireAssignments = new HashMap<String, Set<Integer>>();
+    
+    /**
+     * Receives proposal replies from the coordinator agent.
+     */
+    class ReceiveProposalReply extends CyclicBehaviour {
+        
+        private final MessageTemplate replyTpl = MessageTemplate.and(
+                                                                     MessageTemplate.or(
+                                                                                        MessageTemplate.MatchPerformative(ACLMessage.ACCEPT_PROPOSAL),
+                                                                                        MessageTemplate.MatchPerformative(ACLMessage.REJECT_PROPOSAL)),
+                                                                     MessageTemplate.MatchOntology(CoordinatorAgent.COORDINATION_ONT_TYPE));
+        
+        /**
+         * @see jade.core.behaviours.Behaviour#action()
+         */
+        @Override
+        public void action() {
+
+            final ACLMessage replyMsg = blockingReceive(replyTpl);
+            if (replyMsg == null) return;
+            
+            if (replyMsg.getContent() == null) {
+                logger.error("reply message has no content");
+                return;
+            }
+            final String firePositionStr = replyMsg.getContent();
+//            logger.debug("received proposal reply for fire at position (" + firePositionStr + ")");
+            
+            if (replyMsg.getPerformative() == ACLMessage.REJECT_PROPOSAL) {
+                logger.info("proposal for fire at position (" + firePositionStr + ") got rejected");
+                return;
+            }
+            
+            logger.info("proposal for fire at position (" + firePositionStr + ") got accepted");
+            
+            // insert into maps
+            fires.put(firePositionStr, null);
+            fireAssignments.put(firePositionStr, new HashSet<Integer>());
+            
+            // send all idle vehicles to the new fire
+            final ACLMessage sendToMsg = new ACLMessage(ACLMessage.REQUEST);
+            sendToMsg.setOntology(VehicleAgent.VEHICLE_TARGET_ONT_TYPE);
+            sendToMsg.setContent(firePositionStr);
+            for (final Map.Entry<Integer, Vehicle> vehicleEntry : vehicles.entrySet()) {
+                if (vehicleEntry.getValue().getState() == Vehicle.STATE_IDLE) {
+                    try {
+                        sendToMsg.addReceiver(new AID(vehicleAgents.get(vehicleEntry.getKey()).getName(), true));
+                    } catch (final StaleProxyException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            send(sendToMsg);
+            logger.info("sent all idle vehicles to the new fire");
+        }
+    }
+    
+    /**
+     * Assigns the {@link #vehicleAgents} to the {@link #fires}.
+     */
+    class HandleFires extends TickerBehaviour {
+        
+        /**
+         * @param a
+         */
+        public HandleFires(final Agent a) {
+
+            super(a, 1000);
+        }
+        
+        /**
+         * @see jade.core.behaviours.TickerBehaviour#onTick()
+         */
+        @Override
+        protected void onTick() {
+
+            for (final Fire fire : fires.values()) {
+                if (fire == null) {
+                    // no info about fire yet
+                } else {
+                    if (fire.getCasualties() == 0 && fire.getIntensity() == 0) {
+                        // TODO
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
+     * Receives the status messages from the vehicle agents of this stationary agent.
+     */
+    class ReceiveVehicleStatus extends CyclicBehaviour {
+        
+        private final MessageTemplate statusTpl = MessageTemplate.and(
+                                                                      MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+                                                                      MessageTemplate.MatchOntology(VehicleAgent.VEHICLE_STATUS_ONT_TYPE));
+        
+        /**
+         * @see jade.core.behaviours.Behaviour#action()
+         */
+        @Override
+        public void action() {
+
+            final ACLMessage statusMsg = blockingReceive(statusTpl);
             if (statusMsg == null) return;
             
-            if (!vehicles.containsKey(statusMsg.getSender())) {
-                logger.error("received vehicle status from unknown vehicle");
+            if (statusMsg.getContent() == null) {
+                logger.error("status message has no content");
                 return;
             }
-            
-            try {
-                vehicles.put(statusMsg.getSender(),
-                             extractMessageContent(VehicleStatusInfo.class, statusMsg, false).getVehicleStatus());
-            } catch (final Exception e) {
-                return;
+            final Vehicle vehicleStatus = Vehicle.fromString(statusMsg.getContent());
+            if (vehicles.get(vehicleStatus.id) == null) {
+                // initial status
+                logger.debug("received status from vehicle " + vehicleStatus.id);
+            } else {
+                logger.info("received status from vehicle " + vehicleStatus.id);
             }
+            vehicles.put(vehicleStatus.id, vehicleStatus);
             
-//            logger.debug("received status from vehicle " + statusMsg.getSender());
+            // update assignments
+            for (final Map.Entry<String, Set<Integer>> fireAssignment : fireAssignments.entrySet()) {
+                if (vehicleStatus.target != null && fireAssignment.getKey() == vehicleStatus.target.toString()) {
+                    fireAssignment.getValue().add(vehicleStatus.id);
+                } else {
+                    fireAssignment.getValue().remove(vehicleStatus.id);
+                }
+            }
         }
     }
     
     /**
      * Receives the fire status messages propagated by the vehicle agents.
      */
-    private class ReceiveFireStatus extends CyclicBehaviour {
+    class ReceiveFireStatus extends CyclicBehaviour {
         
-        final MessageTemplate mt;
-        
-        public ReceiveFireStatus(final Agent a, final MessageTemplate mt) {
-
-            super(a);
-            this.mt = mt;
-        }
+        private final MessageTemplate statusTpl = MessageTemplate.and(
+                                                                      MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+                                                                      MessageTemplate.MatchOntology(FireAgent.FIRE_STATUS_ONT_TYPE));
         
         /**
          * @see jade.core.behaviours.Behaviour#action()
@@ -382,31 +439,17 @@ public abstract class StationaryAgent extends ExtendedAgent {
         @Override
         public void action() {
 
-            final ACLMessage statusMsg = blockingReceive(mt);
+            final ACLMessage statusMsg = blockingReceive(statusTpl);
             if (statusMsg == null) return;
             
-            if (!vehicles.containsKey(statusMsg.getSender())) {
-                logger.error("received fire status from unknown vehicle");
+            if (statusMsg.getContent() == null) {
+                logger.error("status message has no content");
                 return;
             }
+            final Fire fireStatus = Fire.fromString(statusMsg.getContent());
+            logger.info("received status for fire at (" + fireStatus.position + ")");
             
-            FireStatus status;
-            try {
-                status = extractMessageContent(FireStatusInfo.class, statusMsg, false).getFireStatus();
-            } catch (final Exception e) {
-                return;
-            }
-            fires.put(status.getCoordinate(), status);
-            
-            logger.debug("received status for fire at (" + status.getCoordinate() + ")");
-            
-            // (re-)distribute vehicles
-            if (distributeVehicles == null) {
-                distributeVehicles = new DistributeVehicles(myAgent);
-            } else {
-                distributeVehicles.reset();
-            }
-            addParallelBehaviour(distributeVehicles);
+            fires.put(fireStatus.position.toString(), fireStatus);
         }
     }
 }

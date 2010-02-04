@@ -7,10 +7,11 @@ import it.unitn.disi.aose.firerespsim.agents.FireMonitorAgent;
 import it.unitn.disi.aose.firerespsim.agents.HospitalAgent;
 import it.unitn.disi.aose.firerespsim.agents.HospitalCoordinatorAgent;
 import it.unitn.disi.aose.firerespsim.model.Position;
-import it.unitn.disi.aose.firerespsim.util.AgentUtil;
 import jade.core.ProfileImpl;
 import jade.core.Runtime;
 import jade.wrapper.AgentContainer;
+import jade.wrapper.AgentController;
+import jade.wrapper.StaleProxyException;
 import org.apache.commons.lang.math.RandomUtils;
 import org.apache.log4j.Logger;
 
@@ -26,12 +27,12 @@ public final class Main {
     private static final int JADE_PORT = 1199;
     
     // Configuration
-    private static final int AREA_WIDTH = 3;
-    private static final int AREA_HEIGHT = 3;
+    private static final int AREA_WIDTH = 4;
+    private static final int AREA_HEIGHT = 4;
     private static final int ENVIRONMENT_SPAWN_FIRE_IVAL = 10000;
     private static final int MONITOR_SCAN_AREA_IVAL = 1000;
-    private static final int NUMBER_OF_FIRE_BRIGADES = 2;
-    private static final int NUMBER_OF_HOSPITALS = 2;
+    private static final int NUMBER_OF_FIRE_BRIGADES = 1;
+    private static final int NUMBER_OF_HOSPITALS = 1;
     private static final int FIRE_INCREASE_IVAL = 10000;
     private static final int VEHICLE_MOVE_IVAL = 1000;
     
@@ -49,24 +50,23 @@ public final class Main {
         logger.info("starting simulation");
         
         // start the environment agent
-        AgentUtil.startAgent(ac, "environment", EnvironmentAgent.class.getName(), new Object[] {
+        startAgent("environment", EnvironmentAgent.class.getName(), new Object[] {
             AREA_WIDTH, AREA_HEIGHT, ENVIRONMENT_SPAWN_FIRE_IVAL, FIRE_INCREASE_IVAL});
         logger.info("started environment");
         
         // start the monitor agent
-        AgentUtil.startAgent(ac, "fire monitor", FireMonitorAgent.class.getName(),
-                             new Object[] {MONITOR_SCAN_AREA_IVAL});
+        startAgent("fire monitor", FireMonitorAgent.class.getName(), new Object[] {MONITOR_SCAN_AREA_IVAL});
         logger.info("started fire monitor");
         
         // start the fire brigade coordinator
-        AgentUtil.startAgent(ac, "fire brigade coordinator", FireBrigadeCoordinatorAgent.class.getName(), null);
+        startAgent("fire brigade coordinator", FireBrigadeCoordinatorAgent.class.getName(), null);
         logger.info("started fire brigade coordinator");
         
         // start the fire brigade agents
         startStationaryAgents(FireBrigadeAgent.class.getName(), NUMBER_OF_FIRE_BRIGADES, "fire brigade", "fb");
         
         // start the hospital coordinator
-        AgentUtil.startAgent(ac, "hospital coordinator", HospitalCoordinatorAgent.class.getName(), null);
+        startAgent("hospital coordinator", HospitalCoordinatorAgent.class.getName(), null);
         logger.info("started hospital coordinator");
         
         // start the hospital agents
@@ -80,10 +80,22 @@ public final class Main {
             final String id = name + " " + i;
             final Position position = new Position(RandomUtils.nextInt(AREA_HEIGHT - 1) + 1,
                                                    RandomUtils.nextInt(AREA_WIDTH - 1) + 1);
-            AgentUtil.startAgent(ac, id, className, new Object[] {
+            startAgent(id, className, new Object[] {
                 shortName + i, position.getRow(), position.getCol(), VEHICLE_MOVE_IVAL});
             logger.debug("started '" + id + "' at (" + position + ")");
         }
         logger.info("started " + NUMBER_OF_FIRE_BRIGADES + " " + name + "s");
+    }
+    
+    private static void startAgent(final String nickname, final String className, final Object[] args) {
+
+        try {
+            final AgentController a = ac.createNewAgent(nickname, className, args);
+            a.start();
+        } catch (final StaleProxyException e) {
+            logger.error("couldn't start the " + nickname + " agent");
+            e.printStackTrace();
+            return;
+        }
     }
 }

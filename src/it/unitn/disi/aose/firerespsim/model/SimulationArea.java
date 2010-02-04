@@ -1,20 +1,22 @@
 package it.unitn.disi.aose.firerespsim.model;
 
 import it.unitn.disi.aose.firerespsim.agents.VehicleAgent;
-import it.unitn.disi.aose.firerespsim.ontology.AreaDimensions;
-import it.unitn.disi.aose.firerespsim.ontology.Coordinate;
 
 /**
- * Model of the simulation area.
+ * Represents the simulation area.
  * 
  * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 public final class SimulationArea {
     
     /**
-     * Dimensions of the simulation area.
+     * Width of the simulation area.
      */
-    public AreaDimensions dimensions;
+    public int width;
+    /**
+     * Height of the simulation area.
+     */
+    public int height;
     /**
      * On fire status of the positions on the area. <code>true</code> stands for on fire, <code>false</code> for not on
      * fire.
@@ -22,52 +24,68 @@ public final class SimulationArea {
     private final boolean[][] onFireStates;
     
     /**
-     * @param dimensions
+     * @param width
+     * @param height
      */
-    public SimulationArea(final AreaDimensions dimensions) {
+    public SimulationArea(final int width, final int height) {
 
-        this.dimensions = dimensions;
+        this.width = width;
+        this.height = height;
         
         // initialize on fire statuses
-        onFireStates = new boolean[dimensions.getHeight()][dimensions.getWidth()];
-        for (int row = 0; row < dimensions.getHeight(); row++) {
-            for (int col = 0; col < dimensions.getWidth(); col++) {
+        onFireStates = new boolean[height][width];
+        for (int row = 0; row < height; row++) {
+            for (int col = 0; col < width; col++) {
                 onFireStates[row][col] = false;
             }
         }
     }
     
     /**
-     * @param coordinate
+     * @param position
      * @return <code>true</code> if on fire, <code>false</code> if not
      */
-    public boolean getOnFireState(final Coordinate coordinate) {
+    public boolean getOnFireState(final Position position) {
 
-        return onFireStates[coordinate.getRow() - 1][coordinate.getCol() - 1];
+        return onFireStates[position.getRow() - 1][position.getCol() - 1];
     }
     
     /**
-     * @param coordinate
+     * @param position
      * @param state
      */
-    public void setOnFireState(final Coordinate coordinate, final boolean state) {
+    public void setOnFireState(final Position position, final boolean state) {
 
-        onFireStates[coordinate.getRow() - 1][coordinate.getCol() - 1] = state;
+        onFireStates[position.getRow() - 1][position.getCol() - 1] = state;
     }
     
     /**
-     * Calculates the distance of two coordinates on the simulation area in number of moves necessary for a
+     * Separator used by {@link #toString()}.
+     */
+    public static final String FIELD_SEPARATOR = " ";
+    
+    /**
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+
+        return width + FIELD_SEPARATOR + height;
+    }
+
+    /**
+     * Calculates the distance of two positions on the simulation area in number of moves necessary for a
      * {@link VehicleAgent} to cross.
      * 
-     * @param coordinate1
-     * @param coordinate2
+     * @param position1
+     * @param position2
      * @return Number of moves to cross.
      */
-    public static final int getDistance(final Coordinate coordinate1, final Coordinate coordinate2) {
-
-        return getDistance(coordinate1.getRow(), coordinate1.getCol(), coordinate2.getRow(), coordinate2.getCol());
-    }
+    public static final int getDistance(final Position position1, final Position position2) {
     
+        return getDistance(position1.getRow(), position1.getCol(), position2.getRow(), position2.getCol());
+    }
+
     /**
      * Calculates the distance of two points on the simulation area in number of moves necessary for a
      * {@link VehicleAgent} to cross.
@@ -79,18 +97,7 @@ public final class SimulationArea {
      * @return Number of moves to cross.
      */
     public static final int getDistance(final int row1, final int col1, final int row2, final int col2) {
-
-        return Math.max(Math.abs(Math.abs(row1) - Math.abs(row2)), Math.abs(Math.abs(col1) - Math.abs(col2)));
-    }
     
-    /**
-     * @param coordinate1
-     * @param coordinate2
-     * @return <code>true</code> if equal, <code>false</code> if note
-     */
-    public static final boolean coordinatesEqual(final Coordinate coordinate1, final Coordinate coordinate2) {
-
-        return (coordinate1.getRow() == coordinate2.getRow() && coordinate1.getCol() == coordinate2.getCol()) ? true
-                                                                                                             : false;
+        return Math.max(Math.abs(Math.abs(row1) - Math.abs(row2)), Math.abs(Math.abs(col1) - Math.abs(col2)));
     }
 }

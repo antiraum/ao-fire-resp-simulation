@@ -1,10 +1,9 @@
 package it.unitn.disi.aose.firerespsim.model;
 
-import it.unitn.disi.aose.firerespsim.ontology.Coordinate;
 import it.unitn.disi.aose.firerespsim.util.SyncedInteger;
 
 /**
- * Model of a position on the simulation area. Thread-safe.
+ * Representation of a position on the simulation area. Thread-safe.
  * 
  * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
@@ -30,11 +29,12 @@ public final class Position {
     }
     
     /**
-     * @param coordinate
+     * @see java.lang.Object#clone()
      */
-    public Position(final Coordinate coordinate) {
+    @Override
+    public Position clone() {
 
-        this(coordinate.getRow(), coordinate.getCol());
+        return new Position(getRow(), getCol());
     }
     
     /**
@@ -111,14 +111,6 @@ public final class Position {
     }
     
     /**
-     * @return {@link Coordinate} with the current position.
-     */
-    public Coordinate getCoordinate() {
-
-        return new Coordinate(getRow(), getCol());
-    }
-    
-    /**
      * @see java.lang.Object#toString()
      */
     @Override
@@ -128,11 +120,33 @@ public final class Position {
     }
     
     /**
-     * @see java.lang.Object#clone()
+     * @param str
+     * @return {@link Position}
+     */
+    public static Position fromString(final String str) {
+
+        final String[] fields = str.split(" ");
+        if (fields.length != 2) return null;
+        return new Position(Integer.parseInt(fields[0]), Integer.parseInt(fields[1]));
+    }
+    
+    /**
+     * @see java.lang.Object#equals(java.lang.Object)
      */
     @Override
-    public Position clone() {
+    public boolean equals(final Object obj) {
 
-        return new Position(getRow(), getCol());
+        final Position other = (Position) obj;
+        final boolean equal = (other.row.equals(row) && other.col.equals(col)) ? true : false;
+        return equal;
+    }
+    
+    /**
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+
+        return super.hashCode();
     }
 }

@@ -1,28 +1,26 @@
 package it.unitn.disi.aose.firerespsim.agents;
 
-import it.unitn.disi.aose.firerespsim.behaviours.FindAgent;
-import it.unitn.disi.aose.firerespsim.behaviours.SubscriptionService;
-import it.unitn.disi.aose.firerespsim.model.Subscribers;
-import it.unitn.disi.aose.firerespsim.ontology.AreaDimensions;
-import it.unitn.disi.aose.firerespsim.ontology.AreaDimensionsInfo;
-import it.unitn.disi.aose.firerespsim.ontology.Coordinate;
-import it.unitn.disi.aose.firerespsim.ontology.FireAlert;
-import it.unitn.disi.aose.firerespsim.ontology.OnFireStatusInfo;
-import it.unitn.disi.aose.firerespsim.ontology.OnFireStatusRequest;
+import it.unitn.disi.aose.firerespsim.model.Position;
+import it.unitn.disi.aose.firerespsim.model.SimulationArea;
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.DataStore;
-import jade.core.behaviours.OneShotBehaviour;
+import jade.core.behaviours.Behaviour;
+import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.ParallelBehaviour;
+import jade.core.behaviours.SequentialBehaviour;
+import jade.core.behaviours.SimpleBehaviour;
+import jade.core.behaviours.ThreadedBehaviourFactory;
 import jade.core.behaviours.TickerBehaviour;
+import jade.domain.DFService;
+import jade.domain.FIPAException;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import jade.proto.AchieveREInitiator;
-import jade.proto.SubscriptionResponder.Subscription;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.Set;
-import java.util.Vector;
+import org.apache.log4j.Logger;
 
 /**
  * This agent scans the simulation area for new fires. Agents can subscribe to get notified about newly detected fires.
@@ -31,25 +29,34 @@ import java.util.Vector;
  * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
-public final class FireMonitorAgent extends ExtendedAgent {
+public final class FireMonitorAgent extends Agent {
     
     /**
-     * DF type of fire alert service.
+     * DF type of this agent.
      */
-    public final static String FIRE_ALERT_DF_TYPE = "FireMonitor";
+    final static String DF_TYPE = "FireMonitor";
     /**
-     * Protocol for fire alert messages.
+     * Ontology type for fire alert messages. Package scoped for faster access by inner classes.
      */
-    final static String FIRE_ALERT_PROTOCOL = "FireAlert";
+    final static String FIRE_ALERT_ONT_TYPE = "FireAlert";
     
     /**
      * Package scoped for faster access by inner classes.
      */
-    final Subscribers fireAlertSubscribers = new Subscribers();
+    static final Logger logger = Logger.getLogger("it.unitn.disi.aose.firerespsim");
+    
     /**
-     * List of detected, currently burning fires. Package scoped for faster access by inner classes.
+     * Defaults for start-up arguments.
      */
-    final Set<Coordinate> detectedFires = new HashSet<Coordinate>();
+    private static final int DEFAULT_SCAN_AREA_IVAL = 10000;
+    
+    private final ThreadedBehaviourFactory tbf = new ThreadedBehaviourFactory();
+    private final Set<Behaviour> threadedBehaviours = new HashSet<Behaviour>();
+    
+    /**
+     * Package scoped for faster access by inner classes.
+     */
+    Agent thisAgent = this;
     
     /**
      * @see jade.core.Agent#setup()
@@ -57,275 +64,92 @@ public final class FireMonitorAgent extends ExtendedAgent {
     @Override
     protected void setup() {
 
-        params = new LinkedHashMap<String, Object>() {
-            
-            {
-                put("SCAN_AREA_IVAL", 10000);
-            }
-        };
-        
-        dfTypes = new String[] {FIRE_ALERT_DF_TYPE};
+        logger.debug("starting up");
         
         super.setup();
         
-        // create data store
-        final String areaDimAIDKey = "AREA_DIMENSIONS_AID";
-        final String onFireStatusAIDKey = "ON_FIRE_STATUS_AID";
-        final String areaDimKey = "AREA_DIMENSIONS";
-        final DataStore ds = new DataStore();
-        
-        // create behaviors
-        final FindAgent findAreaDimAgent = new FindAgent(this, EnvironmentAgent.AREA_DIMENSIONS_DF_TYPE, areaDimAIDKey);
-        findAreaDimAgent.setDataStore(ds);
-        final ACLMessage getAreaDimReqMsg = createMessage(ACLMessage.REQUEST, EnvironmentAgent.AREA_DIMENSIONS_PROTOCOL);
-        final GetAreaDimensions getAreaDim = new GetAreaDimensions(this, getAreaDimReqMsg, ds, areaDimAIDKey,
-                                                                   areaDimKey);
-        final FindAgent findOnFireStatusAgent = new FindAgent(this, EnvironmentAgent.ON_FIRE_STATUS_DF_TYPE,
-                                                              onFireStatusAIDKey);
-        findOnFireStatusAgent.setDataStore(ds);
-        final MessageTemplate fireAlertSubsTpl = createMessageTemplate(null, FIRE_ALERT_PROTOCOL, ACLMessage.SUBSCRIBE);
-        final ScanArea scanArea = new ScanArea(this, (Integer) params.get("SCAN_AREA_IVAL"), onFireStatusAIDKey,
-                                               areaDimKey);
-        scanArea.setDataStore(ds);
-        final SubscriptionService fireAlertSubsService = new SubscriptionService(this, fireAlertSubsTpl,
-                                                                                 fireAlertSubscribers);
+        // read start-up arguments
+        Object[] params = getArguments();
+        if (params == null) {
+            params = new Object[] {};
+        }
+        final int scanAreaIval = (params.length > 0) ? (Integer) params[0] : DEFAULT_SCAN_AREA_IVAL;
         
         // add behaviors
-        sequentialBehaviours.add(findAreaDimAgent);
-        sequentialBehaviours.add(getAreaDim);
-        sequentialBehaviours.add(findOnFireStatusAgent);
-        parallelBehaviours.addAll(Arrays.asList(scanArea, fireAlertSubsService));
-        addBehaviours();
+        final SequentialBehaviour sb = new SequentialBehaviour();
+        sb.addSubBehaviour(new GetAreaDimensions());
+        threadedBehaviours.addAll(Arrays.asList(new Behaviour[] {
+            new ScanArea(this, scanAreaIval), new FireAlertService()}));
+        final ParallelBehaviour pb = new ParallelBehaviour(ParallelBehaviour.WHEN_ALL);
+        for (final Behaviour b : threadedBehaviours) {
+            pb.addSubBehaviour(tbf.wrap(b));
+        }
+        sb.addSubBehaviour(pb);
+        addBehaviour(sb);
+        
+        // register at the DF
+        final DFAgentDescription descr = new DFAgentDescription();
+        final ServiceDescription sd = new ServiceDescription();
+        sd.setName(getName());
+        sd.setType(DF_TYPE);
+        descr.addServices(sd);
+        try {
+            DFService.register(this, descr);
+        } catch (final FIPAException e) {
+            logger.error("cannot register at the DF");
+            e.printStackTrace();
+            doDelete();
+        }
     }
+    
+    /**
+     * @see jade.core.Agent#takeDown()
+     */
+    @Override
+    protected void takeDown() {
+
+        logger.info("shutting down");
+        
+        for (final Behaviour b : threadedBehaviours) {
+            if (b != null) {
+                tbf.getThread(b).interrupt();
+            }
+        }
+        
+        super.takeDown();
+    }
+    
+    /**
+     * With of the simulation area. Package scoped for faster access by inner classes.
+     */
+    int areaWidth = 0;
+    /**
+     * Height of the simulation area. Package scoped for faster access by inner classes.
+     */
+    int areaHeight = 0;
     
     /**
      * Gets the simulation area dimensions from the environment agent.
      */
-    private class GetAreaDimensions extends AchieveREInitiator {
+    class GetAreaDimensions extends SimpleBehaviour {
         
-        private final String areaDimAIDKey;
-        private final String areaDimKey;
-        
-        /**
-         * @param a
-         * @param msg
-         * @param store
-         * @param areaDimAIDKey Data store key of the area dimensions service AID.
-         * @param areaDimKey Data store key of the area dimensions.
-         */
-        public GetAreaDimensions(final Agent a, final ACLMessage msg, final DataStore store,
-                                 final String areaDimAIDKey, final String areaDimKey) {
-
-            super(a, msg, store);
-            this.areaDimAIDKey = areaDimAIDKey;
-            this.areaDimKey = areaDimKey;
-        }
+        private boolean done = false;
+        private final DFAgentDescription areaDimensionsAD = new DFAgentDescription();
+        private AID environmentAID = null;
+        private final MessageTemplate replyTpl = MessageTemplate.and(
+                                                                     MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+                                                                     MessageTemplate.MatchOntology(EnvironmentAgent.AREA_DIMENSIONS_ONT_TYPE));
         
         /**
-         * @see jade.proto.AchieveREInitiator#prepareRequests(jade.lang.acl.ACLMessage)
+         * Constructor
          */
-        @SuppressWarnings("unchecked")
-        @Override
-        protected Vector prepareRequests(final ACLMessage request) {
+        public GetAreaDimensions() {
 
-//            logger.debug("sending request for area dimensions");
+            super();
             
-            request.addReceiver((AID) getDataStore().get(areaDimAIDKey));
-            return super.prepareRequests(request);
-        }
-        
-        /**
-         * @see jade.proto.AchieveREInitiator#handleInform(jade.lang.acl.ACLMessage)
-         */
-        @Override
-        protected void handleInform(final ACLMessage inform) {
-
-            try {
-                getDataStore().put(areaDimKey,
-                                   extractMessageContent(AreaDimensionsInfo.class, inform, false).getAreaDimensions());
-            } catch (final Exception e) {
-                return;
-            }
-            logger.info("received area dimensions");
-        }
-    }
-    
-    /**
-     * Scans the simulation area line by line for fires. Starts a {@link GetOnFireStatus} for each coordinate to check.
-     */
-    private class ScanArea extends TickerBehaviour {
-        
-        private final String onFireStatusAIDKey;
-        private final String areaDimKey;
-        private AreaDimensions areaDim = null;
-        private final ACLMessage onFireStatusReqMsg = createMessage(ACLMessage.REQUEST,
-                                                                    EnvironmentAgent.ON_FIRE_STATUS_PROTOCOL);
-        
-        private final Coordinate areaCoord = new Coordinate(1, 1);
-        
-        /**
-         * @param a
-         * @param period
-         * @param onFireStatusAIDKey Data store key of the on fire status service AID.
-         * @param areaDimKey Data store key of the area dimensions.
-         */
-        public ScanArea(final Agent a, final long period, final String onFireStatusAIDKey, final String areaDimKey) {
-
-            super(a, period);
-            this.onFireStatusAIDKey = onFireStatusAIDKey;
-            this.areaDimKey = areaDimKey;
-        }
-        
-        /**
-         * @see jade.core.behaviours.TickerBehaviour#onTick()
-         */
-        @Override
-        protected void onTick() {
-
-            if (!onFireStatusReqMsg.getAllReceiver().hasNext()) {
-                onFireStatusReqMsg.addReceiver((AID) getDataStore().get(onFireStatusAIDKey));
-            }
-            if (areaDim == null) {
-                areaDim = (AreaDimensions) getDataStore().get(areaDimKey);
-                if (areaDim == null) {
-                    logger.error("area dimensions not set, cannot scan!");
-                    return;
-                }
-            }
-            
-            // scan current coordinate
-//            logger.debug("scanning coordinate (" + areaCoord + ")");
-            final ACLMessage thisReqMsg = copyMessage(onFireStatusReqMsg);
-            fillMessage(thisReqMsg, new OnFireStatusRequest(areaCoord));
-            if (getOnFireStatus == null) {
-                getOnFireStatus = new GetOnFireStatus(myAgent, thisReqMsg, getDataStore(), areaCoord.clone());
-            } else {
-                getOnFireStatus.reset(thisReqMsg, areaCoord.clone());
-            }
-            addParallelBehaviour(getOnFireStatus);
-            
-            // move to next coordinate
-            if (areaCoord.getCol() == areaDim.getWidth()) {
-                // to new row
-                areaCoord.setCol(1);
-                if (areaCoord.getRow() == areaDim.getHeight()) {
-                    // to first row
-                    areaCoord.setRow(1);
-                } else {
-                    // to next row
-                    areaCoord.increaseRow(1);
-                }
-            } else {
-                // to next column
-                areaCoord.increaseCol(1);
-            }
-//            logger.debug("moved to coordinate (" + areaCoord + ")");
-        }
-    }
-    
-    /**
-     * Instance of {@link GetOnFireStatus} that gets re-used for scanned coordinate. Package scoped for faster access by
-     * inner classes.
-     */
-    GetOnFireStatus getOnFireStatus = null;
-    
-    /**
-     * Gets the on fire status of a position on the simulation area from the environment agent. Stores the detected
-     * fires in {@link #detectedFires}. Starts a {@link SendFireAlert} for every newly detected fire.
-     */
-    private class GetOnFireStatus extends AchieveREInitiator {
-        
-        private Coordinate fireCoord;
-        
-        /**
-         * @param a
-         * @param msg
-         * @param store
-         * @param fireCoord
-         */
-        public GetOnFireStatus(final Agent a, final ACLMessage msg, final DataStore store, final Coordinate fireCoord) {
-
-            super(a, msg, store);
-            this.fireCoord = fireCoord;
-        }
-        
-        /**
-         * @see jade.proto.AchieveREInitiator#handleInform(jade.lang.acl.ACLMessage)
-         */
-        @Override
-        protected void handleInform(final ACLMessage inform) {
-
-            boolean onFireStatus;
-            try {
-                onFireStatus = extractMessageContent(OnFireStatusInfo.class, inform, false).getStatus();
-            } catch (final Exception e) {
-                return;
-            }
-//            logger.debug("received on fire status");
-            handleOnFireStatus(onFireStatus);
-        }
-        
-        /**
-         * @param onFireStatus
-         */
-        private void handleOnFireStatus(final boolean onFireStatus) {
-
-            if (onFireStatus) {
-                // position is on fire
-                if (detectedFires.contains(fireCoord)) {
-                    // known fire
-                    logger.debug("detected known fire at (" + fireCoord + ")");
-                } else {
-                    // new fire
-                    logger.info("detected new fire at (" + fireCoord + ")");
-                    detectedFires.add(fireCoord);
-                    if (sendFireAlert == null) {
-                        sendFireAlert = new SendFireAlert(fireCoord);
-                    } else {
-                        sendFireAlert.reset(fireCoord);
-                    }
-                    addParallelBehaviour(sendFireAlert);
-                }
-            } else {
-                // position is not on fire
-//                logger.debug("no fire at (" + fireCoord + ")");
-                if (detectedFires.contains(fireCoord)) {
-                    // remove known fire
-                    logger.info("fire at (" + fireCoord + ") no longer burning");
-                    detectedFires.remove(fireCoord);
-                }
-            }
-        }
-        
-        /**
-         * @param msg
-         * @param fireCoord
-         */
-        public void reset(final ACLMessage msg, final Coordinate fireCoord) {
-
-            super.reset(msg);
-            this.fireCoord = fireCoord;
-        }
-    }
-    
-    /**
-     * Instance of {@link SendFireAlert} that gets re-used for every fire.
-     */
-    SendFireAlert sendFireAlert = null;
-    
-    /**
-     * Sends a fire alert to all subscribers.
-     */
-    private class SendFireAlert extends OneShotBehaviour {
-        
-        private Coordinate fireCoord;
-        
-        /**
-         * @param fireCoord
-         */
-        public SendFireAlert(final Coordinate fireCoord) {
-
-            this.fireCoord = fireCoord;
+            final ServiceDescription areaDimensionsSD = new ServiceDescription();
+            areaDimensionsSD.setType(EnvironmentAgent.AREA_DIM_DF_TYPE);
+            areaDimensionsAD.addServices(areaDimensionsSD);
         }
         
         /**
@@ -334,23 +158,231 @@ public final class FireMonitorAgent extends ExtendedAgent {
         @Override
         public void action() {
 
-            final Set<Subscription> fireAlertSubscriptions = fireAlertSubscribers.getSubscriptions();
-            if (fireAlertSubscriptions.isEmpty()) {
-                logger.error("no agents registered to send fire alert to - fire will not be handled!");
+            if (environmentAID == null) {
+                DFAgentDescription[] result = null;
+                try {
+                    result = DFService.search(thisAgent, areaDimensionsAD);
+                } catch (final FIPAException e) {
+                    logger.error("error searching for agent with " + EnvironmentAgent.AREA_DIM_DF_TYPE +
+                                 " service at DF");
+                    e.printStackTrace();
+                    return;
+                }
+                if (result != null && result.length > 0) {
+                    environmentAID = result[0].getName();
+                }
+            }
+            if (environmentAID == null) {
+                logger.error("no AreaDimensions AID");
+                try {
+                    Thread.sleep(1000);
+                } catch (final InterruptedException e) {
+//                    done = true;
+                }
                 return;
             }
-            final ACLMessage alertMsg = createMessage(ACLMessage.INFORM, FIRE_ALERT_PROTOCOL,
-                                                      Arrays.asList(new AID[] {}), new FireAlert(fireCoord));
-            for (final Subscription sub : fireAlertSubscriptions) {
-                sub.notify(alertMsg);
+            
+            final ACLMessage requestMsg = new ACLMessage(ACLMessage.REQUEST);
+            requestMsg.addReceiver(environmentAID);
+            requestMsg.setOntology(EnvironmentAgent.AREA_DIMENSIONS_ONT_TYPE);
+            send(requestMsg);
+//            logger.debug("sent area dimensions request");
+            
+            final ACLMessage replyMsg = blockingReceive(replyTpl);
+            
+            if (replyMsg.getContent() == null) {
+                logger.error("reply message has no content");
+                return;
             }
-            logger.debug("sent alert for fire at (" + fireCoord + ")");
+            final String[] areaDimensions = replyMsg.getContent().split(SimulationArea.FIELD_SEPARATOR);
+            areaWidth = Integer.parseInt(areaDimensions[0]);
+            areaHeight = Integer.parseInt(areaDimensions[1]);
+            logger.info("received area dimensions (" + areaWidth + " " + areaHeight + ")");
+            
+            done = true;
         }
         
-        public void reset(final Coordinate fireCoord) {
+        /**
+         * @see jade.core.behaviours.Behaviour#done()
+         */
+        @Override
+        public boolean done() {
 
-            super.reset();
-            this.fireCoord = fireCoord;
+            return done;
         }
+    }
+    
+    /**
+     * Scans the simulation area for new fires. Stores a set of the known burning fires. If a new fire is detected the
+     * {@link #fireAlertSubscribers} get notified.
+     */
+    class ScanArea extends TickerBehaviour {
+        
+        private final DFAgentDescription fireStatusAD = new DFAgentDescription();
+        private AID environmentAID = null;
+        private final MessageTemplate replyTpl = MessageTemplate.and(
+                                                                     MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+                                                                     MessageTemplate.MatchOntology(EnvironmentAgent.ON_FIRE_STATUS_ONT_TYPE));
+        
+        private final Position areaPosition = new Position(1, 1);
+        
+        private final Set<String> detectedFires = new HashSet<String>();
+        
+        /**
+         * @param a
+         * @param period
+         */
+        public ScanArea(final Agent a, final long period) {
+
+            super(a, period);
+            
+            final ServiceDescription fireStatusSD = new ServiceDescription();
+            fireStatusSD.setType(EnvironmentAgent.ON_FIRE_STATUS_DF_TYPE);
+            fireStatusAD.addServices(fireStatusSD);
+        }
+        
+        /**
+         * @see jade.core.behaviours.TickerBehaviour#onTick()
+         */
+        @Override
+        protected void onTick() {
+
+            if (areaWidth == 0 || areaHeight == 0) {
+                // area dimensions not yet set
+                logger.error("area dimensions not yet set");
+                return;
+            }
+            
+            if (environmentAID == null) {
+                DFAgentDescription[] result = null;
+                try {
+                    result = DFService.search(thisAgent, fireStatusAD);
+                } catch (final FIPAException e) {
+                    logger.error("error searching for agent with " + EnvironmentAgent.ON_FIRE_STATUS_DF_TYPE +
+                                 " service at DF");
+                    e.printStackTrace();
+                    return;
+                }
+                if (result != null && result.length > 0) {
+                    environmentAID = result[0].getName();
+                }
+            }
+            if (environmentAID == null) {
+                logger.error("no on fire status AID");
+                try {
+                    Thread.sleep(1000);
+                } catch (final InterruptedException e) {
+//                    done = true;
+                }
+                return;
+            }
+            
+            // get fire status for current position
+            logger.debug("scanning position (" + areaPosition + ")");
+            final ACLMessage requestMsg = new ACLMessage(ACLMessage.REQUEST);
+            requestMsg.addReceiver(environmentAID);
+            requestMsg.setOntology(EnvironmentAgent.ON_FIRE_STATUS_ONT_TYPE);
+            requestMsg.setContent(areaPosition.toString());
+            send(requestMsg);
+//            logger.debug("sent fire status request");
+            
+            final ACLMessage replyMsg = blockingReceive(replyTpl);
+            
+//            logger.debug("received fire status reply");
+            if (replyMsg.getContent() == null) {
+                logger.error("reply message has no content");
+                return;
+            }
+            if (Boolean.parseBoolean(replyMsg.getContent())) {
+                // position is on fire
+                if (detectedFires.contains(areaPosition.toString())) {
+                    // known fire
+                    logger.debug("detected known fire at (" + areaPosition + ")");
+                } else {
+                    // new fire
+                    logger.info("detected new fire at (" + areaPosition + ") - sending fire alert to coordinators");
+                    detectedFires.add(areaPosition.toString());
+                    if (fireAlertSubscribers.size() > 0) {
+                        // tell registered agents
+                        final ACLMessage alertMsg = new ACLMessage(ACLMessage.INFORM);
+                        alertMsg.setOntology(FIRE_ALERT_ONT_TYPE);
+                        alertMsg.setContent(areaPosition.toString());
+                        for (final AID agentAID : fireAlertSubscribers) {
+                            alertMsg.addReceiver(agentAID);
+                        }
+                        send(alertMsg);
+                    } else {
+                        logger.error("no coordinator is registered to send fire alert to");
+                    }
+                }
+            } else {
+                // position is not on fire
+                logger.debug("no fire at (" + areaPosition + ")");
+                if (detectedFires.contains(areaPosition.toString())) {
+                    // remove known fire
+                    logger.info("fire at (" + areaPosition + ") no longer burning");
+                    detectedFires.remove(areaPosition.toString());
+                }
+            }
+            
+            // move to next position
+            if (areaPosition.getCol() == areaWidth) {
+                // to new row
+                areaPosition.setCol(1);
+                if (areaPosition.getRow() == areaHeight) {
+                    // to first row
+                    areaPosition.setRow(1);
+                } else {
+                    // to next row
+                    areaPosition.increaseRow(1);
+                }
+            } else {
+                // to next column
+                areaPosition.increaseCol(1);
+            }
+//            logger.debug("moved to position (" + areaPosition + ")");
+        }
+    }
+    
+    /**
+     * Set of all agents that subscribed to be notified about new fires. Package scoped for faster access by inner
+     * classes.
+     */
+    final Set<AID> fireAlertSubscribers = new HashSet<AID>();
+    
+    /**
+     * Service for subscribing to alerts for new fires.
+     */
+    class FireAlertService extends CyclicBehaviour {
+        
+        private final MessageTemplate requestTpl = MessageTemplate.and(
+                                                                       MessageTemplate.MatchPerformative(ACLMessage.SUBSCRIBE),
+                                                                       MessageTemplate.MatchOntology(FIRE_ALERT_ONT_TYPE));
+        
+        /**
+         * @see jade.core.behaviours.Behaviour#action()
+         */
+        @Override
+        public void action() {
+
+            final ACLMessage requestMsg = blockingReceive(requestTpl);
+            if (requestMsg == null) return;
+            
+//            logger.debug("received fire alert subscription request");
+            
+            final AID aid = requestMsg.getSender();
+            final ACLMessage replyMsg = requestMsg.createReply();
+            if (fireAlertSubscribers.contains(aid)) {
+                // already subscribed
+                replyMsg.setPerformative(ACLMessage.REFUSE);
+            } else {
+                // new subscriber
+                fireAlertSubscribers.add(aid);
+                replyMsg.setPerformative(ACLMessage.AGREE);
+            }
+            send(replyMsg);
+//            logger.debug("sent fire alert subscription reply");
+        }
+        
     }
 }
