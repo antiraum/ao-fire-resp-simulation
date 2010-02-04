@@ -38,7 +38,7 @@ public final class Subscriber extends OneShotBehaviour {
     @Override
     public void action() {
 
-        logger.debug("sending subscription request");
+//        logger.debug("sending subscription request");
         
         msg.addReceiver((AID) getDataStore().get(dsKey));
         myAgent.send(msg);
@@ -48,7 +48,7 @@ public final class Subscriber extends OneShotBehaviour {
         if (response.getPerformative() == ACLMessage.AGREE) {
             logger.info("subscription request was accepted");
         } else {
-            logger.error("subscription request was refused");
+//            logger.error("subscription request was refused");
         }
     }
 }

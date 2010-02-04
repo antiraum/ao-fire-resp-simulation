@@ -28,14 +28,14 @@ public final class FireEngineAgent extends VehicleAgent {
     @Override
     void arrivedAtFire() {
 
-        putOutFire();
+    // nothing
     }
     
     /**
-     * @see it.unitn.disi.aose.firerespsim.agents.VehicleAgent#doMove()
+     * @see it.unitn.disi.aose.firerespsim.agents.VehicleAgent#continuousAction()
      */
     @Override
-    void doMove() {
+    void continuousAction() {
 
         if (vehicle.getState() != Vehicle.STATE_AT_TARGET || vehicle.fire == null) return;
         putOutFire();
@@ -47,7 +47,7 @@ public final class FireEngineAgent extends VehicleAgent {
     @Override
     void handleFireStatus(final FireStatus status) {
 
-        if (status.getIntensity() >= 1) return;
+        if (status.getIntensity() > 0) return;
         logger.info("fire is put out, returning to fire brigade");
         vehicle.fire = null;
         setTarget(vehicle.home);

@@ -28,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+import org.apache.commons.lang.math.RandomUtils;
 
 /**
  * This is the super class for the fire brigade and hospital agents. Handles the communication with the
@@ -88,7 +89,7 @@ public abstract class StationaryAgent extends ExtendedAgent {
         final Coordinate position = new Coordinate((Integer) params.get("ROW"), (Integer) params.get("COLUMN"));
         
         // create vehicle agents
-        final int numVehicles = 1;//RandomUtils.nextInt(4) + 1; // between 1 and 5
+        final int numVehicles = RandomUtils.nextInt(4) + 1; // between 1 and 5
         final Object[] args = {getName(), position.getRow(), position.getCol(), params.get("VEHICLE_MOVE_IVAL")};
         for (int i = 0; i < numVehicles; i++) {
             final String nickname = vehicleName + " " + params.get("ID") + "-" + i;
@@ -256,27 +257,29 @@ public abstract class StationaryAgent extends ExtendedAgent {
 
         if (fires.isEmpty()) return;
         
+        logger.debug("(re-)distributing vehicles (old distribution: " + fireVehicles + ")");
+        
         // calculate vehicles distribution
         final Map<String, Integer> fireWeights = new HashMap<String, Integer>();
         int sumWeights = 0;
+        boolean fireVehiclesChanged = false;
         for (final Entry<String, FireStatus> fire : fires.entrySet()) {
             if (!fireVehicles.containsKey(fire.getKey())) {
-                fireVehicles.put(fire.getKey(), 1);
+                fireVehicles.put(fire.getKey(), 0);
             }
             final int weight = (fire.getValue() == null) ? 1 : getFireWeight(fire.getKey());
             fireWeights.put(fire.getKey(), weight);
             sumWeights += weight;
         }
-        // TODO check that exact number of vehicles assigned
-        final float addVehiclesPerWeight = (vehicles.size() - fires.size()) / sumWeights;
-        boolean fireVehiclesChanged = false;
+        final float vehiclesPerWeight = vehicles.size() / sumWeights;
         for (final Entry<String, Integer> fireWeight : fireWeights.entrySet()) {
-            final int numVehicles = 1 + Math.round(fireWeight.getValue() * addVehiclesPerWeight);
+            final int numVehicles = Math.round(fireWeight.getValue() * vehiclesPerWeight);
             if (fireVehicles.put(fireWeight.getKey(), numVehicles) == numVehicles) {
                 continue;
             }
             fireVehiclesChanged = true;
         }
+        logger.debug("#vehicles: " + vehicles.size() + ", new distribution: " + fireVehicles);
         if (!fireVehiclesChanged) return;
         
         // check how many vehicles already correctly assigned
@@ -285,8 +288,13 @@ public abstract class StationaryAgent extends ExtendedAgent {
         final Set<AID> okVehicles = new HashSet<AID>();
         for (final Entry<String, Integer> fv : fireVehicles.entrySet()) {
             fireVehiclesToAssign.put(fv.getKey(), fv.getValue());
+            if (fv.getValue() == 0) {
+                // no vehicles to assign
+                continue;
+            }
             for (final Entry<AID, VehicleStatus> vehicle : vehicles.entrySet()) {
-                if (vehicle.getValue().getFire() == null || !vehicle.getValue().getFire().equals(fv.getKey())) {
+                if (vehicle.getValue().getFire() == null ||
+                    !vehicle.getValue().getFire().toString().equals(fv.getKey())) {
                     // vehicle not assigned to this fire
                     continue;
                 }
@@ -297,6 +305,8 @@ public abstract class StationaryAgent extends ExtendedAgent {
                 }
             }
         }
+        
+        logger.debug("vehicles correctly assigned: " + okVehicles.size() + "/" + vehicles.size());
         
         // (re-)distribute other vehicles
         // TODO consider current vehicle position (prefer already close)
@@ -311,6 +321,7 @@ public abstract class StationaryAgent extends ExtendedAgent {
                 }
                 sendMessage(ACLMessage.REQUEST, VehicleAgent.SET_TARGET_PROTOCOL, vehicleAID,
                             new SetTargetRequest(Coordinate.fromString(fv.getKey())));
+//                logger.debug("sent to target request to vehicle " + vehicleAID);
                 if (fv.setValue(fv.getValue() - 1) == 1) {
                     // all vehicles for this fire
                     break;

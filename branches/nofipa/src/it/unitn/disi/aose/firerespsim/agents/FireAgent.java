@@ -1,9 +1,11 @@
 package it.unitn.disi.aose.firerespsim.agents;
 
 import it.unitn.disi.aose.firerespsim.model.Fire;
+import it.unitn.disi.aose.firerespsim.model.SimulationArea;
 import it.unitn.disi.aose.firerespsim.ontology.Coordinate;
 import it.unitn.disi.aose.firerespsim.ontology.FireStatusInfo;
-import it.unitn.disi.aose.firerespsim.ontology.VehiclePositionInfo;
+import it.unitn.disi.aose.firerespsim.ontology.PickUpCasualtyRequest;
+import it.unitn.disi.aose.firerespsim.ontology.PutOutRequest;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
@@ -67,7 +69,7 @@ public final class FireAgent extends ExtendedAgent {
         
         super.setup();
         
-        fire = new Fire(new Coordinate((Integer) params.get("ROW"), (Integer) params.get("COLUMN")), 0, 0);
+        fire = new Fire(new Coordinate((Integer) params.get("ROW"), (Integer) params.get("COLUMN")), 1, 1);
         final int intensityInc = RandomUtils.nextInt(4) + 1; // intensity increase per {@link Increase#onTick()} (from 1 to 5)
         final int casualtiesInc = RandomUtils.nextInt(1) + 1; // casualties increase per {@link Increase#onTick()} (from 1 to 2)
         
@@ -116,14 +118,15 @@ public final class FireAgent extends ExtendedAgent {
             
             Coordinate engineCoord;
             try {
-                engineCoord = extractMessageContent(VehiclePositionInfo.class, request, false).getVehicleCoordinate();
+                engineCoord = extractMessageContent(PutOutRequest.class, request, false).getFireEnginePosition();
             } catch (final Exception e) {
                 sendReply(request, ACLMessage.NOT_UNDERSTOOD, "could not read message content");
                 return;
             }
             String refuse = null;
-            if (!engineCoord.equals(fire.coordinate)) {
+            if (!SimulationArea.coordinatesEqual(engineCoord, fire.coordinate)) {
                 refuse = "fire engine is too far away";
+                logger.debug("fire (" + fire.coordinate + "), engine (" + engineCoord + ")");
             }
             if (fire.getIntensity() < 1) {
                 refuse = "fire is already put out";
@@ -133,6 +136,7 @@ public final class FireAgent extends ExtendedAgent {
                 sendReply(request, ACLMessage.REFUSE, refuse);
                 return;
             }
+            sendReply(request, ACLMessage.AGREE);
             
             boolean takeDown = false;
             fire.decreaseIntensity(1);
@@ -186,13 +190,13 @@ public final class FireAgent extends ExtendedAgent {
             
             Coordinate ambulanceCoord;
             try {
-                ambulanceCoord = extractMessageContent(VehiclePositionInfo.class, request, false).getVehicleCoordinate();
+                ambulanceCoord = extractMessageContent(PickUpCasualtyRequest.class, request, false).getAmbulancePosition();
             } catch (final Exception e) {
                 sendReply(request, ACLMessage.NOT_UNDERSTOOD, "could not read message content");
                 return;
             }
             String refuse = null;
-            if (!ambulanceCoord.equals(fire.coordinate)) {
+            if (!SimulationArea.coordinatesEqual(ambulanceCoord, fire.coordinate)) {
                 refuse = "ambulance is too far away";
             }
             if (fire.getCasualties() < 1) {
@@ -203,6 +207,7 @@ public final class FireAgent extends ExtendedAgent {
                 sendReply(request, ACLMessage.REFUSE);
                 return;
             }
+            sendReply(request, ACLMessage.AGREE);
             
             boolean takeDown = false;
             fire.decreaseCasualties(1);
@@ -217,8 +222,6 @@ public final class FireAgent extends ExtendedAgent {
             if (takeDown) {
                 doDelete();
             }
-            
-            sendReply(request, ACLMessage.AGREE);
         }
     }
     
