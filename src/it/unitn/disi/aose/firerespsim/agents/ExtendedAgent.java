@@ -114,7 +114,7 @@ public abstract class ExtendedAgent extends Agent {
         
         if (THREADED) {
             for (final Behaviour b : parallelBehaviours) {
-                if (b != null) {
+                if (b != null && tbf.getThread(b) != null) {
                     tbf.getThread(b).interrupt();
                 }
             }

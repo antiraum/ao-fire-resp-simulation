@@ -123,7 +123,7 @@ public abstract class VehicleAgent extends ExtendedAgent {
                 return;
             }
             
-            logger.debug("received set target request to (" + target + ")");
+//            logger.debug("received set target request to (" + target + ")");
             
             vehicle.fire = new Position(target);
             setTarget(new Position(target));

@@ -1,5 +1,7 @@
 package it.unitn.disi.aose.firerespsim.agents;
 
+import it.unitn.disi.aose.firerespsim.ontology.FireStatus;
+
 /**
  * This agent simulates a hospital.
  * 
@@ -26,6 +28,7 @@ public final class HospitalAgent extends StationaryAgent {
     @Override
     protected int getFireWeight(final String fireKey) {
 
-        return fires.get(fireKey).getCasualties();
+        final FireStatus fireStatus = fires.get(fireKey);
+        return (fireStatus == null) ? 1 : fireStatus.getCasualties();
     }
 }
