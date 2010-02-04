@@ -2,7 +2,7 @@ package it.unitn.disi.aose.firerespsim.behaviours;
 
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.SimpleBehaviour;
+import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import org.apache.log4j.Logger;
@@ -11,10 +11,9 @@ import org.apache.log4j.Logger;
  * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
-public final class Subscriber extends SimpleBehaviour {
+public final class Subscriber extends OneShotBehaviour {
     
     private static final Logger logger = Logger.getLogger("it.unitn.disi.aose.firerespsim");
-    private boolean done = false;
     private final ACLMessage msg;
     private final MessageTemplate mt;
     private final String dsKey;
@@ -51,15 +50,5 @@ public final class Subscriber extends SimpleBehaviour {
         } else {
             logger.error("subscription request was refused");
         }
-        done = true;
-    }
-    
-    /**
-     * @see jade.core.behaviours.Behaviour#done()
-     */
-    @Override
-    public boolean done() {
-
-        return done;
     }
 }
