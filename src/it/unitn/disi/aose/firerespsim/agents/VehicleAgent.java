@@ -4,6 +4,7 @@ import it.unitn.disi.aose.firerespsim.model.Position;
 import it.unitn.disi.aose.firerespsim.model.Vehicle;
 import it.unitn.disi.aose.firerespsim.ontology.Coordinate;
 import it.unitn.disi.aose.firerespsim.ontology.FireStatus;
+import it.unitn.disi.aose.firerespsim.ontology.FireStatusInfo;
 import it.unitn.disi.aose.firerespsim.ontology.SetTargetRequest;
 import it.unitn.disi.aose.firerespsim.ontology.VehicleStatusInfo;
 import jade.core.AID;
@@ -71,12 +72,13 @@ public abstract class VehicleAgent extends ExtendedAgent {
         final MessageTemplate setTargetReqTpl = createMessageTemplate(owner, SET_TARGET_PROTOCOL, ACLMessage.REQUEST);
         final SetTargetService setTargetService = new SetTargetService(this, setTargetReqTpl);
         final Move move = new Move(this, (Integer) params.get("MOVE_IVAL"));
+        final ContinuousAction contAction = new ContinuousAction(this, (Integer) params.get("MOVE_IVAL"));
         final MessageTemplate fireStatusTpl = createMessageTemplate(null, FireAgent.FIRE_STATUS_PROTOCOL,
                                                                     ACLMessage.INFORM);
         final HandleFireStatus handleFireStatus = new HandleFireStatus(this, fireStatusTpl);
         
         // add behaviors
-        parallelBehaviours.addAll(Arrays.asList(setTargetService, move, handleFireStatus));
+        parallelBehaviours.addAll(Arrays.asList(setTargetService, move, contAction, handleFireStatus));
         addBehaviours();
     }
     
@@ -121,7 +123,7 @@ public abstract class VehicleAgent extends ExtendedAgent {
                 return;
             }
             
-//            logger.debug("received set target request to (" + target + ")");
+            logger.debug("received set target request to (" + target + ")");
             
             vehicle.fire = new Position(target);
             setTarget(new Position(target));
@@ -192,6 +194,7 @@ public abstract class VehicleAgent extends ExtendedAgent {
         protected void onTick() {
 
             if (vehicle.getState() != Vehicle.STATE_TO_TARGET) return;
+            
             final Position oldPosition = vehicle.position.clone();
             String oldPositionStr = "(" + oldPosition.toString() + ")";
             if (oldPosition.equals(vehicle.home)) {
@@ -199,6 +202,7 @@ public abstract class VehicleAgent extends ExtendedAgent {
             } else if (vehicle.fire != null && oldPosition.equals(vehicle.fire)) {
                 oldPositionStr = "fire";
             }
+            
             if (vehicle.position.getRow() > vehicle.target.getRow()) {
                 vehicle.position.decreaseRow(1);
             } else if (vehicle.position.getRow() < vehicle.target.getRow()) {
@@ -209,6 +213,7 @@ public abstract class VehicleAgent extends ExtendedAgent {
             } else if (vehicle.position.getCol() < vehicle.target.getCol()) {
                 vehicle.position.increaseCol(1);
             }
+            
             final Position newPosition = vehicle.position.clone();
             String newPositionStr = "(" + newPosition.toString() + ")";
             if (newPosition.equals(vehicle.home)) {
@@ -216,12 +221,13 @@ public abstract class VehicleAgent extends ExtendedAgent {
             } else if (vehicle.fire != null && newPosition.equals(vehicle.fire)) {
                 newPositionStr = "fire";
             }
+            
             logger.debug("moved from " + oldPositionStr + " to " + newPositionStr + "");
             if (vehicle.position.equals(vehicle.target)) {
                 arrivedAtTarget();
             }
+            
             sendStatus();
-            doMove();
         }
     }
     
@@ -251,9 +257,33 @@ public abstract class VehicleAgent extends ExtendedAgent {
     abstract void arrivedAtFire();
     
     /**
+     * Behavior for continuous actions that can be defined in the concrete subclasses.
+     */
+    private class ContinuousAction extends TickerBehaviour {
+        
+        /**
+         * @param a
+         * @param period
+         */
+        public ContinuousAction(final Agent a, final long period) {
+
+            super(a, period);
+        }
+        
+        /**
+         * @see jade.core.behaviours.TickerBehaviour#onTick()
+         */
+        @Override
+        protected void onTick() {
+
+            continuousAction();
+        }
+    }
+    
+    /**
      * Gets called every move interval. Package scoped for faster access by inner classes.
      */
-    abstract void doMove();
+    abstract void continuousAction();
     
     /**
      * Receives the status messages from fire agents.
@@ -283,7 +313,7 @@ public abstract class VehicleAgent extends ExtendedAgent {
             
             FireStatus status;
             try {
-                status = extractMessageContent(FireStatus.class, statusMsg, false);
+                status = extractMessageContent(FireStatusInfo.class, statusMsg, false).getFireStatus();
             } catch (final Exception e) {
                 return;
             }

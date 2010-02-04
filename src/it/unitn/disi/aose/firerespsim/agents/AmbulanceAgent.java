@@ -108,10 +108,10 @@ public final class AmbulanceAgent extends VehicleAgent {
     }
     
     /**
-     * @see it.unitn.disi.aose.firerespsim.agents.VehicleAgent#doMove()
+     * @see it.unitn.disi.aose.firerespsim.agents.VehicleAgent#continuousAction()
      */
     @Override
-    void doMove() {
+    void continuousAction() {
 
     // nothing
     }

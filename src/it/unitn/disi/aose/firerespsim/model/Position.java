@@ -135,4 +135,24 @@ public final class Position {
 
         return new Position(getRow(), getCol());
     }
+    
+    /**
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(final Object obj) {
+
+        final Position other = (Position) obj;
+        final boolean equal = (other.row.equals(row) && other.col.equals(col)) ? true : false;
+        return equal;
+    }
+    
+    /**
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+
+        return super.hashCode();
+    }
 }

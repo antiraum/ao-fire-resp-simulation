@@ -79,24 +79,4 @@ public final class FireStatus implements Concept {
 
         this.casualties = casualties;
     }
-    
-    /**
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(final Object obj) {
-
-        final FireStatus other = (FireStatus) obj;
-        return (other.getCoordinate().equals(coordinate) && other.getIntensity() == intensity && other.getCasualties() == casualties) ? true
-                                                                                                                                     : false;
-    }
-    
-    /**
-     * @see java.lang.Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
-
-        return super.hashCode();
-    }
 }

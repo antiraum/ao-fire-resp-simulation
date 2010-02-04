@@ -393,6 +393,7 @@ public abstract class ExtendedAgent extends Agent {
             getContentManager().fillContent(msg, content);
         } catch (final Exception e) {
             logger.error("error filling message content");
+            e.printStackTrace();
         }
     }
     
