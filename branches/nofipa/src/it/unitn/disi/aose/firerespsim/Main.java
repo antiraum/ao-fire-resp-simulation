@@ -26,12 +26,12 @@ public final class Main {
     private static final int JADE_PORT = 1199;
     
     // Configuration
-    private static final int AREA_WIDTH = 3;
-    private static final int AREA_HEIGHT = 3;
-    private static final int ENVIRONMENT_SPAWN_FIRE_IVAL = 5000;
+    private static final int AREA_WIDTH = 10;
+    private static final int AREA_HEIGHT = 10;
+    private static final int ENVIRONMENT_SPAWN_FIRE_IVAL = 10000;
     private static final int MONITOR_SCAN_AREA_IVAL = 1000;
-    private static final int NUMBER_OF_FIRE_BRIGADES = 1;
-    private static final int NUMBER_OF_HOSPITALS = 1;
+    private static final int NUMBER_OF_FIRE_BRIGADES = 3;
+    private static final int NUMBER_OF_HOSPITALS = 3;
     private static final int FIRE_INCREASE_IVAL = 10000;
     private static final int VEHICLE_MOVE_IVAL = 1000;
     

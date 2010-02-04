@@ -37,7 +37,10 @@ import org.apache.log4j.Logger;
 @SuppressWarnings("serial")
 public abstract class ExtendedAgent extends Agent {
     
-    private static final Boolean THREADED = true;
+    /**
+     * Create threaded behaviors?
+     */
+    private static final Boolean THREADED_BEHAVIOURS = true;
     
     /**
      * Response performatives for request interaction.
@@ -112,7 +115,7 @@ public abstract class ExtendedAgent extends Agent {
 
         logger.info("shutting down");
         
-        if (THREADED) {
+        if (THREADED_BEHAVIOURS) {
             for (final Behaviour b : parallelBehaviours) {
                 if (b != null && tbf.getThread(b) != null) {
                     tbf.getThread(b).interrupt();
@@ -185,7 +188,7 @@ public abstract class ExtendedAgent extends Agent {
         }
         parallelBehaviours.addAll(parallelBehaviours);
         for (final Behaviour b : parallelBehaviours) {
-            pb.addSubBehaviour(THREADED ? tbf.wrap(b) : b);
+            pb.addSubBehaviour(THREADED_BEHAVIOURS ? tbf.wrap(b) : b);
         }
         if (sb == null) {
             addBehaviour(pb);
@@ -203,7 +206,7 @@ public abstract class ExtendedAgent extends Agent {
     protected void addParallelBehaviour(final Behaviour b) {
 
         parallelBehaviours.add(b);
-        pb.addSubBehaviour(THREADED ? tbf.wrap(b) : b);
+        pb.addSubBehaviour(THREADED_BEHAVIOURS ? tbf.wrap(b) : b);
     }
     
     /**
@@ -216,8 +219,10 @@ public abstract class ExtendedAgent extends Agent {
         if (b instanceof TickerBehaviour) {
             ((TickerBehaviour) b).stop();
         }
-        if (THREADED) {
-            tbf.getThread(b).interrupt();
+        if (THREADED_BEHAVIOURS) {
+            if (tbf.getThread(b) != null) {
+                tbf.getThread(b).interrupt();
+            }
         }
         pb.removeSubBehaviour(b);
         parallelBehaviours.remove(b);
