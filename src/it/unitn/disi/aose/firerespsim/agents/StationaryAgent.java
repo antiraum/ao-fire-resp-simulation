@@ -17,7 +17,6 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.DataStore;
-import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.wrapper.AgentController;
@@ -219,13 +218,7 @@ public abstract class StationaryAgent extends ExtendedAgent {
             // save fire
             fires.put(fireCoord.toString(), null);
             
-            // (re-)distribute vehicles
-            if (distributeVehicles == null) {
-                distributeVehicles = new DistributeVehicles(myAgent);
-            } else {
-                distributeVehicles.reset();
-            }
-            addParallelBehaviour(distributeVehicles);
+            distributeVehicles();
         }
     }
     
@@ -252,100 +245,75 @@ public abstract class StationaryAgent extends ExtendedAgent {
             final ACLMessage reject = blockingReceive(mt);
             if (reject == null) return;
             
-            logger.info("proposal got rejected");
+//            logger.info("proposal got rejected");
         }
     }
     
     /**
-     * Instance of {@link DistributeVehicles} that gets re-used.
+     * (Re-)distributes the vehicles among the fires. Package scoped for faster access by inner classes.
      */
-    DistributeVehicles distributeVehicles = null;
-    
-    /**
-     * Assigns the {@link #vehicles} to the {@link #fires}. For each fire one vehicle is assigned. Additional vehicles
-     * are distributed along the fires based on the fire intensities.
-     */
-    private class DistributeVehicles extends OneShotBehaviour {
-        
-        private final ACLMessage msg = createMessage(ACLMessage.REQUEST, VehicleAgent.SET_TARGET_PROTOCOL);
-        
-        /**
-         * @param a
-         */
-        public DistributeVehicles(final Agent a) {
+    void distributeVehicles() {
 
-            super(a);
+        if (fires.isEmpty()) return;
+        
+        // calculate vehicles distribution
+        final Map<String, Integer> fireWeights = new HashMap<String, Integer>();
+        int sumWeights = 0;
+        for (final Entry<String, FireStatus> fire : fires.entrySet()) {
+            if (!fireVehicles.containsKey(fire.getKey())) {
+                fireVehicles.put(fire.getKey(), 1);
+            }
+            final int weight = (fire.getValue() == null) ? 1 : getFireWeight(fire.getKey());
+            fireWeights.put(fire.getKey(), weight);
+            sumWeights += weight;
+        }
+        // TODO check that exact number of vehicles assigned
+        final float addVehiclesPerWeight = (vehicles.size() - fires.size()) / sumWeights;
+        boolean fireVehiclesChanged = false;
+        for (final Entry<String, Integer> fireWeight : fireWeights.entrySet()) {
+            final int numVehicles = 1 + Math.round(fireWeight.getValue() * addVehiclesPerWeight);
+            if (fireVehicles.put(fireWeight.getKey(), numVehicles) == numVehicles) {
+                continue;
+            }
+            fireVehiclesChanged = true;
+        }
+        if (!fireVehiclesChanged) return;
+        
+        // check how many vehicles already correctly assigned
+        // TODO consider current vehicle state (at target -> leave assignment)
+        final Map<String, Integer> fireVehiclesToAssign = new HashMap<String, Integer>();
+        final Set<AID> okVehicles = new HashSet<AID>();
+        for (final Entry<String, Integer> fv : fireVehicles.entrySet()) {
+            fireVehiclesToAssign.put(fv.getKey(), fv.getValue());
+            for (final Entry<AID, VehicleStatus> vehicle : vehicles.entrySet()) {
+                if (vehicle.getValue().getFire() == null || !vehicle.getValue().getFire().equals(fv.getKey())) {
+                    // vehicle not assigned to this fire
+                    continue;
+                }
+                okVehicles.add(vehicle.getKey());
+                if (fireVehiclesToAssign.put(fv.getKey(), fv.getValue() - 1) == 1) {
+                    // all vehicles for this fire
+                    break;
+                }
+            }
         }
         
-        /**
-         * @see jade.core.behaviours.Behaviour#action()
-         */
-        @Override
-        public void action() {
-
-            if (fires.isEmpty()) return;
-            
-            // calculate vehicles distribution
-            final Map<String, Integer> fireWeights = new HashMap<String, Integer>();
-            int sumWeights = 0;
-            for (final Entry<String, FireStatus> fire : fires.entrySet()) {
-                if (!fireVehicles.containsKey(fire.getKey())) {
-                    fireVehicles.put(fire.getKey(), 1);
-                }
-                final int weight = (fire.getValue() == null) ? 1 : getFireWeight(fire.getKey());
-                fireWeights.put(fire.getKey(), weight);
-                sumWeights += weight;
+        // (re-)distribute other vehicles
+        // TODO consider current vehicle position (prefer already close)
+        for (final Entry<String, Integer> fv : fireVehiclesToAssign.entrySet()) {
+            if (fv.getValue() == 0) {
+                // no more vehicles to assign
+                continue;
             }
-            // TODO check that exact number of vehicles assigned
-            final float addVehiclesPerWeight = (vehicles.size() - fires.size()) / sumWeights;
-            boolean fireVehiclesChanged = false;
-            for (final Entry<String, Integer> fireWeight : fireWeights.entrySet()) {
-                final int numVehicles = 1 + Math.round(fireWeight.getValue() * addVehiclesPerWeight);
-                if (fireVehicles.put(fireWeight.getKey(), numVehicles) == numVehicles) {
+            for (final AID vehicleAID : vehicles.keySet()) {
+                if (okVehicles.contains(vehicleAID)) {
                     continue;
                 }
-                fireVehiclesChanged = true;
-            }
-            if (!fireVehiclesChanged) return;
-            
-            // check how many vehicles already correctly assigned
-            // TODO consider current vehicle state (at target -> leave assignment)
-            final Map<String, Integer> fireVehiclesToAssign = new HashMap<String, Integer>();
-            final Set<AID> okVehicles = new HashSet<AID>();
-            for (final Entry<String, Integer> fv : fireVehicles.entrySet()) {
-                fireVehiclesToAssign.put(fv.getKey(), fv.getValue());
-                for (final Entry<AID, VehicleStatus> vehicle : vehicles.entrySet()) {
-                    if (vehicle.getValue().getFire() == null || !vehicle.getValue().getFire().equals(fv.getKey())) {
-                        // vehicle not assigned to this fire
-                        continue;
-                    }
-                    okVehicles.add(vehicle.getKey());
-                    if (fireVehiclesToAssign.put(fv.getKey(), fv.getValue() - 1) == 1) {
-                        // all vehicles for this fire
-                        break;
-                    }
-                }
-            }
-            
-            // (re-)distribute other vehicles
-            // TODO consider current vehicle position (prefer already close)
-            for (final Entry<String, Integer> fv : fireVehiclesToAssign.entrySet()) {
-                if (fv.getValue() == 0) {
-                    // no more vehicles to assign
-                    continue;
-                }
-                for (final AID vehicleAID : vehicles.keySet()) {
-                    if (okVehicles.contains(vehicleAID)) {
-                        continue;
-                    }
-                    final ACLMessage thisRequest = copyMessage(msg);
-                    thisRequest.setSender(vehicleAID);
-                    fillMessage(thisRequest, new SetTargetRequest(Coordinate.fromString(fv.getKey())));
-                    send(thisRequest);
-                    if (fv.setValue(fv.getValue() - 1) == 1) {
-                        // all vehicles for this fire
-                        break;
-                    }
+                sendMessage(ACLMessage.REQUEST, VehicleAgent.SET_TARGET_PROTOCOL, vehicleAID,
+                            new SetTargetRequest(Coordinate.fromString(fv.getKey())));
+                if (fv.setValue(fv.getValue() - 1) == 1) {
+                    // all vehicles for this fire
+                    break;
                 }
             }
         }
@@ -434,13 +402,7 @@ public abstract class StationaryAgent extends ExtendedAgent {
             
             if (status == fires.put(status.getCoordinate().toString(), status)) return;
             
-            // (re-)distribute vehicles
-            if (distributeVehicles == null) {
-                distributeVehicles = new DistributeVehicles(myAgent);
-            } else {
-                distributeVehicles.reset();
-            }
-            addParallelBehaviour(distributeVehicles);
+            distributeVehicles();
         }
     }
 }

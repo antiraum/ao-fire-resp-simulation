@@ -179,7 +179,7 @@ public abstract class CoordinatorAgent extends ExtendedAgent {
                 return;
             }
             final Coordinate fireCoord = proposal.getCoordinate();
-            logger.debug("received proposal for fire at (" + fireCoord + ")");
+//            logger.debug("received proposal for fire at (" + fireCoord + ")");
             if (!proposals.containsKey(fireCoord.toString())) {
                 proposals.put(fireCoord.toString(), new HashSet<ProposalInfo>());
             }
