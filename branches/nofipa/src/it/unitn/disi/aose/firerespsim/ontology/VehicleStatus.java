@@ -11,6 +11,7 @@ public final class VehicleStatus implements Concept {
     private Coordinate position;
     private int state;
     private Coordinate fire;
+    private boolean acceptingTarget;
     
     /**
      * Constructor for bean instantiation.
@@ -24,12 +25,15 @@ public final class VehicleStatus implements Concept {
      * @param position
      * @param state
      * @param fire
+     * @param acceptingTarget
      */
-    public VehicleStatus(final Coordinate position, final int state, final Coordinate fire) {
+    public VehicleStatus(final Coordinate position, final int state, final Coordinate fire,
+                         final boolean acceptingTarget) {
 
         this.position = position;
         this.state = state;
         this.fire = fire;
+        this.acceptingTarget = acceptingTarget;
     }
     
     /**
@@ -78,5 +82,21 @@ public final class VehicleStatus implements Concept {
     public void setFire(final Coordinate fire) {
 
         this.fire = fire;
+    }
+    
+    /**
+     * @return If vehicle is accepting set target requests.
+     */
+    public boolean isAcceptingTarget() {
+
+        return acceptingTarget;
+    }
+    
+    /**
+     * @param acceptingTarget
+     */
+    public void setAcceptingTarget(final boolean acceptingTarget) {
+
+        this.acceptingTarget = acceptingTarget;
     }
 }

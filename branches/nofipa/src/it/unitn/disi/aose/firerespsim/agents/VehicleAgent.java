@@ -320,6 +320,7 @@ public abstract class VehicleAgent extends ExtendedAgent {
             logger.info("received status from fire at (" + status.getCoordinate() + ")");
             
             // propagate to stationary agent
+            statusMsg.setSender(myAgent.getAID());
             statusMsg.removeReceiver(myAgent.getAID());
             statusMsg.addReceiver(owner);
             send(statusMsg);
