@@ -114,7 +114,7 @@ public final class FireAgent extends ExtendedAgent {
             final ACLMessage request = blockingReceive(mt);
             if (request == null) return;
             
-            logger.debug("received put out request");
+//            logger.debug("received put out request");
             
             Coordinate engineCoord;
             try {
@@ -132,7 +132,7 @@ public final class FireAgent extends ExtendedAgent {
                 refuse = "fire is already put out";
             }
             if (refuse != null) {
-                logger.debug(refuse);
+//                logger.debug(refuse);
                 sendReply(request, ACLMessage.REFUSE, refuse);
                 return;
             }

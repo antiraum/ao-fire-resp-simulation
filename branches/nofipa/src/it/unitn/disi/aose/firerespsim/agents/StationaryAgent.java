@@ -174,9 +174,15 @@ public abstract class StationaryAgent extends ExtendedAgent {
             logger.debug("received CFP for fire at (" + fireCoord + ")");
             
             // create proposal
+            int availableVehicles = vehicles.size();
+            for (final String fireKey : fires.keySet()) {
+                if (getFireWeight(fireKey) > 0) {
+                    availableVehicles--;
+                }
+            }
             final HandleFireProposal proposal = new HandleFireProposal(fireCoord,
                                                                        SimulationArea.getDistance(position, fireCoord),
-                                                                       vehicles.size() - fires.size()); // need at least one vehicle per fire
+                                                                       availableVehicles);
             
             sendReply(cfp, ACLMessage.PROPOSE, proposal);
             logger.debug("sent proposal for fire at (" + fireCoord + ")");
@@ -267,7 +273,7 @@ public abstract class StationaryAgent extends ExtendedAgent {
             if (!fireVehicles.containsKey(fire.getKey())) {
                 fireVehicles.put(fire.getKey(), 0);
             }
-            final int weight = (fire.getValue() == null) ? 1 : getFireWeight(fire.getKey());
+            final int weight = getFireWeight(fire.getKey());
             fireWeights.put(fire.getKey(), weight);
             sumWeights += weight;
         }
