@@ -9,13 +9,10 @@ import it.unitn.disi.aose.firerespsim.ontology.OnFireStatusInfo;
 import it.unitn.disi.aose.firerespsim.ontology.OnFireStatusRequest;
 import it.unitn.disi.aose.firerespsim.util.AgentUtil;
 import jade.core.Agent;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.TickerBehaviour;
-import jade.domain.FIPAAgentManagement.FailureException;
-import jade.domain.FIPAAgentManagement.NotUnderstoodException;
-import jade.domain.FIPAAgentManagement.RefuseException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import jade.proto.AchieveREResponder;
 import jade.wrapper.AgentController;
 import jade.wrapper.ControllerException;
 import java.util.Arrays;
@@ -97,7 +94,9 @@ public final class EnvironmentAgent extends ExtendedAgent {
     /**
      * Provides the dimensions of the simulation area. Is used by the fire monitor agent.
      */
-    private class AreaDimensionsService extends AchieveREResponder {
+    private class AreaDimensionsService extends CyclicBehaviour {
+        
+        private final MessageTemplate mt;
         
         /**
          * @param a
@@ -105,35 +104,29 @@ public final class EnvironmentAgent extends ExtendedAgent {
          */
         public AreaDimensionsService(final Agent a, final MessageTemplate mt) {
 
-            super(a, mt);
+            super(a);
+            this.mt = mt;
         }
         
         /**
-         * @see jade.proto.AchieveREResponder#handleRequest(jade.lang.acl.ACLMessage)
+         * @see jade.core.behaviours.Behaviour#action()
          */
         @Override
-        protected ACLMessage handleRequest(final ACLMessage request) throws NotUnderstoodException, RefuseException {
+        public void action() {
 
-//            logger.debug("received request for area dimensions");
-            return createReply(request, ACLMessage.INFORM, new AreaDimensionsInfo(area.dimensions));
-        }
-        
-        /**
-         * @see jade.proto.AchieveREResponder#prepareResultNotification(jade.lang.acl.ACLMessage,
-         *      jade.lang.acl.ACLMessage)
-         */
-        @Override
-        protected ACLMessage prepareResultNotification(final ACLMessage request, final ACLMessage response)
-                throws FailureException {
-
-            return null;
+            final ACLMessage request = blockingReceive(mt);
+            if (request == null) return;
+            
+            sendReply(request, ACLMessage.INFORM, new AreaDimensionsInfo(area.dimensions));
         }
     }
     
     /**
      * Provides the on fire status of a coordinate on the simulation area. Is used by the fire monitor agent.
      */
-    private class OnFireStatusService extends AchieveREResponder {
+    private class OnFireStatusService extends CyclicBehaviour {
+        
+        private final MessageTemplate mt;
         
         /**
          * @param a
@@ -141,22 +134,25 @@ public final class EnvironmentAgent extends ExtendedAgent {
          */
         public OnFireStatusService(final Agent a, final MessageTemplate mt) {
 
-            super(a, mt);
+            super(a);
+            this.mt = mt;
         }
         
         /**
-         * @see jade.proto.AchieveREResponder#handleRequest(jade.lang.acl.ACLMessage)
+         * @see jade.core.behaviours.Behaviour#action()
          */
         @Override
-        protected ACLMessage handleRequest(final ACLMessage request) throws NotUnderstoodException, RefuseException {
+        public void action() {
 
-            if (request == null) return null; // TODO check this
-                
+            final ACLMessage request = blockingReceive(mt);
+            if (request == null) return;
+            
             Coordinate coord;
             try {
                 coord = extractMessageContent(OnFireStatusRequest.class, request, false).getCoordinate();
             } catch (final Exception e) {
-                throw new NotUnderstoodException("could not read request message content");
+                sendReply(request, ACLMessage.NOT_UNDERSTOOD, "could not read request message content");
+                return;
             }
             
 //            logger.debug("received on fire status request for (" + coord + ")");
@@ -176,18 +172,7 @@ public final class EnvironmentAgent extends ExtendedAgent {
                 }
             }
             
-            return createReply(request, ACLMessage.INFORM, new OnFireStatusInfo(area.getOnFireState(coord)));
-        }
-        
-        /**
-         * @see jade.proto.AchieveREResponder#prepareResultNotification(jade.lang.acl.ACLMessage,
-         *      jade.lang.acl.ACLMessage)
-         */
-        @Override
-        protected ACLMessage prepareResultNotification(final ACLMessage request, final ACLMessage response)
-                throws FailureException {
-
-            return null;
+            sendReply(request, ACLMessage.INFORM, new OnFireStatusInfo(coord, area.getOnFireState(coord)));
         }
     }
     

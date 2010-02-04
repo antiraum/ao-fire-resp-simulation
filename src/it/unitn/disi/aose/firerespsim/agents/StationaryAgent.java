@@ -8,6 +8,7 @@ import it.unitn.disi.aose.firerespsim.ontology.FireStatus;
 import it.unitn.disi.aose.firerespsim.ontology.FireStatusInfo;
 import it.unitn.disi.aose.firerespsim.ontology.HandleFireCFP;
 import it.unitn.disi.aose.firerespsim.ontology.HandleFireProposal;
+import it.unitn.disi.aose.firerespsim.ontology.HandleFireProposalResponse;
 import it.unitn.disi.aose.firerespsim.ontology.SetTargetRequest;
 import it.unitn.disi.aose.firerespsim.ontology.VehicleStatus;
 import it.unitn.disi.aose.firerespsim.ontology.VehicleStatusInfo;
@@ -16,13 +17,9 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.DataStore;
-import jade.domain.FIPAAgentManagement.FailureException;
-import jade.domain.FIPAAgentManagement.NotUnderstoodException;
-import jade.domain.FIPAAgentManagement.RefuseException;
+import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import jade.proto.AchieveREInitiator;
-import jade.proto.ContractNetResponder;
 import jade.wrapper.AgentController;
 import jade.wrapper.StaleProxyException;
 import java.util.Arrays;
@@ -31,7 +28,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.Vector;
 import java.util.Map.Entry;
 import org.apache.commons.lang.math.RandomUtils;
 
@@ -116,28 +112,36 @@ public abstract class StationaryAgent extends ExtendedAgent {
         final FindAgent findCoordinator = new FindAgent(this, coordinatorDfType, coordinatorAIDKey);
         findCoordinator.setDataStore(ds);
         final ACLMessage coordSubsMsg = createMessage(ACLMessage.SUBSCRIBE, CoordinatorAgent.COORDINATION_PROTOCOL);
-        final Subscriber coordSubscriber = new Subscriber(this, coordSubsMsg, ds, coordinatorAIDKey);
+        final MessageTemplate coordSubsTpl = createMessageTemplate(null, SUBSCRIBE_RESPONSE_PERFORMATIVES,
+                                                                   CoordinatorAgent.COORDINATION_PROTOCOL);
+        final Subscriber coordSubscriber = new Subscriber(this, coordSubsMsg, coordSubsTpl, coordinatorAIDKey);
+        coordSubscriber.setDataStore(ds);
         final MessageTemplate cfpTpl = createMessageTemplate(null, CoordinatorAgent.COORDINATION_PROTOCOL,
                                                              ACLMessage.CFP);
-        final ReceiveCFP receiveCFP = new ReceiveCFP(this, cfpTpl, position);
+        final HandleCFP handleCFP = new HandleCFP(this, cfpTpl, position);
+        final MessageTemplate acceptProposalTpl = createMessageTemplate(null, CoordinatorAgent.COORDINATION_PROTOCOL,
+                                                                        ACLMessage.ACCEPT_PROPOSAL);
+        final HandleAcceptProposal handleAcceptProposal = new HandleAcceptProposal(this, acceptProposalTpl);
+        final MessageTemplate rejectProposalTpl = createMessageTemplate(null, CoordinatorAgent.COORDINATION_PROTOCOL,
+                                                                        ACLMessage.REJECT_PROPOSAL);
+        final HandleRejectProposal rejectAcceptProposal = new HandleRejectProposal(this, rejectProposalTpl);
         final MessageTemplate vehicleStatusTpl = createMessageTemplate(null, VehicleAgent.VEHICLE_STATUS_PROTOCOL,
                                                                        ACLMessage.INFORM);
-        final ReceiveVehicleStatus receiveVehicleStatus = new ReceiveVehicleStatus(this, vehicleStatusTpl);
+        final HandleVehicleStatus handleVehicleStatus = new HandleVehicleStatus(this, vehicleStatusTpl);
         final MessageTemplate fireStatusTpl = createMessageTemplate(null, FireAgent.FIRE_STATUS_PROTOCOL,
                                                                     ACLMessage.INFORM);
-        final ReceiveFireStatus receiveFireStatus = new ReceiveFireStatus(this, fireStatusTpl);
+        final HandleFireStatus handleFireStatus = new HandleFireStatus(this, fireStatusTpl);
         
         // add behaviors
         sequentialBehaviours.add(findCoordinator);
-        parallelBehaviours.addAll(Arrays.asList(coordSubscriber, receiveCFP, receiveVehicleStatus, receiveFireStatus));
+        parallelBehaviours.addAll(Arrays.asList(coordSubscriber, handleCFP, handleAcceptProposal, rejectAcceptProposal,
+                                                handleVehicleStatus, handleFireStatus));
         addBehaviours();
     }
     
-    /**
-     * Receive calls for proposal from the coordinator agent. Sends out the a proposal.
-     */
-    private class ReceiveCFP extends ContractNetResponder {
+    private class HandleCFP extends CyclicBehaviour {
         
+        private final MessageTemplate mt;
         private final Coordinate position;
         
         /**
@@ -145,38 +149,70 @@ public abstract class StationaryAgent extends ExtendedAgent {
          * @param mt
          * @param position
          */
-        public ReceiveCFP(final Agent a, final MessageTemplate mt, final Coordinate position) {
+        public HandleCFP(final Agent a, final MessageTemplate mt, final Coordinate position) {
 
-            super(a, mt);
+            super(a);
+            this.mt = mt;
             this.position = position;
         }
         
         /**
-         * @see jade.proto.ContractNetResponder#handleCfp(jade.lang.acl.ACLMessage)
+         * @see jade.core.behaviours.Behaviour#action()
          */
         @Override
-        protected ACLMessage handleCfp(final ACLMessage cfp) throws RefuseException, FailureException,
-                NotUnderstoodException {
+        public void action() {
 
-            final Coordinate fireCoord = getFireCoordinate(cfp);
+            final ACLMessage cfp = blockingReceive(mt);
+            if (cfp == null) return;
+            
+            Coordinate fireCoord;
+            try {
+                fireCoord = extractMessageContent(HandleFireCFP.class, cfp, false).getCoordinate();
+            } catch (final Exception e) {
+                sendReply(cfp, ACLMessage.FAILURE, "cannot extract message content");
+                return;
+            }
             logger.debug("received CFP for fire at (" + fireCoord + ")");
             
             // create proposal
-            final HandleFireProposal proposal = new HandleFireProposal(SimulationArea.getDistance(position, fireCoord),
+            final HandleFireProposal proposal = new HandleFireProposal(fireCoord,
+                                                                       SimulationArea.getDistance(position, fireCoord),
                                                                        vehicles.size() - fires.size()); // need at least one vehicle per fire
             
-            return createReply(cfp, ACLMessage.PROPOSE, proposal);
+            sendReply(cfp, ACLMessage.PROPOSE, proposal);
+        }
+    }
+    
+    private class HandleAcceptProposal extends CyclicBehaviour {
+        
+        private final MessageTemplate mt;
+        
+        /**
+         * @param a
+         * @param mt
+         */
+        public HandleAcceptProposal(final Agent a, final MessageTemplate mt) {
+
+            super(a);
+            this.mt = mt;
         }
         
         /**
-         * @see jade.proto.ContractNetResponder#handleAcceptProposal(jade.lang.acl.ACLMessage, jade.lang.acl.ACLMessage,
-         *      jade.lang.acl.ACLMessage)
+         * @see jade.core.behaviours.Behaviour#action()
          */
         @Override
-        protected ACLMessage handleAcceptProposal(final ACLMessage cfp, final ACLMessage propose,
-                                                  final ACLMessage accept) throws FailureException {
+        public void action() {
 
-            final Coordinate fireCoord = getFireCoordinate(cfp);
+            final ACLMessage accept = blockingReceive(mt);
+            if (accept == null) return;
+            
+            final Coordinate fireCoord;
+            try {
+                fireCoord = extractMessageContent(HandleFireProposalResponse.class, accept, false).getCoordinate();
+            } catch (final Exception e) {
+                sendReply(accept, ACLMessage.FAILURE, "cannot extract message content");
+                return;
+            }
             
             logger.info("proposal for fire at (" + fireCoord + ") got accepted");
             
@@ -190,32 +226,33 @@ public abstract class StationaryAgent extends ExtendedAgent {
                 distributeVehicles.reset();
             }
             addParallelBehaviour(distributeVehicles);
-            
-            return null;
+        }
+    }
+    
+    private class HandleRejectProposal extends CyclicBehaviour {
+        
+        private final MessageTemplate mt;
+        
+        /**
+         * @param a
+         * @param mt
+         */
+        public HandleRejectProposal(final Agent a, final MessageTemplate mt) {
+
+            super(a);
+            this.mt = mt;
         }
         
         /**
-         * @see jade.proto.SSContractNetResponder#handleRejectProposal(jade.lang.acl.ACLMessage,
-         *      jade.lang.acl.ACLMessage, jade.lang.acl.ACLMessage)
+         * @see jade.core.behaviours.Behaviour#action()
          */
         @Override
-        protected void handleRejectProposal(final ACLMessage cfp, final ACLMessage propose, final ACLMessage reject) {
+        public void action() {
 
+            final ACLMessage reject = blockingReceive(mt);
+            if (reject == null) return;
+            
             logger.info("proposal got rejected");
-        }
-        
-        /**
-         * @param cfp
-         * @return Coordinate of the fire.
-         * @throws FailureException
-         */
-        private Coordinate getFireCoordinate(final ACLMessage cfp) throws FailureException {
-
-            try {
-                return extractMessageContent(HandleFireCFP.class, cfp, false).getCoordinate();
-            } catch (final Exception e) {
-                throw new FailureException("cannot extract cfp content");
-            }
         }
     }
     
@@ -228,24 +265,25 @@ public abstract class StationaryAgent extends ExtendedAgent {
      * Assigns the {@link #vehicles} to the {@link #fires}. For each fire one vehicle is assigned. Additional vehicles
      * are distributed along the fires based on the fire intensities.
      */
-    private class DistributeVehicles extends AchieveREInitiator {
+    private class DistributeVehicles extends OneShotBehaviour {
+        
+        private final ACLMessage msg = createMessage(ACLMessage.REQUEST, VehicleAgent.SET_TARGET_PROTOCOL);
         
         /**
          * @param a
          */
         public DistributeVehicles(final Agent a) {
 
-            super(a, createMessage(ACLMessage.REQUEST, VehicleAgent.SET_TARGET_PROTOCOL));
+            super(a);
         }
         
         /**
-         * @see jade.proto.AchieveREInitiator#prepareRequests(jade.lang.acl.ACLMessage)
+         * @see jade.core.behaviours.Behaviour#action()
          */
-        @SuppressWarnings("unchecked")
         @Override
-        protected Vector prepareRequests(final ACLMessage request) {
+        public void action() {
 
-            if (fires.isEmpty()) return null;
+            if (fires.isEmpty()) return;
             
             // calculate vehicles distribution
             final Map<Coordinate, Integer> fireWeights = new HashMap<Coordinate, Integer>();
@@ -268,7 +306,7 @@ public abstract class StationaryAgent extends ExtendedAgent {
                 }
                 fireVehiclesChanged = true;
             }
-            if (!fireVehiclesChanged) return null;
+            if (!fireVehiclesChanged) return;
             
             // check how many vehicles already correctly assigned
             // TODO consider current vehicle state (at target -> leave assignment)
@@ -289,8 +327,6 @@ public abstract class StationaryAgent extends ExtendedAgent {
                 }
             }
             
-            final Vector<ACLMessage> requests = new Vector<ACLMessage>();
-            
             // (re-)distribute other vehicles
             // TODO consider current vehicle position (prefer already close)
             for (final Entry<Coordinate, Integer> fv : fireVehiclesToAssign.entrySet()) {
@@ -302,18 +338,16 @@ public abstract class StationaryAgent extends ExtendedAgent {
                     if (okVehicles.contains(vehicleAID)) {
                         continue;
                     }
-                    final ACLMessage thisRequest = copyMessage(request);
+                    final ACLMessage thisRequest = copyMessage(msg);
                     thisRequest.setSender(vehicleAID);
                     fillMessage(thisRequest, new SetTargetRequest(fv.getKey()));
-                    requests.add(thisRequest);
+                    send(thisRequest);
                     if (fv.setValue(fv.getValue() - 1) == 1) {
                         // all vehicles for this fire
                         break;
                     }
                 }
             }
-            
-            return requests;
         }
     }
     
@@ -328,11 +362,11 @@ public abstract class StationaryAgent extends ExtendedAgent {
     /**
      * Receives the status messages from the vehicle agents of this stationary agent.
      */
-    private class ReceiveVehicleStatus extends CyclicBehaviour {
+    private class HandleVehicleStatus extends CyclicBehaviour {
         
         final MessageTemplate mt;
         
-        public ReceiveVehicleStatus(final Agent a, final MessageTemplate mt) {
+        public HandleVehicleStatus(final Agent a, final MessageTemplate mt) {
 
             super(a);
             this.mt = mt;
@@ -366,11 +400,11 @@ public abstract class StationaryAgent extends ExtendedAgent {
     /**
      * Receives the fire status messages propagated by the vehicle agents.
      */
-    private class ReceiveFireStatus extends CyclicBehaviour {
+    private class HandleFireStatus extends CyclicBehaviour {
         
         final MessageTemplate mt;
         
-        public ReceiveFireStatus(final Agent a, final MessageTemplate mt) {
+        public HandleFireStatus(final Agent a, final MessageTemplate mt) {
 
             super(a);
             this.mt = mt;

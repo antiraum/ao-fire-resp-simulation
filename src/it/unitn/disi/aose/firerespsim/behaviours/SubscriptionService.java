@@ -1,57 +1,49 @@
 package it.unitn.disi.aose.firerespsim.behaviours;
 
+import it.unitn.disi.aose.firerespsim.agents.ExtendedAgent;
+import it.unitn.disi.aose.firerespsim.model.Subscribers;
 import jade.core.Agent;
-import jade.domain.FIPAAgentManagement.FailureException;
-import jade.domain.FIPAAgentManagement.NotUnderstoodException;
-import jade.domain.FIPAAgentManagement.RefuseException;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import jade.proto.SubscriptionResponder;
 
 /**
  * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
 @SuppressWarnings("serial")
-public final class SubscriptionService extends SubscriptionResponder {
+public final class SubscriptionService extends CyclicBehaviour {
+    
+    private final MessageTemplate mt;
+    private final Subscribers sm;
     
     /**
      * @param a
      * @param mt
      * @param sm
      */
-    public SubscriptionService(final Agent a, final MessageTemplate mt, final SubscriptionManager sm) {
+    public SubscriptionService(final Agent a, final MessageTemplate mt, final Subscribers sm) {
 
-        super(a, mt, sm);
+        super(a);
+        this.mt = mt;
+        this.sm = sm;
     }
     
     /**
-     * @see jade.proto.SubscriptionResponder#handleSubscription(jade.lang.acl.ACLMessage)
+     * @see jade.core.behaviours.Behaviour#action()
      */
     @Override
-    protected ACLMessage handleSubscription(final ACLMessage subscription) throws NotUnderstoodException,
-            RefuseException {
+    public void action() {
 
-        final ACLMessage reply = subscription.createReply();
-        final Subscription subs = createSubscription(subscription);
-        reply.setPerformative(mySubscriptionManager.register(subs) ? ACLMessage.AGREE : ACLMessage.REFUSE);
-        return reply;
-    }
-    
-    /**
-     * @see jade.proto.SubscriptionResponder#handleCancel(jade.lang.acl.ACLMessage)
-     */
-    @Override
-    protected ACLMessage handleCancel(final ACLMessage cancel) throws FailureException {
-
-        final ACLMessage reply = cancel.createReply();
-        reply.setPerformative(ACLMessage.FAILURE);
-        final Subscription subs = getSubscription(cancel);
-        if (subs != null) {
-            if (mySubscriptionManager.deregister(subs)) {
-                reply.setPerformative(ACLMessage.INFORM);
-            }
-            subs.close();
+        final ACLMessage request = myAgent.blockingReceive(mt);
+        if (request == null) return;
+        
+        int perf;
+        if (request.getPerformative() == ACLMessage.SUBSCRIBE) {
+            perf = sm.register(request) ? ACLMessage.AGREE : ACLMessage.REFUSE;
+        } else {
+            perf = sm.deregister(request) ? ACLMessage.INFORM : ACLMessage.FAILURE;
         }
-        return reply;
+        
+        ((ExtendedAgent) myAgent).sendReply(request, perf);
     }
 }

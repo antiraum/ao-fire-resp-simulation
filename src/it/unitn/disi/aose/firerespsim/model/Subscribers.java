@@ -1,11 +1,10 @@
 package it.unitn.disi.aose.firerespsim.model;
 
-import jade.domain.FIPAAgentManagement.FailureException;
-import jade.domain.FIPAAgentManagement.NotUnderstoodException;
-import jade.domain.FIPAAgentManagement.RefuseException;
-import jade.proto.SubscriptionResponder.Subscription;
-import jade.proto.SubscriptionResponder.SubscriptionManager;
+import jade.core.AID;
+import jade.lang.acl.ACLMessage;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -13,27 +12,27 @@ import java.util.Set;
  * 
  * @author Thomas Hess (139467) / Musawar Saeed (140053)
  */
-public final class Subscribers implements SubscriptionManager {
+public final class Subscribers {
     
     /**
      * Subscriptions
      */
-    public final Set<Subscription> subscriptions = new HashSet<Subscription>();
+    public final Set<ACLMessage> subscriptions = new HashSet<ACLMessage>();
     
     /**
-     * @see jade.proto.SubscriptionResponder.SubscriptionManager#register(jade.proto.SubscriptionResponder.Subscription)
+     * @param s
+     * @return <code>true</code> if was not registered, <code>false</code> if was
      */
-    @Override
-    public boolean register(final Subscription s) throws RefuseException, NotUnderstoodException {
+    public boolean register(final ACLMessage s) {
 
         return subscriptions.add(s);
     }
     
     /**
-     * @see jade.proto.SubscriptionResponder.SubscriptionManager#deregister(jade.proto.SubscriptionResponder.Subscription)
+     * @param s
+     * @return <code>true</code> if was registered, <code>false</code> if not
      */
-    @Override
-    public boolean deregister(final Subscription s) throws FailureException {
+    public boolean deregister(final ACLMessage s) {
 
         return subscriptions.remove(s);
     }
@@ -41,8 +40,27 @@ public final class Subscribers implements SubscriptionManager {
     /**
      * @return The subscriptions.
      */
-    public Set<Subscription> getSubscriptions() {
+    public Set<ACLMessage> getSubscriptions() {
 
         return subscriptions;
+    }
+    
+    public int size() {
+
+        return subscriptions.size();
+    }
+    
+    public boolean isEmpty() {
+
+        return subscriptions.isEmpty();
+    }
+    
+    public List<AID> getAIDs() {
+
+        final List<AID> aids = new ArrayList<AID>();
+        for (final ACLMessage s : subscriptions) {
+            aids.add(s.getSender());
+        }
+        return aids;
     }
 }

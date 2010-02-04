@@ -37,7 +37,25 @@ import org.apache.log4j.Logger;
 @SuppressWarnings("serial")
 public abstract class ExtendedAgent extends Agent {
     
-    private static final Boolean THREADED = false;
+    private static final Boolean THREADED = true;
+    
+    /**
+     * Response performatives for request interaction.
+     */
+    protected static final List<Integer> REQUEST_RESPONSE_PERFORMATIVES = Arrays.asList(ACLMessage.AGREE,
+                                                                                        ACLMessage.INFORM,
+                                                                                        ACLMessage.NOT_UNDERSTOOD,
+                                                                                        ACLMessage.REFUSE);
+    /**
+     * Request performatives for subscription interaction.
+     */
+    protected static final List<Integer> SUBSCRIBE_REQUEST_PERFORMATIVES = Arrays.asList(ACLMessage.SUBSCRIBE,
+                                                                                         ACLMessage.CANCEL);
+    /**
+     * Response performatives for subscription interaction.
+     */
+    protected static final List<Integer> SUBSCRIBE_RESPONSE_PERFORMATIVES = Arrays.asList(ACLMessage.AGREE,
+                                                                                          ACLMessage.REFUSE);
     
     /**
      * Log4J logger.
@@ -240,6 +258,25 @@ public abstract class ExtendedAgent extends Agent {
     }
     
     /**
+     * @param msg
+     * @param performative
+     * @param content
+     */
+    protected void sendReply(final ACLMessage msg, final int performative, final String content) {
+
+        send(createReply(msg, performative, content));
+    }
+    
+    /**
+     * @param msg
+     * @param performative
+     */
+    public void sendReply(final ACLMessage msg, final int performative) {
+
+        send(createReply(msg, performative));
+    }
+    
+    /**
      * @param performative
      * @param protocol
      * @return {@link ACLMessage} skeleton.
@@ -301,6 +338,32 @@ public abstract class ExtendedAgent extends Agent {
     
     /**
      * @param msg
+     * @param performative
+     * @param content
+     * @return {@link ACLMessage} ready to send.
+     */
+    protected ACLMessage createReply(final ACLMessage msg, final int performative, final String content) {
+
+        final ACLMessage reply = msg.createReply();
+        reply.setPerformative(performative);
+        reply.setContent(content);
+        return reply;
+    }
+    
+    /**
+     * @param msg
+     * @param performative
+     * @return {@link ACLMessage} ready to send.
+     */
+    protected ACLMessage createReply(final ACLMessage msg, final int performative) {
+
+        final ACLMessage reply = msg.createReply();
+        reply.setPerformative(performative);
+        return reply;
+    }
+    
+    /**
+     * @param msg
      * @return Copy of the message.
      */
     protected ACLMessage copyMessage(final ACLMessage msg) {
@@ -337,17 +400,17 @@ public abstract class ExtendedAgent extends Agent {
      */
     protected MessageTemplate createMessageTemplate(final AID sender, final String protocol, final Integer performative) {
 
-        return createMessageTemplate(sender, protocol, Arrays.asList(performative));
+        return createMessageTemplate(sender, Arrays.asList(performative), protocol);
     }
     
     /**
      * @param sender
-     * @param protocol
      * @param performatives
+     * @param protocol
      * @return Combined {@link MessageTemplate}.
      */
-    protected MessageTemplate createMessageTemplate(final AID sender, final String protocol,
-                                                    final List<Integer> performatives) {
+    protected MessageTemplate createMessageTemplate(final AID sender, final List<Integer> performatives,
+                                                    final String protocol) {
 
         final Set<MessageTemplate> andTpl = new HashSet<MessageTemplate>();
         if (sender != null) {

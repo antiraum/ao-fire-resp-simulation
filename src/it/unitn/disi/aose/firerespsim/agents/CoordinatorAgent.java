@@ -8,22 +8,17 @@ import it.unitn.disi.aose.firerespsim.ontology.Coordinate;
 import it.unitn.disi.aose.firerespsim.ontology.FireAlert;
 import it.unitn.disi.aose.firerespsim.ontology.HandleFireCFP;
 import it.unitn.disi.aose.firerespsim.ontology.HandleFireProposal;
-import jade.core.AID;
 import jade.core.Agent;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.DataStore;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import jade.proto.ContractNetInitiator;
-import jade.proto.SubscriptionResponder.Subscription;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.Map;
 import java.util.Set;
-import java.util.Vector;
 
 /**
  * Coordinator for {@link StationaryAgent}s. Subscribes at the {@link FireMonitorAgent} for fire alerts. Distribute the
@@ -50,7 +45,7 @@ public abstract class CoordinatorAgent extends ExtendedAgent {
     /**
      * Currently known fires. Package scoped for faster access by inner classes.
      */
-    final Set<Coordinate> knownFires = new HashSet<Coordinate>();
+    final Set<String> knownFires = new HashSet<String>();
     
     /**
      * @see jade.core.Agent#setup()
@@ -70,148 +65,198 @@ public abstract class CoordinatorAgent extends ExtendedAgent {
         final FindAgent findFireMonitor = new FindAgent(this, FireMonitorAgent.FIRE_ALERT_DF_TYPE, fireMonitorAIDKey);
         findFireMonitor.setDataStore(ds);
         final ACLMessage fireAlertSubsMsg = createMessage(ACLMessage.SUBSCRIBE, FireMonitorAgent.FIRE_ALERT_PROTOCOL);
-        final Subscriber fireAlertSubscriber = new Subscriber(this, fireAlertSubsMsg, ds, fireMonitorAIDKey);
-        fireAlertSubscriber.registerHandleInform(new HandleFireAlert(this));
+        final MessageTemplate fireAlertSubsTpl = createMessageTemplate(null, SUBSCRIBE_RESPONSE_PERFORMATIVES,
+                                                                       FireMonitorAgent.FIRE_ALERT_PROTOCOL);
+        final Subscriber fireAlertSubscriber = new Subscriber(this, fireAlertSubsMsg, fireAlertSubsTpl,
+                                                              fireMonitorAIDKey);
+        fireAlertSubscriber.setDataStore(ds);
+        final MessageTemplate fireAlertTpl = createMessageTemplate(null, REQUEST_RESPONSE_PERFORMATIVES,
+                                                                   FireMonitorAgent.FIRE_ALERT_PROTOCOL);
+        final HandleFireAlert handleFireAlert = new HandleFireAlert(this, fireAlertTpl);
         final MessageTemplate coordSubsTpl = createMessageTemplate(null, COORDINATION_PROTOCOL, ACLMessage.SUBSCRIBE);
         final SubscriptionService coordSubsService = new SubscriptionService(this, coordSubsTpl, coordSubscribers);
+        final MessageTemplate proposalTpl = createMessageTemplate(null, COORDINATION_PROTOCOL, ACLMessage.PROPOSE);
+        final HandleProposals handleProposals = new HandleProposals(this, proposalTpl);
         
         // add behaviors
         sequentialBehaviours.add(findFireMonitor);
-        parallelBehaviours.addAll(Arrays.asList(fireAlertSubscriber, coordSubsService));
+        parallelBehaviours.addAll(Arrays.asList(fireAlertSubscriber, handleFireAlert, coordSubsService, handleProposals));
         addBehaviours();
     }
     
     /**
-     * Handles a fire alert. If a fire is new, starts a {@link CoordinateFire} for it.
+     * Handles incoming fire alert. If a fire is new, starts a {@link SendCFP} for it.
      */
-    private class HandleFireAlert extends OneShotBehaviour {
+    private class HandleFireAlert extends CyclicBehaviour {
+        
+        private final MessageTemplate mt;
         
         /**
          * @param a
+         * @param mt
          */
-        public HandleFireAlert(final Agent a) {
+        public HandleFireAlert(final Agent a, final MessageTemplate mt) {
 
             super(a);
+            this.mt = mt;
         }
         
         /**
          * @see jade.core.behaviours.Behaviour#action()
          */
-        @SuppressWarnings("unchecked")
         @Override
         public void action() {
 
-            // look for fire alert in data store
-            Coordinate fireCoord = null;
-            final Iterator iter = getDataStore().values().iterator();
-            while (iter.hasNext()) {
-                final Object val = iter.next();
-                if (!(val instanceof ACLMessage)) {
-                    continue;
-                }
-                try {
-                    fireCoord = extractMessageContent(FireAlert.class, (ACLMessage) val, true).getFireCoordinate();
-                } catch (final Exception e) {
-                    continue;
-                }
-            }
-            if (fireCoord == null) {
-                logger.error("cannot find fire alert in data store");
+            final ACLMessage response = blockingReceive(mt);
+            if (response == null) return;
+            
+            if (response.getPerformative() != ACLMessage.INFORM) return;
+            
+            Coordinate fireCoord;
+            try {
+                fireCoord = extractMessageContent(FireAlert.class, response, false).getFireCoordinate();
+            } catch (final Exception e) {
                 return;
             }
+            if (knownFires.contains(fireCoord.toString())) return; // not new
+                
             logger.debug("received alert for fire at (" + fireCoord + ")");
-            
-            // add to known fires
-            if (knownFires.contains(fireCoord)) return; // not new
-            knownFires.add(fireCoord); // TODO remove fires when put out
+            knownFires.add(fireCoord.toString());
+            // TODO remove fires when put out
             
             // start cfp
-            final Set<Subscription> coordSubscriptions = coordSubscribers.getSubscriptions();
-            if (coordSubscriptions.isEmpty()) {
-                logger.error("no stationary agent registered to send CFP to - fire will not be handled!");
-                return;
-            }
-            final List<AID> recipients = new ArrayList<AID>();
-            for (final Subscription sub : coordSubscriptions) {
-                recipients.add(sub.getMessage().getSender());
-            }
-            final ACLMessage cfpMsg = createMessage(ACLMessage.CFP, COORDINATION_PROTOCOL, recipients,
-                                                    new HandleFireCFP(fireCoord));
-            if (coordinateFire == null) {
-                coordinateFire = new CoordinateFire(myAgent, cfpMsg);
+            if (sendCFP == null) {
+                sendCFP = new SendCFP(fireCoord);
             } else {
-                coordinateFire.reset(cfpMsg);
+                sendCFP.reset(fireCoord);
             }
-            addParallelBehaviour(coordinateFire);
+            addParallelBehaviour(sendCFP);
+            // TODO start cfp timeout
         }
     }
     
     /**
-     * Instance of {@link CoordinateFire} that gets re-used for every coordination. Package scoped for faster access by
-     * inner classes.
+     * Instance of {@link SendCFP} that gets re-used for every fire.
      */
-    CoordinateFire coordinateFire = null;
+    SendCFP sendCFP = null;
     
     /**
-     * Coordinates the responsibility for a new fire. Sends a CFP and gives the responsibility to the stationary agent
-     * with the best proposal.
+     * Sends a fire alert to all subscribers.
      */
-    private class CoordinateFire extends ContractNetInitiator {
+    private class SendCFP extends OneShotBehaviour {
+        
+        private Coordinate fireCoord;
         
         /**
-         * @param a
-         * @param cfp
+         * @param fireCoord
          */
-        public CoordinateFire(final Agent a, final ACLMessage cfp) {
+        public SendCFP(final Coordinate fireCoord) {
 
-            super(a, cfp);
+            this.fireCoord = fireCoord;
         }
         
         /**
-         * @see jade.proto.ContractNetInitiator#handleAllResponses(java.util.Vector, java.util.Vector)
+         * @see jade.core.behaviours.Behaviour#action()
          */
-        @SuppressWarnings("unchecked")
         @Override
-        protected void handleAllResponses(final Vector responses, final Vector acceptances) {
+        public void action() {
 
+            if (coordSubscribers.isEmpty()) {
+                logger.error("no stationary agent registered to send CFP to - fire will not be handled!");
+                return;
+            }
+            sendMessage(ACLMessage.CFP, COORDINATION_PROTOCOL, coordSubscribers.getAIDs(), new HandleFireCFP(fireCoord));
+            logger.debug("sent CFP for fire at (" + fireCoord + ")");
+        }
+        
+        public void reset(final Coordinate fireCoord) {
+
+            super.reset();
+            this.fireCoord = fireCoord;
+        }
+    }
+    
+    private class HandleProposals extends CyclicBehaviour {
+        
+        private final MessageTemplate mt;
+        
+        /**
+         * @param a
+         * @param mt
+         */
+        public HandleProposals(final Agent a, final MessageTemplate mt) {
+
+            super(a);
+            this.mt = mt;
+        }
+        
+        private final Map<Coordinate, Set<ProposalInfo>> proposals = new HashMap<Coordinate, Set<ProposalInfo>>();
+        
+        private class ProposalInfo {
+            
+            public ACLMessage msg;
+            public HandleFireProposal proposal;
+            
+            public ProposalInfo(final ACLMessage msg, final HandleFireProposal proposal) {
+
+                this.msg = msg;
+                this.proposal = proposal;
+            }
+        }
+        
+        /**
+         * @see jade.core.behaviours.Behaviour#action()
+         */
+        @Override
+        public void action() {
+
+            final ACLMessage proposalMsg = blockingReceive(mt);
+            if (proposalMsg == null) return;
+            
+            HandleFireProposal proposal;
+            try {
+                proposal = extractMessageContent(HandleFireProposal.class, proposalMsg, false);
+            } catch (final Exception e) {
+                sendReply(proposalMsg, ACLMessage.FAILURE, "cannot read proposal content");
+                return;
+            }
+            final Coordinate fireCoord = proposal.getCoordinate();
+            if (!proposals.containsKey(fireCoord)) {
+                proposals.put(fireCoord, new HashSet<ProposalInfo>());
+            }
+            proposals.get(fireCoord).add(new ProposalInfo(proposalMsg, proposal));
+            
+            if (proposals.get(fireCoord).size() != coordSubscribers.size()) return;
+            
             // find best proposal
-            ACLMessage bestMsg = null;
-            HandleFireProposal bestProp = null;
-            ListIterator<ACLMessage> iter = responses.listIterator();
-            while (iter.hasNext()) {
-                final ACLMessage msg = iter.next();
-                if (msg.getPerformative() != ACLMessage.PROPOSE) {
+            ProposalInfo bestPropInfo = null;
+            for (final ProposalInfo propInfo : proposals.get(fireCoord)) {
+                
+                if (bestPropInfo == null) {
+                    bestPropInfo = propInfo;
                     continue;
                 }
-                HandleFireProposal prop;
-                try {
-                    prop = extractMessageContent(HandleFireProposal.class, msg, false);
-                } catch (final Exception e) {
-                    continue;
-                }
+                
+                final HandleFireProposal bestProp = bestPropInfo.proposal;
+                final HandleFireProposal prop = propInfo.proposal;
+                
                 // number of available vehicles is primary criteria, distance to fire is secondary criteria
-                if (bestProp == null || prop.getNumVehicles() > bestProp.getNumVehicles() ||
+                if (prop.getNumVehicles() > bestProp.getNumVehicles() ||
                     (prop.getNumVehicles() == bestProp.getNumVehicles() && prop.getDistance() < bestProp.getDistance())) {
-                    bestMsg = msg;
-                    bestProp = prop;
+                    bestPropInfo = propInfo;
                 }
             }
             
-            if (bestProp == null) {
+            if (bestPropInfo == null) {
                 logger.error("no proposal for fire, will not be handled!");
                 return;
             }
-            logger.info("accepted proposal (" + bestProp + ")");
+            logger.info("accepted proposal (" + bestPropInfo.proposal + ")");
             
-            // create replies
-            iter = responses.listIterator();
-            while (iter.hasNext()) {
-                final ACLMessage msg = iter.next();
-                if (msg.getPerformative() != ACLMessage.PROPOSE) {
-                    continue;
-                }
-                acceptances.add(createReply(msg, (msg == bestMsg) ? ACLMessage.ACCEPT_PROPOSAL
-                                                                 : ACLMessage.REJECT_PROPOSAL, null));
+            // send replies
+            for (final ProposalInfo propInfo : proposals.get(fireCoord)) {
+                sendReply(propInfo.msg, (propInfo == bestPropInfo) ? ACLMessage.ACCEPT_PROPOSAL
+                                                                  : ACLMessage.REJECT_PROPOSAL);
             }
         }
     }

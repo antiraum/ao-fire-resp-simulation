@@ -3,10 +3,9 @@ package it.unitn.disi.aose.firerespsim.agents;
 import it.unitn.disi.aose.firerespsim.ontology.FireStatus;
 import it.unitn.disi.aose.firerespsim.ontology.PickUpCasualtyRequest;
 import jade.core.Agent;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.lang.acl.ACLMessage;
-import jade.proto.AchieveREInitiator;
-import java.util.ListIterator;
-import java.util.Vector;
+import jade.lang.acl.MessageTemplate;
 
 /**
  * This agent simulates an ambulance.
@@ -20,6 +19,19 @@ public final class AmbulanceAgent extends VehicleAgent {
      * If currently transporting a casualty. Package scoped for faster access by inner classes.
      */
     boolean hasCasualty = false;
+    
+    /**
+     * @see it.unitn.disi.aose.firerespsim.agents.VehicleAgent#setup()
+     */
+    @Override
+    protected void setup() {
+
+        super.setup();
+        
+        final MessageTemplate pickUpResponseTpl = createMessageTemplate(null, REQUEST_RESPONSE_PERFORMATIVES,
+                                                                        FireAgent.PICK_UP_CASUALTY_PROTOCOL);
+        addParallelBehaviour(new HandlePickUpCasualtyResponse(this, pickUpResponseTpl));
+    }
     
     /**
      * @see it.unitn.disi.aose.firerespsim.agents.VehicleAgent#arrivedAtHome()
@@ -57,45 +69,40 @@ public final class AmbulanceAgent extends VehicleAgent {
             sendStatus();
         }
         
-        final ACLMessage pickUpMsg = createMessage(ACLMessage.REQUEST, FireAgent.PICK_UP_CASUALTY_PROTOCOL,
-                                                   getFireAID(),
-                                                   new PickUpCasualtyRequest(vehicle.position.getCoordinate()));
-        if (pickUpCasualty == null) {
-            pickUpCasualty = new PickUpCasualty(this, pickUpMsg);
-        } else {
-            pickUpCasualty.reset(pickUpMsg);
-        }
-        addParallelBehaviour(pickUpCasualty);
+        sendMessage(ACLMessage.REQUEST, FireAgent.PICK_UP_CASUALTY_PROTOCOL, getFireAID(),
+                    new PickUpCasualtyRequest(vehicle.position.getCoordinate()));
     }
     
-    private PickUpCasualty pickUpCasualty = null;
-    
-    private class PickUpCasualty extends AchieveREInitiator {
+    private class HandlePickUpCasualtyResponse extends CyclicBehaviour {
+        
+        private final MessageTemplate mt;
         
         /**
          * @param a
-         * @param msg
+         * @param mt
          */
-        public PickUpCasualty(final Agent a, final ACLMessage msg) {
+        public HandlePickUpCasualtyResponse(final Agent a, final MessageTemplate mt) {
 
-            super(a, msg);
+            super(a);
+            this.mt = mt;
         }
         
-        @SuppressWarnings("unchecked")
+        /**
+         * @see jade.core.behaviours.Behaviour#action()
+         */
         @Override
-        protected void handleAllResponses(final Vector responses) {
+        public void action() {
 
-            final ListIterator iter = responses.listIterator();
-            while (iter.hasNext()) {
-                final ACLMessage response = (ACLMessage) iter.next();
-                if (response.getPerformative() == ACLMessage.AGREE) {
-                    logger.info("picked up casualty from fire at (" + vehicle.fire + "), bringing it back to hospital");
-                    hasCasualty = true;
-                    vehicle.setAcceptingTarget(false);
-                    setTarget(vehicle.home);
-                } else {
-                    logger.info("no casualty picked up from fire at (" + vehicle.fire + ")");
-                }
+            final ACLMessage response = blockingReceive(mt);
+            if (response == null) return;
+            
+            if (response.getPerformative() == ACLMessage.AGREE) {
+                logger.info("picked up casualty from fire at (" + vehicle.fire + "), bringing it back to hospital");
+                hasCasualty = true;
+                vehicle.setAcceptingTarget(false);
+                setTarget(vehicle.home);
+            } else {
+                logger.info("no casualty picked up from fire at (" + vehicle.fire + ")");
             }
         }
     }
@@ -110,10 +117,10 @@ public final class AmbulanceAgent extends VehicleAgent {
     }
     
     /**
-     * @see it.unitn.disi.aose.firerespsim.agents.VehicleAgent#receivedFireStatus(it.unitn.disi.aose.firerespsim.ontology.FireStatus)
+     * @see it.unitn.disi.aose.firerespsim.agents.VehicleAgent#handleFireStatus(it.unitn.disi.aose.firerespsim.ontology.FireStatus)
      */
     @Override
-    void receivedFireStatus(final FireStatus fire) {
+    void handleFireStatus(final FireStatus fire) {
 
         if (fire.getIntensity() >= 1 || fire.getCasualties() >= 1) return;
         
