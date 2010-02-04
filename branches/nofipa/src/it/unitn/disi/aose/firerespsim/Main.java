@@ -11,8 +11,11 @@ import it.unitn.disi.aose.firerespsim.util.AgentUtil;
 import jade.core.ProfileImpl;
 import jade.core.Runtime;
 import jade.wrapper.AgentContainer;
+import java.io.FileInputStream;
+import java.util.Properties;
 import org.apache.commons.lang.math.RandomUtils;
 import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 
 /**
  * This class launches the JADE runtime and starts the emergency response simulation.
@@ -46,6 +49,16 @@ public final class Main {
      */
     public static void main(final String[] args) {
 
+        // set up logging
+        final Properties logProperties = new Properties();
+        try {
+            logProperties.load(new FileInputStream("log/log4j.properties"));
+        } catch (final Exception e) {
+            e.printStackTrace();
+        }
+        PropertyConfigurator.configure(logProperties);
+        logger.debug("logging initialized");
+        
         logger.info("starting simulation");
         
         // start the environment agent
