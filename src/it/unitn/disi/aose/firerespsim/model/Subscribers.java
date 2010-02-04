@@ -12,10 +12,8 @@ import java.util.Set;
  */
 public final class Subscribers {
     
-    /**
-     * Subscriptions
-     */
-    public final Set<ACLMessage> subscriptions = new HashSet<ACLMessage>();
+    private final Set<AID> aids = new HashSet<AID>();
+    private final Set<ACLMessage> subscriptions = new HashSet<ACLMessage>();
     
     /**
      * @param s
@@ -23,7 +21,11 @@ public final class Subscribers {
      */
     public boolean register(final ACLMessage s) {
 
-        return subscriptions.add(s);
+        if (aids.add(s.getSender())) {
+            subscriptions.add(s);
+            return true;
+        }
+        return false;
     }
     
     /**
@@ -32,7 +34,19 @@ public final class Subscribers {
      */
     public boolean deregister(final ACLMessage s) {
 
-        return subscriptions.remove(s);
+        if (aids.remove(s.getSender())) {
+            subscriptions.remove(s);
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * @return AIDs of the subscribers.
+     */
+    public Set<AID> getAIDs() {
+
+        return aids;
     }
     
     /**
@@ -43,22 +57,19 @@ public final class Subscribers {
         return subscriptions;
     }
     
+    /**
+     * @return Number of subscribers.
+     */
     public int size() {
 
-        return subscriptions.size();
+        return aids.size();
     }
     
+    /**
+     * @return <code>true</code> if there are no subscribers, <code>false</code> if there are
+     */
     public boolean isEmpty() {
 
-        return subscriptions.isEmpty();
-    }
-    
-    public Set<AID> getAIDs() {
-
-        final Set<AID> aids = new HashSet<AID>();
-        for (final ACLMessage s : subscriptions) {
-            aids.add(s.getSender());
-        }
-        return aids;
+        return aids.isEmpty();
     }
 }

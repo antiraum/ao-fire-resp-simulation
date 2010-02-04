@@ -30,8 +30,8 @@ public final class Main {
     private static final int AREA_HEIGHT = 3;
     private static final int ENVIRONMENT_SPAWN_FIRE_IVAL = 5000;
     private static final int MONITOR_SCAN_AREA_IVAL = 1000;
-    private static final int NUMBER_OF_FIRE_BRIGADES = 2;
-    private static final int NUMBER_OF_HOSPITALS = 2;
+    private static final int NUMBER_OF_FIRE_BRIGADES = 1;
+    private static final int NUMBER_OF_HOSPITALS = 1;
     private static final int FIRE_INCREASE_IVAL = 10000;
     private static final int VEHICLE_MOVE_IVAL = 1000;
     

@@ -28,7 +28,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
-import org.apache.commons.lang.math.RandomUtils;
 
 /**
  * This is the super class for the fire brigade and hospital agents. Handles the communication with the
@@ -89,7 +88,7 @@ public abstract class StationaryAgent extends ExtendedAgent {
         final Coordinate position = new Coordinate((Integer) params.get("ROW"), (Integer) params.get("COLUMN"));
         
         // create vehicle agents
-        final int numVehicles = RandomUtils.nextInt(4) + 1; // between 1 and 5
+        final int numVehicles = 1;//RandomUtils.nextInt(4) + 1; // between 1 and 5
         final Object[] args = {getName(), position.getRow(), position.getCol(), params.get("VEHICLE_MOVE_IVAL")};
         for (int i = 0; i < numVehicles; i++) {
             final String nickname = vehicleName + " " + params.get("ID") + "-" + i;
@@ -179,6 +178,7 @@ public abstract class StationaryAgent extends ExtendedAgent {
                                                                        vehicles.size() - fires.size()); // need at least one vehicle per fire
             
             sendReply(cfp, ACLMessage.PROPOSE, proposal);
+            logger.debug("sent proposal for fire at (" + fireCoord + ")");
         }
     }
     
