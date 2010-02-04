@@ -107,6 +107,17 @@ public final class Coordinate implements Concept {
     }
     
     /**
+     * @param str
+     * @return {@link Coordinate}
+     */
+    public static Coordinate fromString(final String str) {
+
+        final String[] fields = str.split(" ");
+        if (fields.length != 2) return null;
+        return new Coordinate(Integer.parseInt(fields[0]), Integer.parseInt(fields[1]));
+    }
+    
+    /**
      * @see java.lang.Object#clone()
      */
     @Override
